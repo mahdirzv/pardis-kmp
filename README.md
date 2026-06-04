@@ -1,63 +1,79 @@
-# Pardis KMP (Reader App) — Native UI + Shared Logic
+# Pardis KMP (Reader App) — Shared Logic + Native UIs
 
-This KMP project follows the **Beforely architecture** (see https://github.com/pooyanmajd/Beforely and its `docs/kmpSkill.md` + `docs/skills/beforely-kmp-delivery/SKILL.md`):
+Pardis is a bilingual (Farsi/English) Persian heritage content platform for diaspora families. This is the Kotlin Multiplatform reader app for stories and lullabies.
 
-- **Shared logic** in Kotlin Multiplatform (`shared/` + `core/*`): business rules, data contracts, ViewModels (with `uiState: StateFlow` + `onAction`), use cases, repositories, DI (Koin), offline (SQLDelight), network.
+## Architecture
+
+- **Shared logic** in Kotlin Multiplatform (`shared/` + `core/*`): business rules, data contracts (Story, StoryPage, etc.), ViewModels (with `uiState: StateFlow` + `onAction`), use cases, repositories, DI (Koin), offline storage (SQLDelight), network.
 - **Native UIs only**:
   - Android: Jetpack Compose in `app/` (the `:PardisAndroidApp` module).
-  - iOS: SwiftUI in `iosApp/` (imports the `Shared` framework produced by the `shared` KMP module, using SKIE for great interop).
+  - iOS: SwiftUI in `iosApp/` (imports the `Shared` framework produced by the `shared` KMP module).
 
-No shared Compose or shared SwiftUI screen code. Platform shells stay thin: they render shared `UiState` and forward `Action`s (plus own navigation/theme).
+No shared UI code across platforms. Platform shells stay thin: they render shared `UiState` and forward `Action`s (plus their own navigation and theming).
 
-## Structure (matching Beforely)
+## Structure
 
 ```
 pardis-kmp/
-├── app/                  # Android native shell (Compose UI, theme, nav, MainActivity, Application bootstrap)
-├── iosApp/               # iOS native shell (SwiftUI, xcodeproj, adapters for Shared VMs)
-├── shared/               # Feature-scoped VMs, UiState, Action, SharedInit, iOS ViewModelProvider
+├── app/                  # Android native shell (Compose UI, theme, nav, MainActivity, bootstrap)
+├── iosApp/               # iOS native shell (SwiftUI, adapters for shared VMs)
+├── shared/               # Feature-scoped ViewModels, UiState, Action, SharedInit, platform providers
 ├── core/
-│   ├── model/            # Pure data contracts (Story, StoryPage, VocabItem...)
-│   ├── domain/           # Use case interfaces + repo interfaces
-│   ├── data/             # Repo impls + mappers
-│   ├── network/          # Ktor / Supabase client
-│   ├── database/         # SQLDelight for offline stories/pages/vocab/progress
+│   ├── model/            # Pure data contracts (Story, StoryPage, VocabItem, etc.)
+│   ├── domain/           # Use cases + repository interfaces
+│   ├── data/             # Repository implementations + mappers
+│   ├── network/          # Ktor client for Supabase public data
+│   ├── database/         # SQLDelight for offline caching
 │   └── di/               # Core Koin modules
+├── design-system/        # Tokenised design using Pardis palette
 ├── gradle/...
-├── settings.gradle.kts   # Includes :PardisAndroidApp (maps to app/), core/*, :shared
+├── settings.gradle.kts   # Multi-module setup
 └── ...
 ```
 
-See the Beforely files for the full contract:
-- `docs/kmpSkill.md` (architecture rules)
-- `AGENTS.md` style operating model (Pardis has its own in the web repo)
-- How `SharedInit.init(platformModules)` + Koin assembles everything
-- iOS adapters using `@Observable` + `.task` + Skie flows + `apply(state)`
-- Android: `koinViewModel()`, `collectAsStateWithLifecycle()`, Route/Screen split with callbacks for nav
+## Design System
 
-## Current Scaffold State
+Fully tokenised using the Pardis palette and tokens from the web project (`src/lib/design/`).
 
-Basic library feature wired end-to-end:
-- Shared `LibraryViewModel` + `LibraryUiState` + `LibraryAction`
-- Android Compose screen observing it
-- iOS SwiftUI + Observable adapter observing the Skie flow
+- `design-system/tokens.json`
+- Generated platform tokens in `design-system/generated/`
+- Use `PardisColors`, `PardisSpacing`, etc. in native UIs. No raw hex or magic values.
 
-Real content fetching (public Supabase stories + pages), MP4 video player (per your clarification: only pre-rendered MP4s + cues), audio page reader, offline downloads, child profiles/PIN, etc. to be layered on top following the same boundaries.
+See `design-system/MDS.md` and the web design tokens for the full contract.
 
-## Setup (see previous requirements check)
+## Getting Started
 
-1. Complete JDK link + PATH (from earlier).
-2. Open this folder in Android Studio (install KMP plugin if prompted).
-3. For iOS: full Xcode + the Shared framework will be produced on build.
+See the parent Pardis web project `AGENTS.md` for overall conventions.
 
-Run checks (once set up):
+For KMP-specific:
+- `docs/kmpSkill.md` — architecture and coding patterns.
+- `docs/skills/pardis-kmp-delivery/SKILL.md` — delivery, review, and implementation guidance.
+- `.github/instructions/kmp.instructions.md`
+
+## Data Source
+
+Content is fetched from the public Supabase instance used by the Pardis web project:
+
+- URL: https://tpjgnlcporgnlrjwjufq.supabase.co
+- Public tables (stories, story_pages, vocab_terms, etc.) are readable with the anon key.
+
+The anon key and URL are configured per-platform (see platform bootstrap for how secrets/config are provided).
+
+## Verification
+
 ```bash
 ./gradlew test :PardisAndroidApp:assembleDebug
-# iOS build via Xcode or xcodebuild after framework
+# iOS: build via Xcode after generating framework
 ```
 
-Follow the same rules as Beforely for any changes: shared logic here, native UI in the shells, no platform leakage into commonMain, etc.
+## Roadmap
 
-Update this README + add project-specific docs as the reader features grow.
+See `docs/ROADMAP.md`.
 
-This structure keeps the Pardis web (authoring, admin, agents) and the mobile reader cleanly separated while sharing the canonical data contracts.
+## Contributing
+
+Follow the rules in `docs/code-rules.md`, `docs/severity.md`, and the KMP skill docs. All shared logic must stay in `shared/` and `core/*`. UI lives only in the native shells.
+
+Never commit secrets or keys.
+
+This project shares data contracts with the main Pardis web app — keep models in sync with `src/lib/content.ts` in the web project.

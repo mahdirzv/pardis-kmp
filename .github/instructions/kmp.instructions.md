@@ -7,7 +7,7 @@ applyTo: "shared/**,core/**,app/**,iosApp/**,design-system/**"
 The architecture contract is `docs/kmpSkill.md` (mirrors Codex cross-platform-app-engineering). **Read and apply it; do not duplicate rules here.** This is the review-time projection for Pardis KMP track.
 
 Also bind to:
-- `docs/skills/pardis-kmp-delivery/SKILL.md` (Pardis-specific: use only Pardis palette/tokens from web design, no Beforely anything in UI).
+- `docs/skills/pardis-kmp-delivery/SKILL.md` (Pardis-specific: use only Pardis palette/tokens from web design).
 - `docs/code-rules.md` (cross-cutting).
 - Top-level Pardis `AGENTS.md` (in sibling web project) for overall conventions.
 - Parent design tokens: `../pardis/src/lib/design/` — tokenise with saffron, indigo, mint, lilac, #FAF6EE bg, etc.
@@ -34,7 +34,7 @@ Use `docs/severity.md` for P0/P1/P2/P3. APPROVED = zero P0/P1 outstanding.
 
 ## Pardis-specific review heuristics
 
-- **Palette**: Must use Pardis tokens (saffron #F08A2D, indigo #2436A1, mint #34B57F, lilac, warm cream #FAF6EE, ink #14111B from web neutral.ts). No Beforely colors or "bf-" tokens. If new visual, add to design-system/ first.
+- **Palette**: Must use Pardis tokens (saffron #F08A2D, indigo #2436A1, mint #34B57F, lilac, warm cream #FAF6EE, ink #14111B from web neutral.ts). If new visual, add to design-system/ first.
 - **Content fidelity**: Models match web (Story + StoryPage with paragraphs, illustrationUrl, narration* + durations, vocab). MP4 path only when videoReady (use cues from durations like web VideoReader). Fallback page audio + images.
 - **Offline**: Asset manifests + SQLDelight cache for full story bundles (prose + media). Download UX in native shells.
 - **Child/PIN**: Auth + RLS for family data; local secure PIN in shells.
@@ -53,13 +53,13 @@ Use `docs/severity.md` for P0/P1/P2/P3. APPROVED = zero P0/P1 outstanding.
 - Room/SQLDelight entities or network DTOs referenced from shared — P0 layering.
 - Not consuming state-derived nav with stable id guard — repeats on recompose. P1.
 - SKIE version out of sync with Kotlin — build break (P0).
-- Using Beforely design concepts or palette — P1 (project rule).
+- Using non-Pardis design tokens or palette — P1 (project rule).
 
 ## Library / common forms
 
 Valid to have small adapter files in iosApp/ and thin Route files in app/ as long as logic stays shared.
 
-For design-system changes: also run any token lint if added (like Beforely's verifyMdsTokenRules).
+For design-system changes: verify token usage against the generated Pardis tokens.
 
 Update this file + the delivery skill when the contract evolves.
 

@@ -21,8 +21,8 @@ Subtle, Persian-inspired but modern soft. Use named tokens.
 - Vocab: tappable chips or inline highlight → bottom sheet with translit + en + audio.
 - Video mode: native player + synced subtitles (page cues).
 
-No Beforely signal cards etc.
+Use Pardis-specific components for the reader (library cards, page reader, etc.).
 
 Full alignment with web reader at /read/stories/[slug].
 
-See design-system/components/ for JSON descriptions if expanded (like Beforely).
+See design-system/components/ for JSON descriptions if expanded.

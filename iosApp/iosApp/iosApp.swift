@@ -7,7 +7,7 @@ struct PardisiOSApp: App {
         // Provide any iOS platform config (e.g. future auth tokens)
         let platformModules: [Any] = [] // In real: build Koin modules from Swift
         // SharedInit is called from a provider or directly if no platform deps
-        // For scaffold, assume SharedInit.init() is called; in practice use Beforely-like platformModules
+        // For scaffold, assume SharedInit.init() is called; provide platform modules as needed for config/secrets
     }
 
     var body: some Scene {

@@ -1,6 +1,6 @@
 ---
 name: pardis-kmp-delivery
-description: Build, review, and verify Pardis Kotlin Multiplatform content reader app. Shared logic (ViewModels, UiState, domain, data) + native Android Jetpack Compose + native iOS SwiftUI. Follows Beforely KMP architecture (see docs/kmpSkill.md). Use Pardis design tokens/palette only (saffron, indigo/lapis, mint, lilac, warm cream backgrounds from web src/lib/design/). No Beforely UI, colors, or components.
+description: Build, review, and verify Pardis Kotlin Multiplatform content reader app. Shared logic (ViewModels, UiState, domain, data) + native Android Jetpack Compose + native iOS SwiftUI. Follows the KMP architecture in docs/kmpSkill.md. Use Pardis design tokens/palette only (saffron, indigo/lapis, mint, lilac, warm cream backgrounds from web src/lib/design/). 
 ---
 
 # Pardis KMP Delivery Skill
@@ -9,13 +9,13 @@ description: Build, review, and verify Pardis Kotlin Multiplatform content reade
 
 Pardis KMP is the mobile content reader for the Pardis Persian heritage stories/lullabies platform (bilingual FA/EN, MP4 video when available per `videoReady` + cues, per-page illustrations + narration audio fallback, vocab, games, offline, child profiles/PIN).
 
-**Architecture (non-negotiable, from docs/kmpSkill.md and Beforely reference):**
+**Architecture (non-negotiable, from docs/kmpSkill.md):**
 - Shared logic in `shared/` (feature VMs with single `uiState: StateFlow`, `onAction`, UiState/Action contracts, SharedInit) and `core/*` (model, domain, data, network, database, di).
 - **Native UIs only**: Android Jetpack Compose in `app/`, iOS SwiftUI in `iosApp/`.
 - No shared Compose/SwiftUI screens or theme code.
 - DI: Koin, `SharedInit.init(platformModules)`, qualified platform bindings.
 - Use SKIE in `shared` for iOS framework.
-- Design: **Pardis palette only** (see web `src/lib/design/themes/neutral.ts` and tokens: saffron #F08A2D, indigo #2436A1, mint #34B57F, background #FAF6EE, ink #14111B, etc.). Tokenised via `design-system/`. Generate platform tokens. No Beforely colors, components, or "vehicle/area" concepts.
+- Design: **Pardis palette only** (see web `src/lib/design/themes/neutral.ts` and tokens: saffron #F08A2D, indigo #2436A1, mint #34B57F, background #FAF6EE, ink #14111B, etc.). Tokenised via `design-system/`. Generate platform tokens. 
 
 Reference:
 - Parent Pardis web: `AGENTS.md` (top-level in ../pardis), CLAUDE.md, design tokens.
@@ -48,7 +48,7 @@ Reference:
    - Consume in native shells (callbacks for nav, no shared nav ownership).
 7. MP4 video: When story.videoReady and urls present, use native player (Media3 on Android, AVPlayer on iOS) + subtitle cues (build from narration durations + intro/outro, match web VideoReader logic). Fallback to image + per-page audio pager.
 8. Secrets/config: Only in platform bootstrap (Android BuildConfig/local.properties or iOS xcconfig). Never in shared/commonMain.
-9. No Beforely anything in UI/palette.
+9. Use only Pardis design tokens and palette in UI.
 
 ## Verification (run narrowest then broaden)
 
@@ -76,7 +76,7 @@ When adding new feature (e.g. reader, games):
 - Use Pardis web palette exclusively: saffron, lapis/indigo, mint, lilac, warm cream #FAF6EE bg, ink #14111B. See neutral.ts for full list.
 - Tokenise everything: no raw colors, no magic spacing in UI code.
 
-## Common traps (from kmpSkill + Beforely)
+## Common traps (from kmpSkill)
 
 - Platform leakage into commonMain → P0.
 - Shared VM doing nav or owning Compose/SwiftUI types → P1.

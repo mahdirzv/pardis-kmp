@@ -10,14 +10,16 @@ import kotlinx.serialization.json.Json
 
 /**
  * Basic Ktor client for public Supabase reads (Pardis content).
- * Tables are publicly readable.
- * For production reader, configure anon key or use Supabase KMP client.
+ * Tables are publicly readable (for select using (true) RLS).
+ * Keys and URL taken from the Pardis web project (.env.local and client usage).
+ * For full app, provide via platform config (Android BuildConfig / iOS secrets) and inject in SharedInit platformModules.
  */
 object Supabase {
-    // Public demo URL from Pardis web. In real: inject from platform config / BuildConfig.
+    // From Pardis web project: NEXT_PUBLIC_SUPABASE_URL
     private const val BASE = "https://tpjgnlcporgnlrjwjufq.supabase.co/rest/v1"
-    // Anon key is safe for public reads; in app use from secure config.
-    private const val ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwamdubGNwb3Jnbmxyaml3dWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NDUyNzAsImV4cCI6MjA2MTUyMTI3MH0.placeholder" // replace with real anon from .env if needed; for public data often works without
+
+    // From Pardis web project: NEXT_PUBLIC_SUPABASE_ANON_KEY (safe for public client reads)
+    private const val ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwamdubGNwb3JnbmxyandqdWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMTkzODUsImV4cCI6MjA5Mzg5NTM4NX0.hhw9JZnwNkuaE_Mkjmy_gK_GW42BukzdYfy5d0n9CPo"
 
     val client = HttpClient {
         install(ContentNegotiation) {

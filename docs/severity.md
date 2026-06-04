@@ -1,6 +1,6 @@
 # Severity Scale (Pardis KMP)
 
-Canonical for this track. Matches parent Pardis style and Beforely reference.
+Canonical for this track. Matches parent Pardis style.
 
 - **P0**: Blocks everything. Build break, data loss, security, layering violation that will cause runtime crash or total failure, major security/privacy (e.g. leaking child data), platform leakage into shared that prevents compile or correct behavior.
 - **P1**: Blocks merge. Incorrect behavior, bad UX, missing contract, untested boundary, magic numbers in UI, error swallowing, no tokens, wrong DI scoping, navigation bugs, iOS VM lifetime leaks.

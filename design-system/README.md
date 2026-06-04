@@ -2,7 +2,7 @@
 
 Tokenised design for the mobile reader, using the **Pardis web palette only** (from `../pardis/src/lib/design/themes/neutral.ts` and tokens/).
 
-**Do not use Beforely colors, components, or "bf-" namespace.**
+Use only the Pardis palette and tokens.
 
 ## Structure
 - `tokens.json`: Source of truth (semantic + values).

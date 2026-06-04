@@ -1,7 +1,7 @@
 import SwiftUI
 import Shared  // or the framework name
 
-// Minimal helper to observe Skie StateFlow in SwiftUI (inspired by Beforely patterns + SKIE)
+// Minimal helper to observe Skie StateFlow in SwiftUI (using SKIE for async bridging)
 extension View {
     func collect<T>(flow: SkieSwiftStateFlow<T>, onEach: @escaping (T) -> Void) -> some View {
         self.task {

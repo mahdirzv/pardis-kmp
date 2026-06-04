@@ -1,12 +1,12 @@
 # Pardis KMP Reader Roadmap
 
 ## Phase 0: Structure & Foundations (current)
-- [x] Beforely-style architecture wired (shared logic + native Android Compose + native iOS SwiftUI)
+- [x] Architecture wired (shared logic + native Android Compose + native iOS SwiftUI following the patterns in docs/kmpSkill.md)
 - [x] Core modules skeleton (model, domain, data, network, database, di)
 - [x] Shared VMs (Library + Reader stubs), UiState, Actions, DI (Koin + SharedInit)
 - [x] Basic native shells consuming shared (library list demo on both platforms)
 - [x] Design-system tokenised with **Pardis palette only** (saffron, indigo, mint, lilac, cream bg from web)
-- [x] Skills/docs/MCP/AGENTS.md imported + adapted from Beforely + Pardis web
+- [x] Skills/docs/MCP/AGENTS.md and design system in place for Pardis KMP (tokenised with web palette)
 - [x] Gradle multi-module, SKIE, wrapper, versions per best practices
 - [ ] Real Supabase public fetch wired end-to-end (stories + pages)
 - [ ] Basic offline (SQLDelight cache)
@@ -44,7 +44,7 @@
 
 ## Non-goals (for v1)
 - Shared UI (CMP) — stick to native.
-- Beforely design language.
+- Inconsistent design tokens across platforms.
 - Full admin/creation in mobile (web is for that).
 
 Track in Linear or parent tickets. Reference parent Pardis AGENTS.md for cross-repo coordination.
