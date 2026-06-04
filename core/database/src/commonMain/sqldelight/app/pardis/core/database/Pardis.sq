@@ -1,0 +1,10 @@
+CREATE TABLE cached_story (
+    slug TEXT PRIMARY KEY,
+    title_en TEXT NOT NULL,
+    title_fa TEXT NOT NULL,
+    age_band TEXT NOT NULL,
+    data_json TEXT NOT NULL,  -- full serialized for simplicity in scaffold
+    downloaded_at INTEGER NOT NULL
+);
+
+-- Add pages, vocab cache tables as needed.

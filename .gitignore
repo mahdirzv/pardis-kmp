@@ -1,0 +1,41 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Android
+*.iml
+.idea/
+local.properties
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.log
+
+# iOS / Xcode
+iosApp/iosApp.xcodeproj/
+iosApp/Pods/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata
+
+# Kotlin / Native
+*.klib
+*.framework/
+*.dSYM/
+
+# Supabase / secrets (never commit keys)
+*.env
+.env.local
+
+# Misc
+.kotlin/
+*.hprof
+*.log
+Thumbs.db
+
+# Generated
+composeApp/src/commonMain/composeResources/
