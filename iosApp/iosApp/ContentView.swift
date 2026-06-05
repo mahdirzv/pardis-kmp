@@ -37,6 +37,11 @@ struct LibraryScreen: View {
                     model.search(query: newValue)
                 }
 
+            // Toggle cached only
+            Button(model.showOnlyCached ? "Show all stories" : "Show only offline cached") {
+                model.toggleShowOnlyCached()
+            }
+
             if model.isLoading && model.stories.isEmpty {
                 ProgressView().tint(PardisColors.saffron)
             }

@@ -133,6 +133,11 @@ fun LibraryScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
+        Spacer(Modifier.height(PardisSpacing.sm))
+        // Toggle for offline cached only
+        Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
+            Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")
+        }
         Spacer(Modifier.height(PardisSpacing.md))
 
         if (state.isLoading && state.stories.isEmpty()) {

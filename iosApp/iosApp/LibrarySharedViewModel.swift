@@ -17,6 +17,7 @@ final class LibrarySharedViewModel {
     var errorMessage: String?
     var cachedStorySlugs: Set<String> = []
     var searchQuery: String = ""
+    var showOnlyCached = false
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
@@ -36,11 +37,16 @@ final class LibrarySharedViewModel {
         viewModel.onAction(action: LibraryActionSearch(query: query))
     }
 
+    func toggleShowOnlyCached() {
+        viewModel.onAction(action: LibraryActionToggleShowOnlyCached.shared)
+    }
+
     private func apply(_ state: LibraryUiState) {
         self.stories = state.stories
         self.isLoading = state.isLoading
         self.errorMessage = state.errorMessage
         self.cachedStorySlugs = Set(state.cachedStorySlugs)
         self.searchQuery = state.searchQuery
+        self.showOnlyCached = state.showOnlyCached
     }
 }
