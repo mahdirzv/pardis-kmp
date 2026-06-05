@@ -58,8 +58,9 @@ class ReaderViewModel(
             }
             is ReaderAction.ToggleVideo -> _uiState.update { it.copy(isVideoMode = !it.isVideoMode) }
             is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang)
+            is ReaderAction.SetNarrationLang -> _uiState.update { it.copy(preferredNarrationLang = action.lang) }
             is ReaderAction.PlayNarration -> {
-                // Native shell handles actual playback using current page's narration urls
+                // Native shell handles actual playback using current page's narration urls (prefers preferredNarrationLang + local)
             }
             is ReaderAction.ShowVocab -> {
                 analytics.track("vocab_opened", mapOf("fa" to action.vocab.fa))

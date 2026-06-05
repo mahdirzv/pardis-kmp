@@ -26,6 +26,7 @@ final class ReaderSharedViewModel {
     var isDownloadingVideo = false
     var localIllustrationUrls: [Int: String] = [:]
     var localNarrationUrls: [String: String] = [:] // "fa-3" etc.
+    var preferredNarrationLang: String = "fa"
     var cues: [SubtitleCue] = []
     var selectedVocab: VocabItem? = nil
 
@@ -63,6 +64,10 @@ final class ReaderSharedViewModel {
         viewModel.onAction(action: ReaderActionDownloadVideo(lang: lang))
     }
 
+    func setNarrationLang(lang: String) {
+        viewModel.onAction(action: ReaderActionSetNarrationLang(lang: lang))
+    }
+
     func playNarration() {
         viewModel.onAction(action: ReaderActionPlayNarration.shared)
     }
@@ -89,6 +94,7 @@ final class ReaderSharedViewModel {
         self.isDownloadingVideo = state.isDownloadingVideo
         self.localIllustrationUrls = state.localIllustrationUrls
         self.localNarrationUrls = state.localNarrationUrls
+        self.preferredNarrationLang = state.preferredNarrationLang
         self.cues = state.cues
         self.selectedVocab = state.selectedVocab
     }

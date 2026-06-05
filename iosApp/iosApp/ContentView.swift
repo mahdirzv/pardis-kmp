@@ -217,8 +217,12 @@ struct ReaderScreen: View {
                             let pageNum = p.page
                             let faKey = "fa-\(pageNum)"
                             let enKey = "en-\(pageNum)"
-                            let localNar = model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
-                            let urlStr = localNar ?? p.narrationFa?.url ?? p.narrationEn?.url
+                            let localNar = if model.preferredNarrationLang == "fa" {
+                                model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
+                            } else {
+                                model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
+                            }
+                            let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
                             if let u = urlStr, let url = URL(string: u) {
                                 // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
                                 let player = AVPlayer(url: url)
@@ -239,6 +243,8 @@ struct ReaderScreen: View {
                         }
                         model.playNarration()
                     }
+                    Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
+                    Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
                 }
                 if model.videoUrlFa != nil || model.videoUrlEn != nil {
                     Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }

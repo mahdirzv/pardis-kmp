@@ -537,8 +537,10 @@ fun ReaderScreen(
                                 val pageNum = current?.page ?: 0
                                 val faKey = "fa-$pageNum"
                                 val enKey = "en-$pageNum"
-                                val localNar = state.localNarrationUrls[faKey] ?: state.localNarrationUrls[enKey]
-                                val url = localNar ?: current?.narrationFa?.url ?: current?.narrationEn?.url
+                                val localNar = if (state.preferredNarrationLang == "fa") state.localNarrationUrls[faKey] ?: state.localNarrationUrls[enKey]
+                                               else state.localNarrationUrls[enKey] ?: state.localNarrationUrls[faKey]
+                                val url = localNar ?: if (state.preferredNarrationLang == "fa") current?.narrationFa?.url ?: current?.narrationEn?.url
+                                                      else current?.narrationEn?.url ?: current?.narrationFa?.url
                                 url?.let {
                                     val mp = MediaPlayer().apply {
                                         setDataSource(it)
@@ -562,6 +564,13 @@ fun ReaderScreen(
                             }
                         }) {
                             Text("Play Audio")
+                        }
+                        // Simple lang switch for narration audio
+                        Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
+                            Text("FA")
+                        }
+                        Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
+                            Text("EN")
                         }
                     }
                     if (state.videoUrlFa != null || state.videoUrlEn != null) {

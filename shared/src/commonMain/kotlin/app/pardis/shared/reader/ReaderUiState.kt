@@ -18,6 +18,7 @@ data class ReaderUiState(
     // Local asset paths for page content (keyed by page number for illustration, "fa-3"/"en-3" for narration)
     val localIllustrationUrls: Map<Int, String> = emptyMap(),
     val localNarrationUrls: Map<String, String> = emptyMap(), // e.g. "fa-0" -> local path
+    val preferredNarrationLang: String = "fa", // "fa" or "en" for per-page audio play
     val introDuration: Double = 0.0,
     val outroDuration: Double = 0.0,
     val isLoading: Boolean = false,
@@ -39,6 +40,7 @@ sealed interface ReaderAction {
     data class GoToPage(val page: Int) : ReaderAction
     data object ToggleVideo : ReaderAction
     data class DownloadVideo(val lang: String = "fa") : ReaderAction // "fa" or "en"; starts download of the MP4 for offline
+    data class SetNarrationLang(val lang: String) : ReaderAction // "fa" or "en"
     data object PlayNarration : ReaderAction // per page or current
     data class ShowVocab(val vocab: VocabItem) : ReaderAction
     data object DismissVocab : ReaderAction
