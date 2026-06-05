@@ -24,9 +24,12 @@ import app.pardis.design.PardisRadius
 import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
 import app.pardis.shared.library.LibraryAction
+import app.pardis.shared.library.LibraryUiState
 import app.pardis.shared.library.LibraryViewModel
 import app.pardis.shared.reader.ReaderAction
+import app.pardis.shared.reader.ReaderUiState
 import app.pardis.shared.reader.ReaderViewModel
+import app.pardis.core.model.VocabItem
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -72,8 +75,8 @@ fun LibraryRoute(
 
 @Composable
 fun LibraryScreen(
-    state: app.pardis.shared.library.LibraryUiState,
-    onAction: (app.pardis.shared.library.LibraryAction) -> Unit,
+    state: LibraryUiState,
+    onAction: (LibraryAction) -> Unit,
     onOpenStory: (String) -> Unit,
 ) {
     Column(
@@ -102,7 +105,7 @@ fun LibraryScreen(
 
         state.errorMessage?.let { err ->
             Text("Error: $err", color = MaterialTheme.colorScheme.error)
-            Button(onClick = { onAction(app.pardis.shared.library.LibraryAction.Refresh) }) { Text("Retry") }
+            Button(onClick = { onAction(LibraryAction.Refresh) }) { Text("Retry") }
         }
 
         LazyColumn(
@@ -125,7 +128,7 @@ fun LibraryScreen(
         // Floating refresh for demo
         Spacer(Modifier.height(PardisSpacing.md))
         Button(
-            onClick = { onAction(app.pardis.shared.library.LibraryAction.Refresh) },
+            onClick = { onAction(LibraryAction.Refresh) },
             colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)
         ) {
             Text("Refresh library")
@@ -210,7 +213,7 @@ fun PardisCard(
  * Simple vocab chip component using tokens.
  */
 @Composable
-fun PardisVocabChip(vocab: app.pardis.core.model.VocabItem, onClick: () -> Unit = {}) {
+fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
     Surface(
         modifier = Modifier
             .clickable(onClick = onClick)
@@ -262,8 +265,8 @@ fun ReaderRoute(
 
 @Composable
 fun ReaderScreen(
-    state: app.pardis.shared.reader.ReaderUiState,
-    onAction: (app.pardis.shared.reader.ReaderAction) -> Unit,
+    state: ReaderUiState,
+    onAction: (ReaderAction) -> Unit,
     onBack: () -> Unit,
 ) {
     Column(

@@ -2,6 +2,7 @@ package app.pardis.shared.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.model.Story
 import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,11 +13,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LibraryViewModel(
-    private val getStoriesUseCase: app.pardis.core.domain.GetStoriesUseCase,
+    private val getStoriesUseCase: GetStoriesUseCase,
     private val analytics: Analytics,
 ) : ViewModel() {
 
-    private val stories = MutableStateFlow<List<app.pardis.core.model.Story>>(emptyList())
+    private val stories = MutableStateFlow<List<Story>>(emptyList())
     private val isLoading = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
