@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import android.media.MediaPlayer
@@ -334,6 +335,14 @@ fun ReaderScreen(
                             setMediaItem(MediaItem.fromUri(videoUrl))
                             prepare()
                             playWhenReady = true
+                            addListener(object : Player.Listener {
+                                override fun onPlaybackStateChanged(playbackState: Int) {
+                                    if (playbackState == Player.STATE_ENDED) {
+                                        // Video finished - go to last page / end of story
+                                        onAction(ReaderAction.GoToPage(state.pages.lastIndex.coerceAtLeast(0)))
+                                    }
+                                }
+                            })
                         }
                     } else null
                 }
@@ -387,85 +396,90 @@ fun ReaderScreen(
                 )
                 Spacer(Modifier.height(PardisSpacing.sm))
 
-                // Scrollable content for the story page
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    // Video player or Illustration
-                    if (videoUrl != null && exoPlayer != null) {
-                        // Prominent player with live custom subtitles overlay (synced via cues)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(320.dp)
-                        ) {
-                            AndroidView(
-                                factory = {
-                                    PlayerView(it).apply {
-                                        player = exoPlayer
-                                        useController = true
-                                    }
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            // Custom subtitles overlay at bottom (bilingual, updates as page/cue advances)
-                            Box(
+                if (videoUrl != null && exoPlayer != null) {
+                    // Video mode: player always visible at top (tall, prominent), 
+                    // dedicated scrollable captions area below for readable synced text.
+                    // Much better UX than cramped scroll + tiny overlay.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(380.dp)  // taller for better viewing
+                    ) {
+                        AndroidView(
+                            factory = {
+                                PlayerView(it).apply {
+                                    player = exoPlayer
+                                    useController = true
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    Spacer(Modifier.height(PardisSpacing.sm))
+
+                    // Scrollable captions / current page text (large, readable while video plays)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            page.paragraphsFa.joinToString("\n\n"),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = PardisColors.ink
+                        )
+                        Spacer(Modifier.height(PardisSpacing.sm))
+                        Text(
+                            page.paragraphsEn.joinToString("\n\n"),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = PardisColors.inkSoft
+                        )
+
+                        Spacer(Modifier.height(PardisSpacing.lg))
+
+                        if (page.vocabulary.isNotEmpty()) {
+                            Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
+                            Column {
+                                page.vocabulary.take(3).forEach { v ->
+                                    PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Normal text/illustration mode - everything scrollable
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        if (page.illustrationUrl != null) {
+                            AsyncImage(
+                                model = page.illustrationUrl,
+                                contentDescription = "Illustration for page ${page.page} of story",
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Color.Black.copy(alpha = 0.65f))
-                                    .padding(PardisSpacing.sm)
+                                    .height(220.dp)
+                            )
+                        } else {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(220.dp),
+                                color = PardisColors.surfaceLilac
                             ) {
-                                Column {
+                                Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        page.paragraphsFa.joinToString("\n\n"),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White,
-                                        maxLines = 3,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        page.paragraphsEn.joinToString("\n\n"),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.85f),
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        "No illustration",
+                                        color = PardisColors.inkSoft
                                     )
                                 }
                             }
                         }
-                    } else if (page.illustrationUrl != null) {
-                        AsyncImage(
-                            model = page.illustrationUrl,
-                            contentDescription = "Illustration for page ${page.page} of story",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                        )
-                    } else {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp),
-                            color = PardisColors.surfaceLilac
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    "No illustration",
-                                    color = PardisColors.inkSoft
-                                )
-                            }
-                        }
-                    }
 
-                    Spacer(Modifier.height(PardisSpacing.md))
+                        Spacer(Modifier.height(PardisSpacing.md))
 
-                    // In video mode the synced bilingual text is shown as overlay subtitles above.
-                    // Only render the full text + vocab in text/illustration mode.
-                    if (!state.isVideoMode) {
                         Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
                         Spacer(Modifier.height(PardisSpacing.sm))
                         Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
@@ -478,14 +492,6 @@ fun ReaderScreen(
                                 page.vocabulary.take(3).forEach { v ->
                                     PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
                                 }
-                            }
-                        }
-                    } else if (page.vocabulary.isNotEmpty()) {
-                        // Still allow quick vocab access even in video mode
-                        Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
-                        Column {
-                            page.vocabulary.take(3).forEach { v ->
-                                PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
                             }
                         }
                     }

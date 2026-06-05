@@ -107,77 +107,84 @@ struct ReaderScreen: View {
                     .font(.caption)
                     .foregroundStyle(PardisColors.inkMuted)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Video or Illustration
-                        if model.isVideoMode, let videoUrl = model.videoUrlFa ?? model.videoUrlEn {
-                            // Player + custom live subtitles overlay (synced via cues, matches Android)
-                            ZStack(alignment: .bottom) {
-                                VideoPlayerView(
-                                    videoUrl: videoUrl,
-                                    cues: model.cues,
-                                    currentPage: model.currentPage,
-                                    onPageChange: { newPage in
-                                        model.goToPage(Int32(newPage))
-                                    }
-                                )
-                                .frame(height: 260)
-                                .cornerRadius(12)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(page.paragraphsFa.joined(separator: "\n\n"))
-                                        .font(.body)
-                                        .foregroundStyle(.white)
-                                        .lineLimit(3)
-                                    Text(page.paragraphsEn.joined(separator: "\n\n"))
-                                        .font(.callout)
-                                        .foregroundStyle(.white.opacity(0.85))
-                                        .lineLimit(2)
-                                }
-                                .padding(8)
-                                .background(Color.black.opacity(0.65))
-                                .cornerRadius(8)
-                                .padding(.horizontal, 8)
-                                .padding(.bottom, 8)
-                            }
-                            .frame(height: 260)
-                        } else if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
-                            AsyncImage(url: url) { image in
-                                image.resizable().scaledToFill()
-                            } placeholder: {
-                                Color(PardisColors.surfaceLilac)
-                            }
-                            .frame(height: 220)
-                            .cornerRadius(12)
-                            .accessibilityLabel("Illustration for page \(page.page)")
-                        } else {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(PardisColors.surfaceLilac)
-                                .frame(height: 220)
-                                .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
+                if model.isVideoMode, let videoUrl = model.videoUrlFa ?? model.videoUrlEn {
+                    // Video mode UX: tall player always visible at top, 
+                    // separate scrollable area below for large readable synced captions/text.
+                    VideoPlayerView(
+                        videoUrl: videoUrl,
+                        cues: model.cues,
+                        currentPage: model.currentPage,
+                        onPageChange: { newPage in
+                            model.goToPage(Int32(newPage))
                         }
+                    )
+                    .frame(height: 380)
+                    .cornerRadius(12)
 
-                        // In video mode the synced text is the live subtitle overlay on the player.
-                        if !model.isVideoMode {
+                    Spacer(minLength: 8)
+
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(page.paragraphsFa.joined(separator: "\n\n"))
+                                .font(.title3)
+                            Text(page.paragraphsEn.joined(separator: "\n\n"))
+                                .font(.body)
+                                .foregroundStyle(PardisColors.inkSoft)
+
+                            if !page.vocabulary.isEmpty {
+                                Text("Vocab").font(.headline)
+                                ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                                    Text("\(v.fa) (\(v.translit)) — \(v.en)")
+                                        .font(.caption)
+                                        .padding(4)
+                                        .background(PardisColors.mintSoft)
+                                        .cornerRadius(PardisRadius.sm)
+                                        .onTapGesture { model.showVocab(v) }
+                                        .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
+                                        .accessibilityAddTraits(.isButton)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Normal illustration + text mode
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
+                                AsyncImage(url: url) { image in
+                                    image.resizable().scaledToFill()
+                                } placeholder: {
+                                    Color(PardisColors.surfaceLilac)
+                                }
+                                .frame(height: 220)
+                                .cornerRadius(12)
+                                .accessibilityLabel("Illustration for page \(page.page)")
+                            } else {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(PardisColors.surfaceLilac)
+                                    .frame(height: 220)
+                                    .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
+                            }
+
                             Text(page.paragraphsFa.joined(separator: "\n\n"))
                                 .font(.body)
 
                             Text(page.paragraphsEn.joined(separator: "\n\n"))
                                 .font(.callout)
                                 .foregroundStyle(PardisColors.inkSoft)
-                        }
 
-                        if !page.vocabulary.isEmpty {
-                            Text("Vocab").font(.headline)
-                            ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
-                                Text("\(v.fa) (\(v.translit)) — \(v.en)")
-                                    .font(.caption)
-                                    .padding(4)
-                                    .background(PardisColors.mintSoft)
-                                    .cornerRadius(PardisRadius.sm)
-                                    .onTapGesture { model.showVocab(v) }
-                                    .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
-                                    .accessibilityAddTraits(.isButton)
+                            if !page.vocabulary.isEmpty {
+                                Text("Vocab").font(.headline)
+                                ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                                    Text("\(v.fa) (\(v.translit)) — \(v.en)")
+                                        .font(.caption)
+                                        .padding(4)
+                                        .background(PardisColors.mintSoft)
+                                        .cornerRadius(PardisRadius.sm)
+                                        .onTapGesture { model.showVocab(v) }
+                                        .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
+                                        .accessibilityAddTraits(.isButton)
+                                }
                             }
                         }
                     }
