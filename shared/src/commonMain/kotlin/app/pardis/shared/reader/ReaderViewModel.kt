@@ -2,6 +2,7 @@ package app.pardis.shared.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.ClearStoryAssetsUseCase
 import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
 import app.pardis.core.domain.GetLocalAssetPathUseCase
@@ -28,6 +29,7 @@ class ReaderViewModel(
     private val downloadVideo: DownloadVideoUseCase,
     private val downloadStoryAssets: DownloadStoryAssetsUseCase,
     private val getLocalAssetPath: GetLocalAssetPathUseCase,
+    private val clearAssets: ClearStoryAssetsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReaderUiState(isLoading = true))
@@ -60,6 +62,20 @@ class ReaderViewModel(
             is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang)
             is ReaderAction.SetNarrationLang -> _uiState.update { it.copy(preferredNarrationLang = action.lang) }
             is ReaderAction.SetPlaybackRate -> _uiState.update { it.copy(playbackRate = action.rate.coerceIn(0.5f, 2.0f)) }
+            is ReaderAction.ClearAssets -> {
+                viewModelScope.launch {
+                    clearAssets(_uiState.value.storySlug)
+                    // Reset locals
+                    _uiState.update {
+                        it.copy(
+                            localVideoUrlFa = null,
+                            localVideoUrlEn = null,
+                            localIllustrationUrls = emptyMap(),
+                            localNarrationUrls = emptyMap()
+                        )
+                    }
+                }
+            }
             is ReaderAction.PlayNarration -> {
                 // Native shell handles actual playback using current page's narration urls (prefers preferredNarrationLang + local) and rate
             }

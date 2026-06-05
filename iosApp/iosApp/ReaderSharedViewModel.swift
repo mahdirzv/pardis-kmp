@@ -72,6 +72,10 @@ final class ReaderSharedViewModel {
         viewModel.onAction(action: ReaderActionSetPlaybackRate(rate: rate))
     }
 
+    func clearAssets() {
+        viewModel.onAction(action: ReaderActionClearAssets.shared)
+    }
+
     func playNarration() {
         viewModel.onAction(action: ReaderActionPlayNarration.shared)
     }

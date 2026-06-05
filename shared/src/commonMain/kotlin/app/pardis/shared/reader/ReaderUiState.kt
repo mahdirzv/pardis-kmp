@@ -43,6 +43,7 @@ sealed interface ReaderAction {
     data class DownloadVideo(val lang: String = "fa") : ReaderAction // "fa" or "en"; starts download of the MP4 for offline
     data class SetNarrationLang(val lang: String) : ReaderAction // "fa" or "en"
     data class SetPlaybackRate(val rate: Float) : ReaderAction
+    data object ClearAssets : ReaderAction
     data object PlayNarration : ReaderAction // per page or current
     data class ShowVocab(val vocab: VocabItem) : ReaderAction
     data object DismissVocab : ReaderAction

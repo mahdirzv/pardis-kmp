@@ -9,6 +9,7 @@ import app.pardis.core.data.GetStoryUseCaseImpl
 import app.pardis.core.data.NoOpOfflineAssetCache
 import app.pardis.core.data.SaveProgressUseCaseImpl
 import app.pardis.core.data.StoryRepositoryImpl
+import app.pardis.core.domain.ClearStoryAssetsUseCase
 import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
 import app.pardis.core.domain.GetLocalAssetPathUseCase
@@ -58,5 +59,7 @@ val pardisCoreModules = listOf(
 
         // Full story assets (video + pages illustrations/narration) for offline
         single<app.pardis.core.domain.DownloadStoryAssetsUseCase> { app.pardis.core.data.DownloadStoryAssetsUseCaseImpl(get(), get(), get()) }
+
+        single<app.pardis.core.domain.ClearStoryAssetsUseCase> { app.pardis.core.data.ClearStoryAssetsUseCaseImpl(get()) }
     }
 )

@@ -624,6 +624,13 @@ fun ReaderScreen(
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x", style = MaterialTheme.typography.labelSmall) }
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(2.0f)) }) { Text("2x", style = MaterialTheme.typography.labelSmall) }
                         }
+                        // Clear cached assets if any
+                        val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
+                        if (hasLocal) {
+                            Button(onClick = { onAction(ReaderAction.ClearAssets) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                                Text("Clear offline", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                     }
                 }
 

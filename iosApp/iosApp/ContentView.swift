@@ -287,6 +287,14 @@ struct ReaderScreen: View {
                             Button("1.5x") { model.setPlaybackRate(1.5) }
                             Button("2x") { model.setPlaybackRate(2.0) }
                         }
+                        // Clear if cached
+                        let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
+                        if hasLocal {
+                            Button("Clear offline") {
+                                model.clearAssets()
+                            }
+                            .foregroundStyle(.red)
+                        }
                     }
                 }
             }
