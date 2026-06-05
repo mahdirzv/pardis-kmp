@@ -1,7 +1,7 @@
 [versions]
-agp = "8.9.1"
+agp = "9.1.0"
 kotlin = "2.1.20"
-compose = "1.8.0"
+compose = "1.8.1"
 androidx-activity = "1.10.1"
 androidx-lifecycle = "2.8.7"
 koin = "4.0.2"
@@ -9,9 +9,9 @@ ktor = "3.0.1"
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.9.0"
 sqldelight = "2.0.2"
-skie = "0.9.0"  # Adjust to compatible with your Kotlin; check latest
-ksp = "2.1.20-1.0.29"
+skie = "0.10.12"  # Compatible with Kotlin 2.1+
 okio = "3.9.0"
+composeBom = "2025.10.00"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
@@ -35,6 +35,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 # SQLDelight for offline caching of stories/pages
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
@@ -44,6 +45,9 @@ sqldelight-driver-sqlite = { module = "app.cash.sqldelight:sqlite-driver", versi
 
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
+# Android Compose BOM - use this for ui, material3, etc. in app/build
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -51,6 +55,6 @@ androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.r
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 skie = { id = "co.touchlab.skie", version.ref = "skie" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

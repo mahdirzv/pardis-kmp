@@ -4,14 +4,15 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.skie)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 val sharedFrameworkBundleId = "app.pardis.shared"
 
 kotlin {
-    android {
+    androidLibrary {
         namespace = "app.pardis.shared"
-        compileSdk = 35
+        compileSdk = 37
         minSdk = 24
     }
 
@@ -39,12 +40,18 @@ kotlin {
             implementation(project(":core:domain"))
             implementation(project(":core:network"))
             api(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.viewmodel.savedstate)
+            // savedstate is Android/JVM only; do not put in common or it breaks iOS native metadata resolution
+            // (pulls coroutines-android which has no native variant)
             api(libs.koin.core)
             implementation(libs.koin.core.viewmodel)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.okio)
+        }
+        androidMain.dependencies {
+            // Only for Android; provides SavedStateHandle support if VMs ever use it.
+            // Current VMs (Library/Reader) do not use it, but kept for compatibility with Android KMP patterns.
+            implementation(libs.androidx.lifecycle.viewmodel.savedstate)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -55,7 +62,15 @@ kotlin {
 }
 
 skie {
+    isEnabled = true  // Updated to 0.10.12 which supports Kotlin 2.1.20
     features {
         enableSwiftUIObservingPreview = true
     }
+}
+
+// Workaround for "The archives configuration has been deprecated for artifact declaration."
+// See https://youtrack.jetbrains.com/issue/KT-61096 and Gradle 9/10 deprecation.
+// This will be needed until the Kotlin Multiplatform plugin updates its artifact publication logic.
+afterEvaluate {
+    configurations.findByName("archives")?.artifacts?.clear()
 }

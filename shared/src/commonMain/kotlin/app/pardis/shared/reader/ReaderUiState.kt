@@ -13,9 +13,11 @@ data class ReaderUiState(
 )
 
 sealed interface ReaderAction {
+    data class LoadStory(val slug: String) : ReaderAction
     data object NextPage : ReaderAction
     data object PrevPage : ReaderAction
     data class GoToPage(val page: Int) : ReaderAction
     data object ToggleVideo : ReaderAction
     data object PlayNarration : ReaderAction // per page or current
+    data object ErrorDismissed : ReaderAction
 }

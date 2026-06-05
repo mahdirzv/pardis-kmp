@@ -1,23 +1,26 @@
 # Pardis KMP Reader Roadmap
 
-## Phase 0: Structure & Foundations (current)
+## Phase 0: Structure & Foundations (mostly complete)
 - [x] Architecture wired (shared logic + native Android Compose + native iOS SwiftUI following the patterns in docs/kmpSkill.md)
 - [x] Core modules skeleton (model, domain, data, network, database, di)
-- [x] Shared VMs (Library + Reader stubs), UiState, Actions, DI (Koin + SharedInit)
-- [x] Basic native shells consuming shared (library list demo on both platforms)
+- [x] Shared VMs (Library + Reader), UiState, Actions, DI (Koin + SharedInit)
+- [x] Basic native shells consuming shared (real library list + basic reader pager on both platforms)
 - [x] Design-system tokenised with **Pardis palette only** (saffron, indigo, mint, lilac, cream bg from web)
 - [x] Skills/docs/MCP/AGENTS.md and design system in place for Pardis KMP (tokenised with web palette)
 - [x] Gradle multi-module, SKIE, wrapper, versions per best practices
-- [ ] Real Supabase public fetch wired end-to-end (stories + pages)
-- [ ] Basic offline (SQLDelight cache)
+- [x] Real Supabase public fetch wired end-to-end (stories + pages via repo + 3-table join matching web)
+- [ ] Basic offline (SQLDelight cache) — schema present, drivers not wired yet
+- [x] Config/secrets moved out of commonMain (platform expect/actual + actuals in androidMain/iosMain only)
 
-## Phase 1: Core Reader Experience
-- Full Library with search/filter by age, cover images (coil or native), meta.
+## Phase 1: Core Reader Experience (in progress)
+- [x] Full Library list (real data, tokenised cards, refresh) on Android + iOS
+- [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle stub) — data loaded end to end
+- Full Library with search/filter by age, cover images (coil or native), meta. (basic list done)
 - Story Reader:
-  - Page pager (full-bleed image + bilingual overlay text).
-  - Per-page narration audio (native players, auto-advance, rate, lang switch).
+  - Page pager (full-bleed image + bilingual overlay text). (basic wired)
+  - Per-page narration audio (native players, auto-advance, rate, lang switch). (hooks in actions, native impl pending)
   - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic).
-  - Vocab: tappable in text or list → sheet with translit, en, audio.
+  - Vocab: tappable in text or list → sheet with translit, en, audio. (sample display done)
   - Progress save (local + sync if auth).
 - Lullabies basic support (loop mode).
 

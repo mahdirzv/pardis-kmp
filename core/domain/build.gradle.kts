@@ -4,9 +4,9 @@ plugins {
 }
 
 kotlin {
-    android {
+    androidLibrary {
         namespace = "app.pardis.core.domain"
-        compileSdk = 35
+        compileSdk = 37
         minSdk = 24
     }
 
@@ -27,4 +27,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
     }
+}
+
+// Workaround for archives deprecation (KT-61096)
+afterEvaluate {
+    configurations.findByName("archives")?.artifacts?.clear()
 }

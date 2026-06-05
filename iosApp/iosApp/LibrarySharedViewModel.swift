@@ -2,27 +2,35 @@ import Foundation
 import Shared
 import SwiftUI
 
+/// Modern iOS adapter following kmpSkill.md recommendation:
+/// - Use @Observable (iOS 17+)
+/// - @State in the View (not @StateObject)
+/// - Activate collection inside .task { } for proper lifetime
 @MainActor
-final class LibrarySharedViewModel: ObservableObject {
-    @Published private(set) var stories: [Story] = []
-    @Published private(set) var isLoading = false
-    @Published private(set) var errorMessage: String?
-
+@Observable
+final class LibrarySharedViewModel {
     private let viewModel: LibraryViewModel
 
-    var uiStateFlow: SkieSwiftStateFlow<LibraryUiState> {
-        viewModel.uiState
-    }
+    // Exposed as observable properties (no @Published needed with @Observable)
+    var stories: [Story] = []
+    var isLoading = false
+    var errorMessage: String?
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
+    }
+
+    func activate() async {
+        for await state in viewModel.uiState {
+            apply(state)
+        }
     }
 
     func refresh() {
         viewModel.onAction(action: LibraryActionRefresh.shared)
     }
 
-    func apply(_ state: LibraryUiState) {
+    private func apply(_ state: LibraryUiState) {
         self.stories = state.stories
         self.isLoading = state.isLoading
         self.errorMessage = state.errorMessage

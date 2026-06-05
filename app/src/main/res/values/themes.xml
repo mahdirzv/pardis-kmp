@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Pardis" parent="android:Theme">
+        <!-- Customize as needed with Pardis tokens later -->
+    </style>
+    <style name="Theme.Pardis.NoDisplay" parent="android:Theme.NoDisplay">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+</resources>

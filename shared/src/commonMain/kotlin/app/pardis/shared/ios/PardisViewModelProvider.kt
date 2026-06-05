@@ -1,6 +1,7 @@
 package app.pardis.shared.ios
 
 import app.pardis.shared.library.LibraryViewModel
+import app.pardis.shared.reader.ReaderViewModel
 import org.koin.mp.KoinPlatform
 
 /**
@@ -9,5 +10,8 @@ import org.koin.mp.KoinPlatform
  */
 object PardisViewModelProvider {
     fun libraryViewModel(): LibraryViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun readerViewModel(): ReaderViewModel =
         KoinPlatform.getKoin().get()
 }

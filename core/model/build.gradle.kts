@@ -1,12 +1,13 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKmpLibrary)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
-    android {
+    androidLibrary {
         namespace = "app.pardis.core.model"
-        compileSdk = 35
+        compileSdk = 37
         minSdk = 24
     }
 
@@ -29,4 +30,9 @@ kotlin {
             implementation(kotlin("test"))
         }
     }
+}
+
+// Workaround for archives deprecation (KT-61096)
+afterEvaluate {
+    configurations.findByName("archives")?.artifacts?.clear()
 }

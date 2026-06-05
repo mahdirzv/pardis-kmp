@@ -2,37 +2,131 @@ import SwiftUI
 import Shared
 
 struct ContentView: View {
-    @StateObject private var libraryModel = LibrarySharedViewModel()
+    @State private var selectedSlug: String? = nil
 
     var body: some View {
         NavigationStack {
-            LibraryScreen(model: libraryModel)
-        }
-        .collect(flow: libraryModel.uiStateFlow) { state in
-            libraryModel.apply(state)
+            LibraryScreen(onSelect: { slug in selectedSlug = slug })
+                .navigationDestination(item: $selectedSlug) { slug in
+                    ReaderScreen(slug: slug)
+                }
         }
     }
 }
 
 struct LibraryScreen: View {
-    @ObservedObject var model: LibrarySharedViewModel
+    @State private var model = LibrarySharedViewModel()
+    var onSelect: (String) -> Void
 
     var body: some View {
-        VStack {
-            Text("Pardis Reader (iOS Native SwiftUI)")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Pardis")
                 .font(.largeTitle)
-            Text("Shared logic via KMP + SKIE")
+                .foregroundStyle(PardisColors.indigo)
+            Text("Persian heritage stories")
+                .foregroundStyle(PardisColors.inkSoft)
+
+            if model.isLoading && model.stories.isEmpty {
+                ProgressView().tint(PardisColors.saffron)
+            }
+
             List(model.stories, id: \.slug) { story in
-                VStack(alignment: .leading) {
-                    Text(story.titleEn)
-                    Text(story.titleFa)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(story.titleEn).font(.headline)
+                    Text(story.titleFa).font(.subheadline).foregroundStyle(PardisColors.indigo)
+                    Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
                         .font(.caption)
+                        .foregroundStyle(PardisColors.inkMuted)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { onSelect(story.slug) }
+            }
+
+            Button("Refresh") {
+                model.refresh()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(PardisColors.saffron)
+        }
+        .padding()
+        .background(PardisColors.background.ignoresSafeArea())
+        .task {
+            await model.activate()
+        }
+    }
+}
+
+struct ReaderScreen: View {
+    let slug: String
+    @State private var model = ReaderSharedViewModel()
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button("← Back") { dismiss() }
+                    .foregroundStyle(PardisColors.indigo)
+                Spacer()
+                if !model.pages.isEmpty {
+                    Text("\(model.currentPage + 1) / \(model.pages.count)")
+                        .foregroundStyle(PardisColors.inkSoft)
                 }
             }
-            Button("Refresh (shared action)") {
-                model.refresh()
+
+            if model.isLoading && model.pages.isEmpty {
+                ProgressView().tint(PardisColors.saffron)
+            } else if let err = model.errorMessage {
+                Text("Error: \(err)").foregroundStyle(.red)
+            } else if let page = model.pages[safe: model.currentPage] {
+                Text("Page \(page.page)")
+                    .font(.caption)
+                    .foregroundStyle(PardisColors.inkMuted)
+
+                // Placeholder for illustration
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(PardisColors.lilac)
+                    .frame(height: 220)
+                    .overlay(Text("🖼️ \(page.illustrationUrl?.split(separator: "/").last ?? "")").foregroundStyle(PardisColors.inkSoft))
+
+                Text(page.paragraphsFa.joined(separator: "\n\n"))
+                    .font(.body)
+
+                Text(page.paragraphsEn.joined(separator: "\n\n"))
+                    .font(.callout)
+                    .foregroundStyle(PardisColors.inkSoft)
+
+                if !page.vocabulary.isEmpty {
+                    Text("Vocab").font(.headline)
+                    ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                        Text("• \(v.fa) — \(v.en)").font(.caption)
+                    }
+                }
+            } else {
+                Text("Loading story \(slug)...")
+            }
+
+            HStack {
+                Button("Prev") { model.prevPage() }.disabled(model.currentPage == 0)
+                Button("Next") { model.nextPage() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(PardisColors.saffron)
+                Spacer()
+                Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
             }
         }
         .padding()
+        .background(PardisColors.background.ignoresSafeArea())
+        .task {
+            await model.activate()
+        }
+        .onAppear {
+            model.load(slug: slug)
+        }
+    }
+}
+
+extension Collection {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

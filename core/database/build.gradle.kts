@@ -5,9 +5,9 @@ plugins {
 }
 
 kotlin {
-    android {
+    androidLibrary {
         namespace = "app.pardis.core.database"
-        compileSdk = 35
+        compileSdk = 37
         minSdk = 24
     }
 
@@ -34,6 +34,11 @@ kotlin {
             implementation(libs.sqldelight.driver.native)
         }
     }
+}
+
+// Workaround for archives deprecation (KT-61096)
+afterEvaluate {
+    configurations.findByName("archives")?.artifacts?.clear()
 }
 
 sqldelight {
