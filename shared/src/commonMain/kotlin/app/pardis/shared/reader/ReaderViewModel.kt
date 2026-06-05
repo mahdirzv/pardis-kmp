@@ -70,9 +70,10 @@ class ReaderViewModel(
                         // Auto cache on entering video if not yet (for videoReady stories) -- silent on fail (e.g. no connection)
                         viewModelScope.launch {
                             try {
-                                val localVideo = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
-                                if (localVideo != null) {
-                                    updateLocalsAfterSuccessfulDownload(current.storySlug)
+                                val result = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
+                                // Resolve whatever cached so offline illustrations/audio work even on partial success.
+                                if (result.anyCached) updateLocalsAfterSuccessfulDownload(current.storySlug)
+                                if (result.videoCached) {
                                     _uiState.update { it.copy(downloadProgress = "Download complete!") }
                                     delay(1200)
                                     _uiState.update { it.copy(downloadProgress = null) }
@@ -80,7 +81,8 @@ class ReaderViewModel(
                                 }
                                 // silent for auto; do not set errorMessage
                             } catch (e: Exception) {
-                                // silent for auto
+                                // Auto path stays silent in the UI, but log so failures aren't invisible.
+                                println("ReaderViewModel: auto asset download failed for ${current.storySlug}: $e")
                             }
                         }
                     }
@@ -190,26 +192,44 @@ class ReaderViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null, downloadProgress = "Starting download...") }
             try {
-                val localVideo = downloadStoryAssets(slug) { progress ->
+                val result = downloadStoryAssets(slug) { progress ->
                     _uiState.update { it.copy(downloadProgress = progress) }
                 }
-                if (localVideo != null) {
-                    updateLocalsAfterSuccessfulDownload(slug)
-                    _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download complete!") }
-                    delay(1200)
-                    _uiState.update { it.copy(downloadProgress = null) }
-                    analytics.track("story_assets_downloaded", mapOf("slug" to slug))
-                } else if (showErrorOnFail) {
-                    // Report via progress area (non-fatal to reader UI, avoids replacing content + player release)
-                    _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download failed (check connection)") }
-                    delay(2200)
-                    _uiState.update { it.copy(downloadProgress = null) }
+                // Resolve whatever cached — partial success still enables offline illustrations/audio.
+                if (result.anyCached) updateLocalsAfterSuccessfulDownload(slug)
+                when {
+                    result.isUsable -> {
+                        _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download complete!") }
+                        delay(1200)
+                        _uiState.update { it.copy(downloadProgress = null) }
+                        analytics.track("story_assets_downloaded", mapOf("slug" to slug))
+                    }
+                    result.anyCached -> {
+                        // The video itself didn't cache, but other assets did. Be honest instead of
+                        // reporting a flat "Download failed" that throws away the assets we did save.
+                        _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Video unavailable offline — saved ${result.succeeded}/${result.total} other assets") }
+                        delay(2600)
+                        _uiState.update { it.copy(downloadProgress = null) }
+                        analytics.track("story_assets_downloaded_partial", mapOf("slug" to slug, "succeeded" to result.succeeded, "total" to result.total))
+                    }
+                    showErrorOnFail -> {
+                        // Report via progress area (non-fatal to reader UI, avoids replacing content + player release)
+                        _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download failed (check connection)") }
+                        delay(2200)
+                        _uiState.update { it.copy(downloadProgress = null) }
+                    }
+                    else -> _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null) }
                 }
             } catch (e: Exception) {
+                // Log the real cause — this catch previously swallowed exceptions silently, which is
+                // why the DI/cache failure was invisible for so long.
+                println("ReaderViewModel: asset download failed for $slug: $e")
                 if (showErrorOnFail) {
                     _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download failed (check connection)") }
                     delay(2200)
                     _uiState.update { it.copy(downloadProgress = null) }
+                } else {
+                    _uiState.update { it.copy(isDownloadingVideo = false) }
                 }
             }
         }

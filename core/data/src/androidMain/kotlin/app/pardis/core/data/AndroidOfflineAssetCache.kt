@@ -4,9 +4,10 @@ import android.content.Context
 import android.util.Log
 import app.pardis.core.domain.OfflineAssetCache
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Android implementation of OfflineAssetCache.
  * Stores under app cacheDir/pardis/assets/{slug}/{kind}-{subKey}.dat (or .mp4 for video)
- * Uses Ktor for download (consistent with SupabaseClient).
+ * Uses Ktor (OkHttp engine) for download (consistent with SupabaseClient).
  * Registered in platformModules in PardisApplication.
  */
 class AndroidOfflineAssetCache(
@@ -23,8 +24,10 @@ class AndroidOfflineAssetCache(
 ) : OfflineAssetCache {
 
     private val http = HttpClient(OkHttp) {
-        // Explicit engine (ktor-client-okhttp) + long timeouts for large public MP4 video files.
-        // Streaming used below for video to avoid OOM from full ByteArray.
+        // Fail loudly on HTTP errors (4xx/5xx) so they surface as exceptions we log, instead of
+        // silently writing a tiny error body that later fails the size check and looks like a
+        // generic "download failed".
+        expectSuccess = true
         engine {
             config {
                 connectTimeout(30, TimeUnit.SECONDS)
@@ -58,21 +61,26 @@ class AndroidOfflineAssetCache(
 
         return withContext(Dispatchers.IO) {
             try {
-                // Note: for very large videos a streaming copy (ByteReadChannel to OutputStream) would be better
-                // to avoid full memory load. For now we use body<ByteArray> + the engine has long read timeout.
-                val bytes: ByteArray = http.get(remoteUrl).body()
-                if (bytes.isEmpty()) return@withContext null
-                f.writeBytes(bytes)
+                // Stream the body straight to disk (ByteReadChannel -> file OutputStream) so large
+                // videos (tens of MB) never need to sit in a single in-memory ByteArray.
+                http.prepareGet(remoteUrl).execute { response ->
+                    f.outputStream().use { out ->
+                        response.bodyAsChannel().copyTo(out)
+                    }
+                }
                 if (f.length() > 1024) {
                     f.absolutePath
                 } else {
+                    // Truncated/empty write (e.g. dropped connection mid-stream) — don't leave a bad file.
                     f.delete()
                     null
                 }
             } catch (t: Throwable) {
                 // Log the *real* cause (timeout, connection refused, 403/404 on Supabase storage URL,
-                // SSL, OOM on huge ByteArray, etc). This is the key to understand "download failed".
+                // SSL, etc). expectSuccess=true turns HTTP errors into exceptions that land here.
                 Log.e("AndroidOfflineAssetCache", "downloadAssetIfNeeded FAILED kind=$kind subKey=$subKey url=$remoteUrl", t)
+                // Clean up any partial file so a retry starts fresh.
+                if (f.exists()) f.delete()
                 null
             }
         }

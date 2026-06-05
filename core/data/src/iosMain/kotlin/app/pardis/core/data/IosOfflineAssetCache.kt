@@ -3,6 +3,7 @@ package app.pardis.core.data
 import app.pardis.core.domain.OfflineAssetCache
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
@@ -24,12 +25,22 @@ import platform.posix.write
 /**
  * iOS (KMP) implementation of OfflineAssetCache using posix for file write (to avoid NSData interop issues).
  * Stores under caches / pardis/assets/{slug}/{kind}-{subKey}.dat (mp4 for video).
- * Android counterpart has full Foundation version.
+ * Android counterpart streams to disk; here we still buffer the body (iOS devices have generous headroom)
+ * but fail loudly on HTTP errors and log the real cause.
  */
 @OptIn(ExperimentalForeignApi::class)
 class IosOfflineAssetCache : OfflineAssetCache {
 
-    private val http = HttpClient()
+    private val http = HttpClient {
+        // Fail loudly on HTTP errors (4xx/5xx) so they surface as exceptions we log instead of
+        // silently writing a tiny error body.
+        expectSuccess = true
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15 * 60 * 1000L      // large videos
+            connectTimeoutMillis = 30 * 1000L
+            socketTimeoutMillis = 15 * 60 * 1000L
+        }
+    }
 
     private fun baseAssetsDir(): String {
         val caches = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
@@ -61,9 +72,14 @@ class IosOfflineAssetCache : OfflineAssetCache {
         return withContext(Dispatchers.IO) {
             try {
                 val bytes: ByteArray = http.get(remoteUrl).body()
-                if (bytes.isEmpty()) return@withContext null
+                // Guard against empty / tiny error bodies being treated as a valid asset.
+                if (bytes.size <= 1024) return@withContext null
                 if (writeBytesToFile(path, bytes)) path else null
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                // Log the real cause (timeout, 403/404, SSL, write error). expectSuccess=true turns
+                // HTTP errors into exceptions that land here.
+                println("IosOfflineAssetCache: downloadAssetIfNeeded FAILED kind=$kind subKey=$subKey url=$remoteUrl error=$t")
+                NSFileManager.defaultManager.removeItemAtPath(path, null)
                 null
             }
         }
