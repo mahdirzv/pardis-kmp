@@ -244,6 +244,10 @@ struct ReaderScreen: View {
                             } else {
                                 Text("✓ Video + assets cached")
                                     .foregroundStyle(PardisColors.mint)
+                                Button("Clear") {
+                                    model.clearAssets()
+                                }
+                                .foregroundStyle(.red)
                             }
                         }
                     }

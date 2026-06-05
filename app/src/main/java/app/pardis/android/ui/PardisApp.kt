@@ -563,6 +563,9 @@ fun ReaderScreen(
                             } else {
                                 // Simple cached indicator using existing design tokens (no new visuals/tokens added).
                                 Text("✓ Video + assets cached", color = PardisColors.mint)
+                                Button(onClick = { onAction(ReaderAction.ClearAssets) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                                    Text("Clear", style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }
