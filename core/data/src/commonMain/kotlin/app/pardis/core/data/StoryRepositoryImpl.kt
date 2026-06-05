@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package app.pardis.core.data
 
 import app.pardis.core.database.PardisDatabase
@@ -17,7 +19,10 @@ import app.pardis.core.network.VocabRow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Ktor + Supabase backed implementation of StoryRepository.
@@ -33,6 +38,11 @@ class StoryRepositoryImpl(
 
     private fun Story.toJson(): String = json.encodeToString(Story.serializer(), this)
     private fun jsonToStory(s: String): Story? = try { json.decodeFromString(Story.serializer(), s) } catch (_: Exception) { null }
+
+    private fun pagesToJson(pages: List<StoryPage>): String =
+        json.encodeToString(ListSerializer(StoryPage.serializer()), pages)
+    private fun jsonToPages(s: String): List<StoryPage> =
+        try { json.decodeFromString(ListSerializer(StoryPage.serializer()), s) } catch (_: Exception) { emptyList() }
     override suspend fun getStory(slug: String): Story? {
         // Prefer network to fetch the *full* story (video URLs + bookends for cues).
         // This is critical for reader: library may have cached a "basic" version (minimal select, video=null).
@@ -85,7 +95,7 @@ class StoryRepositoryImpl(
         db?.pardisQueries?.upsertProgress(
             slug = slug,
             last_page = page.toLong(),
-            updated_at = System.currentTimeMillis()
+            updated_at = Clock.System.now().toEpochMilliseconds()
         )
     }
 
@@ -100,7 +110,7 @@ class StoryRepositoryImpl(
             title_fa = story.titleFa,
             age_band = story.ageBand,
             data_json = story.toJson(),
-            downloaded_at = System.currentTimeMillis()
+            downloaded_at = Clock.System.now().toEpochMilliseconds()
         )
     }
 
@@ -157,36 +167,57 @@ class StoryRepositoryImpl(
     }
 
     override suspend fun getStoryPages(slug: String): List<StoryPage> {
-        val (pageRows, coupletRows, vocabRows) = coroutineScope {
-            awaitAll<List<*>>(
-                async { supabase.getStoryPages(slug) },
-                async { supabase.getCouplets(slug) },
-                async { supabase.getVocabTerms(slug) }
-            )
-        }
+        return try {
+            val (pageRows, coupletRows, vocabRows) = coroutineScope {
+                awaitAll<List<*>>(
+                    async { supabase.getStoryPages(slug) },
+                    async { supabase.getCouplets(slug) },
+                    async { supabase.getVocabTerms(slug) }
+                )
+            }
 
-        val coupletsByPage = (coupletRows as List<CoupletRow>).associateBy { it.page_number }
-        val vocabsByPage = (vocabRows as List<VocabRow>).groupBy { it.page_number }
+            val coupletsByPage = (coupletRows as List<CoupletRow>).associateBy { it.page_number }
+            val vocabsByPage = (vocabRows as List<VocabRow>).groupBy { it.page_number }
 
-        return (pageRows as List<StoryPageRow>).map { p ->
-            StoryPage(
-                page = p.page_number,
-                illustrationUrl = p.illustration_url,
-                paragraphsEn = p.paragraphs_en,
-                paragraphsFa = p.paragraphs_fa,
-                narrationFa = p.narration_fa?.let { Narration(it.url, it.durationSeconds, it.voice) },
-                narrationEn = p.narration_en?.let { Narration(it.url, it.durationSeconds, it.voice) },
-                vocabulary = (vocabsByPage[p.page_number] ?: emptyList()).map { v ->
-                    VocabItem(
-                        fa = v.word_fa,
-                        translit = v.translit,
-                        en = v.meaning_en,
-                        context = v.context,
-                        audioUrl = v.audio_url
-                    )
-                },
-                couplet = coupletsByPage[p.page_number]?.let { Couplet(it.fa, it.en) }
-            )
+            val pages = (pageRows as List<StoryPageRow>).map { p ->
+                StoryPage(
+                    page = p.page_number,
+                    illustrationUrl = p.illustration_url,
+                    paragraphsEn = p.paragraphs_en,
+                    paragraphsFa = p.paragraphs_fa,
+                    narrationFa = p.narration_fa?.let { Narration(it.url, it.durationSeconds, it.voice) },
+                    narrationEn = p.narration_en?.let { Narration(it.url, it.durationSeconds, it.voice) },
+                    vocabulary = (vocabsByPage[p.page_number] ?: emptyList()).map { v ->
+                        VocabItem(
+                            fa = v.word_fa,
+                            translit = v.translit,
+                            en = v.meaning_en,
+                            context = v.context,
+                            audioUrl = v.audio_url
+                        )
+                    },
+                    couplet = coupletsByPage[p.page_number]?.let { Couplet(it.fa, it.en) }
+                )
+            }
+            upsertPagesToCache(slug, pages)
+            pages
+        } catch (t: Throwable) {
+            // Offline or error: fallback to cached pages JSON if present (enables offline reader + video cues)
+            getPagesFromCache(slug)
         }
+    }
+
+    private fun upsertPagesToCache(slug: String, pages: List<StoryPage>) {
+        db?.pardisQueries?.insertOrReplacePages(
+            slug = slug,
+            data_json = pagesToJson(pages),
+            downloaded_at = Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
+    private fun getPagesFromCache(slug: String): List<StoryPage> {
+        return db?.pardisQueries?.selectPages(slug)?.executeAsOneOrNull()?.let { cached ->
+            jsonToPages(cached.data_json)
+        } ?: emptyList()
     }
 }

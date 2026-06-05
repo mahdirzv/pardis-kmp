@@ -325,7 +325,11 @@ fun ReaderScreen(
             }
             else -> {
                 val page = state.pages.getOrNull(state.currentPage) ?: state.pages.first()
-                val videoUrl = if (state.isVideoMode) (state.videoUrlFa ?: state.videoUrlEn) else null
+                // Prefer locally cached video file (offline video support) over remote Supabase URL.
+                // The local paths are absolute file paths from VideoCache (Android cacheDir/.../video-fa.mp4).
+                val videoUrl = if (state.isVideoMode) {
+                    (state.localVideoUrlFa ?: state.localVideoUrlEn ?: state.videoUrlFa ?: state.videoUrlEn)
+                } else null
                 val context = LocalContext.current
 
                 // Stable video player instance (only when in video mode with url)
@@ -551,6 +555,24 @@ fun ReaderScreen(
                     if (state.videoUrlFa != null || state.videoUrlEn != null) {
                         Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
                             Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                        }
+
+                        // Offline video download affordance (appears for video stories; only in video mode to not clutter text mode).
+                        // Uses the polished video UX area. "Cache video" triggers MP4 download to local cache for offline play.
+                        // Once cached, player will use the local file path (no net needed).
+                        if (state.isVideoMode) {
+                            val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null
+                            if (!hasLocal) {
+                                Button(
+                                    onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
+                                    enabled = !state.isDownloadingVideo
+                                ) {
+                                    Text(if (state.isDownloadingVideo) "Downloading video..." else "Cache for offline")
+                                }
+                            } else {
+                                // Simple cached indicator using existing design tokens (no new visuals/tokens added).
+                                Text("✓ Cached offline", color = PardisColors.mint)
+                            }
                         }
                     }
                 }

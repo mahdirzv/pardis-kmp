@@ -31,3 +31,18 @@ VALUES(?, ?, ?);
 
 getProgress:
 SELECT last_page FROM story_progress WHERE slug = ?;
+
+-- Cached full reader pages JSON (prereq for offline reader + offline video cues/text).
+-- Mirrors cached_story pattern. Enables getStoryPages fallback.
+CREATE TABLE cached_pages (
+    slug TEXT PRIMARY KEY,
+    data_json TEXT NOT NULL,  -- serialized List<StoryPage>
+    downloaded_at INTEGER NOT NULL
+);
+
+insertOrReplacePages:
+INSERT OR REPLACE INTO cached_pages(slug, data_json, downloaded_at)
+VALUES(?, ?, ?);
+
+selectPages:
+SELECT * FROM cached_pages WHERE slug = ?;

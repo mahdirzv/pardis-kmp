@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:network"))
     implementation(project(":core:database"))
+    implementation(project(":core:data"))   // for AndroidVideoCache (real impl of VideoCache for offline video)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.koin.android)

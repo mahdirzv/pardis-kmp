@@ -107,19 +107,25 @@ struct ReaderScreen: View {
                     .font(.caption)
                     .foregroundStyle(PardisColors.inkMuted)
 
-                if model.isVideoMode, let videoUrl = model.videoUrlFa ?? model.videoUrlEn {
-                    // Video mode UX: tall player always visible at top, 
-                    // separate scrollable area below for large readable synced captions/text.
-                    VideoPlayerView(
-                        videoUrl: videoUrl,
-                        cues: model.cues,
-                        currentPage: model.currentPage,
-                        onPageChange: { newPage in
-                            model.goToPage(Int32(newPage))
-                        }
-                    )
-                    .frame(height: 380)
-                    .cornerRadius(12)
+                if model.isVideoMode {
+                    // Prefer local cached video file for offline playback (set by VideoCache + VM after DownloadVideo action).
+                    // Falls back to remote Supabase MP4. This makes the fixed tall player + captions work fully offline.
+                    let effectiveVideoUrl = model.localVideoUrlFa ?? model.localVideoUrlEn ?? model.videoUrlFa ?? model.videoUrlEn
+                    if let videoUrl = effectiveVideoUrl {
+                        // Video mode UX: tall player always visible at top, 
+                        // separate scrollable area below for large readable synced captions/text.
+                        VideoPlayerView(
+                            videoUrl: videoUrl,
+                            cues: model.cues,
+                            currentPage: model.currentPage,
+                            onPageChange: { newPage in
+                                model.goToPage(Int32(newPage))
+                            }
+                        )
+                        .frame(height: 380)
+                        .cornerRadius(12)
+                    }
+                }
 
                     Spacer(minLength: 8)
 
@@ -226,6 +232,24 @@ struct ReaderScreen: View {
                 }
                 if model.videoUrlFa != nil || model.videoUrlEn != nil {
                     Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
+
+                    // Mirror Android: download/cache button for offline video (the main remaining Phase1 item).
+                    // Only show in video mode; "Cache for offline" calls the new DownloadVideo action.
+                    // Once done, player uses local file path (AVPlayer supports file: URLs).
+                    if model.isVideoMode {
+                        let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil
+                        if !hasLocal {
+                            Button {
+                                model.downloadVideo(lang: "fa")
+                            } label: {
+                                Text(model.isDownloadingVideo ? "Downloading..." : "Cache for offline")
+                            }
+                            .disabled(model.isDownloadingVideo)
+                        } else {
+                            Text("✓ Cached offline")
+                                .foregroundStyle(PardisColors.mint)
+                        }
+                    }
                 }
             }
         }
@@ -280,7 +304,15 @@ struct VideoPlayerView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
-        let player = AVPlayer(url: URL(string: videoUrl)!)
+        // Support remote http(s) URLs and local absolute file paths (offline video cache from AndroidVideoCache / IosVideoCache).
+        let playerURL: URL = {
+            if videoUrl.hasPrefix("/") || videoUrl.hasPrefix("file:") {
+                return URL(fileURLWithPath: videoUrl.replacingOccurrences(of: "file://", with: ""))
+            } else {
+                return URL(string: videoUrl)!
+            }
+        }()
+        let player = AVPlayer(url: playerURL)
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = .resizeAspect
         view.layer.addSublayer(playerLayer)

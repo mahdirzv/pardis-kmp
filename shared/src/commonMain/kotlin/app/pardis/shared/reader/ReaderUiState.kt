@@ -10,6 +10,11 @@ data class ReaderUiState(
     val isVideoMode: Boolean = false,
     val videoUrlFa: String? = null,
     val videoUrlEn: String? = null,
+    // Local file paths (absolute, file:// friendly) when the MP4 has been cached for offline.
+    // Shells should prefer local* over the remote videoUrl* for the native player.
+    val localVideoUrlFa: String? = null,
+    val localVideoUrlEn: String? = null,
+    val isDownloadingVideo: Boolean = false,
     val introDuration: Double = 0.0,
     val outroDuration: Double = 0.0,
     val isLoading: Boolean = false,
@@ -30,6 +35,7 @@ sealed interface ReaderAction {
     data object PrevPage : ReaderAction
     data class GoToPage(val page: Int) : ReaderAction
     data object ToggleVideo : ReaderAction
+    data class DownloadVideo(val lang: String = "fa") : ReaderAction // "fa" or "en"; starts download of the MP4 for offline
     data object PlayNarration : ReaderAction // per page or current
     data class ShowVocab(val vocab: VocabItem) : ReaderAction
     data object DismissVocab : ReaderAction

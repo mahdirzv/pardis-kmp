@@ -1,0 +1,7 @@
+-- Migration 1: Add cached_pages table for offline reader pages support.
+-- This allows getStoryPages to work from cache when offline.
+CREATE TABLE cached_pages (
+    slug TEXT PRIMARY KEY,
+    data_json TEXT NOT NULL,
+    downloaded_at INTEGER NOT NULL
+);

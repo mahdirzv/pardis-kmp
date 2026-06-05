@@ -2,6 +2,8 @@ package app.pardis.shared.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.DownloadVideoUseCase
+import app.pardis.core.domain.GetLocalVideoPathUseCase
 import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
@@ -20,6 +22,8 @@ class ReaderViewModel(
     private val saveProgress: SaveProgressUseCase,
     private val getProgress: GetProgressUseCase,
     private val analytics: Analytics,
+    private val getLocalVideoPath: GetLocalVideoPathUseCase,
+    private val downloadVideo: DownloadVideoUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReaderUiState(isLoading = true))
@@ -49,6 +53,7 @@ class ReaderViewModel(
                 current.copy(currentPage = newPage)
             }
             is ReaderAction.ToggleVideo -> _uiState.update { it.copy(isVideoMode = !it.isVideoMode) }
+            is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang)
             is ReaderAction.PlayNarration -> {
                 // Native shell handles actual playback using current page's narration urls
             }
@@ -95,21 +100,54 @@ class ReaderViewModel(
                 val savedPage = getProgress(slug) ?: 0
                 val startPage = savedPage.coerceIn(0, (pagesResult.lastIndex).coerceAtLeast(0))
 
+                // Resolve any previously downloaded local video files (enables offline video playback)
+                val localFa = story?.videoUrlFa?.let { getLocalVideoPath(slug, "fa") }
+                val localEn = story?.videoUrlEn?.let { getLocalVideoPath(slug, "en") }
+
                 _uiState.update {
                     it.copy(
                         pages = pagesResult,
                         videoUrlFa = story?.videoUrlFa,
                         videoUrlEn = story?.videoUrlEn,
+                        localVideoUrlFa = localFa,
+                        localVideoUrlEn = localEn,
                         introDuration = introDur,
                         outroDuration = outroDur,
                         cues = cues,
                         currentPage = startPage,
-                        isLoading = false
+                        isLoading = false,
+                        isDownloadingVideo = false
                     )
                 }
                 analytics.track("story_loaded", mapOf("slug" to slug, "pages" to pagesResult.size))
             } catch (t: Throwable) {
-                _uiState.update { it.copy(pages = emptyList(), isLoading = false, errorMessage = t.message ?: "Failed to load story pages") }
+                _uiState.update { it.copy(pages = emptyList(), isLoading = false, errorMessage = t.message ?: "Failed to load story pages", isDownloadingVideo = false) }
+            }
+        }
+    }
+
+    private fun downloadVideoForCurrent(lang: String) {
+        val current = _uiState.value
+        val slug = current.storySlug
+        if (slug.isEmpty()) return
+        val remote = if (lang == "fa") current.videoUrlFa else current.videoUrlEn
+        if (remote.isNullOrBlank()) return
+
+        // Already have local? no-op
+        val existing = if (lang == "fa") current.localVideoUrlFa else current.localVideoUrlEn
+        if (!existing.isNullOrBlank()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null) }
+            val local = downloadVideo(slug, lang, remote)
+            if (local != null) {
+                _uiState.update {
+                    if (lang == "fa") it.copy(localVideoUrlFa = local, isDownloadingVideo = false)
+                    else it.copy(localVideoUrlEn = local, isDownloadingVideo = false)
+                }
+                analytics.track("video_downloaded", mapOf("slug" to slug, "lang" to lang))
+            } else {
+                _uiState.update { it.copy(isDownloadingVideo = false, errorMessage = "Video download failed (check connection)") }
             }
         }
     }

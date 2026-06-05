@@ -10,6 +10,7 @@
 - [x] Gradle multi-module, SKIE, wrapper, versions per best practices
 - [x] Real Supabase public fetch wired end-to-end (stories + pages via repo + 3-table join matching web)
 - [x] Basic offline (SQLDelight cache) — schema present + drivers (android/ios actuals), PardisDatabase via DI (optional for iOS), repo getStories/getStory with cache upsert + fallback on net fail using json in cached_story table. Library resilient to offline.
+- [~] Pages cache + video asset download (for offline video playback) — cached_pages table + fallback in getStoryPages; VideoCache + Download/GetLocal use cases + platform (Android/Ios) impls using cache dir + Ktor download to deterministic video-{lang}.mp4 paths; VM + UiState + shells prefer local file paths for players (tall fixed player + captions now work offline once cached); explicit "Cache for offline" affordance in video mode on both platforms. (pages + video files; full bundle manifest in Phase 2)
 - [x] Config/secrets moved out of commonMain (platform expect/actual + actuals in androidMain/iosMain only)
 
 ## Phase 1: Core Reader Experience (in progress)

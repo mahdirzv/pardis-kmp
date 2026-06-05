@@ -20,6 +20,10 @@ final class ReaderSharedViewModel {
     var errorMessage: String?
     var videoUrlFa: String?
     var videoUrlEn: String?
+    // Local cached paths for offline video (preferred by player when present).
+    var localVideoUrlFa: String?
+    var localVideoUrlEn: String?
+    var isDownloadingVideo = false
     var cues: [SubtitleCue] = []
     var selectedVocab: VocabItem? = nil
 
@@ -53,6 +57,10 @@ final class ReaderSharedViewModel {
         viewModel.onAction(action: ReaderActionToggleVideo.shared)
     }
 
+    func downloadVideo(lang: String = "fa") {
+        viewModel.onAction(action: ReaderActionDownloadVideo(lang: lang))
+    }
+
     func playNarration() {
         viewModel.onAction(action: ReaderActionPlayNarration.shared)
     }
@@ -74,6 +82,9 @@ final class ReaderSharedViewModel {
         self.errorMessage = state.errorMessage
         self.videoUrlFa = state.videoUrlFa
         self.videoUrlEn = state.videoUrlEn
+        self.localVideoUrlFa = state.localVideoUrlFa
+        self.localVideoUrlEn = state.localVideoUrlEn
+        self.isDownloadingVideo = state.isDownloadingVideo
         self.cues = state.cues
         self.selectedVocab = state.selectedVocab
     }
