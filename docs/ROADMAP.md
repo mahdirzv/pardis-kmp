@@ -14,12 +14,12 @@
 
 ## Phase 1: Core Reader Experience (in progress)
 - [x] Full Library list (real data, tokenised cards, refresh) on Android + iOS
-- [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle stub) — data loaded end to end
+- [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle + basic player stub) — data loaded end to end
 - Full Library with search/filter by age, cover images (coil or native), meta. (basic list done)
 - Story Reader:
   - Page pager (full-bleed image + bilingual overlay text). (basic wired)
   - Per-page narration audio (native players, auto-advance, rate, lang switch). (hooks in actions, native impl pending)
-  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic).
+  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (basic ExoPlayer + PlayerView on Android replacing illustration; iOS stub; full data + bookends + cue computation in VM added)
   - Vocab: tappable in text or list → sheet with translit, en, audio. (sample display done)
   - Progress save (local + sync if auth).
 - Lullabies basic support (loop mode).
@@ -30,7 +30,7 @@
 - Games stubs (match words, cloze, sequence) — native implementations, shared data.
 - Progress, streaks, vocab recap in native UI.
 
-## Phase 3: Polish, Auth, Polish (complete - see feature/phase3-icons-launch-metadata branch)
+## Phase 3: Polish, Auth, Polish (complete)
 - [x] Proper Supabase client or enhanced Ktor (auth for user features, realtime if useful). (client enhanced with injectable + authToken support; DI/platform ready)
 - [x] Design system full (more tokens, components, motion, generated lints). (tokens.json expanded with typography/shadows/semantic colors; generated updated; PardisCard + PardisVocabChip + token usage in UIs)
 - [x] Accessibility, RTL for FA, performance (image prefetch, media). (basic RTL forced in shells for demo; urls ready for prefetch; a11y labels/semantics added to images, cards, vocab)

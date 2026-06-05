@@ -7,6 +7,10 @@ interface GetStoriesUseCase {
     suspend operator fun invoke(): List<Story>
 }
 
+interface GetStoryUseCase {
+    suspend operator fun invoke(slug: String): Story?
+}
+
 /**
  * Use case to load full pages + related (vocab, couplets) for a story.
  * Returns the rich reader content.

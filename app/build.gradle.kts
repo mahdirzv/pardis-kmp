@@ -49,6 +49,10 @@ dependencies {
     // Proper navigation
     implementation(libs.androidx.navigation.compose)
 
+    // Media3 for MP4 video player
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
     // Compose (use BOM or direct; for simplicity direct from versions)
     implementation("androidx.compose.ui:ui:1.7.6")
     implementation("androidx.compose.material3:material3:1.3.1")

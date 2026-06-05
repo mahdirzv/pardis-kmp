@@ -7,9 +7,19 @@ data class ReaderUiState(
     val pages: List<StoryPage> = emptyList(),
     val currentPage: Int = 0,
     val isVideoMode: Boolean = false,
-    val videoUrl: String? = null,
+    val videoUrlFa: String? = null,
+    val videoUrlEn: String? = null,
+    val introDuration: Double = 0.0,
+    val outroDuration: Double = 0.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val cues: List<SubtitleCue> = emptyList(),
+)
+
+data class SubtitleCue(
+    val pageIndex: Int,
+    val startSec: Double,
+    val endSec: Double,
 )
 
 sealed interface ReaderAction {

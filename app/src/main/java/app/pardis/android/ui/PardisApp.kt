@@ -18,8 +18,12 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisRadius
@@ -35,6 +39,12 @@ import app.pardis.core.model.VocabItem
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import android.media.MediaPlayer
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -327,8 +337,32 @@ fun ReaderScreen(
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    // Illustration with Coil
-                    if (page.illustrationUrl != null) {
+                    // Video player or Illustration
+                    if (state.isVideoMode && (state.videoUrlFa != null || state.videoUrlEn != null)) {
+                        val videoUrl = state.videoUrlFa ?: state.videoUrlEn
+                        val context = LocalContext.current
+                        val exoPlayer = remember(videoUrl) {
+                            ExoPlayer.Builder(context).build().apply {
+                                setMediaItem(MediaItem.fromUri(videoUrl!!))
+                                prepare()
+                                playWhenReady = true
+                            }
+                        }
+                        AndroidView(
+                            factory = {
+                                PlayerView(it).apply {
+                                    player = exoPlayer
+                                    useController = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp)
+                        )
+                        DisposableEffect(exoPlayer) {
+                            onDispose { exoPlayer.release() }
+                        }
+                    } else if (page.illustrationUrl != null) {
                         AsyncImage(
                             model = page.illustrationUrl,
                             contentDescription = "Illustration for page ${page.page} of story",
@@ -389,6 +423,24 @@ fun ReaderScreen(
                         Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
                     }
                     Spacer(Modifier.weight(1f))
+                    Button(onClick = {
+                        onAction(ReaderAction.PlayNarration)
+                        // Basic narration play for current page (fa preferred)
+                        val narrationUrl = page.narrationFa?.url ?: page.narrationEn?.url
+                        narrationUrl?.let { url ->
+                            val mediaPlayer = MediaPlayer()
+                            try {
+                                mediaPlayer.setDataSource(url)
+                                mediaPlayer.prepare()
+                                mediaPlayer.start()
+                                // Note: no auto release for demo; in real use Disposable or Exo
+                            } catch (e: Exception) {
+                                mediaPlayer.release()
+                            }
+                        }
+                    }) {
+                        Text("Play Audio")
+                    }
                     Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
                         Text(if (state.isVideoMode) "Text mode" else "Video mode")
                     }

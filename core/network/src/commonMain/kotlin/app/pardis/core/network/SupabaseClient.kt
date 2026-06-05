@@ -39,7 +39,24 @@ data class StoryRow(
     val status: String = "available",
     val kid_ready: Boolean = false,
     val video_ready: Boolean = false,
-    val cover_url: String? = null
+    val cover_url: String? = null,
+    val video_url_fa: String? = null,
+    val video_url_en: String? = null,
+    val intro_audio: BookendJson? = null,
+    val outro_audio: BookendJson? = null
+)
+
+@Serializable
+data class BookendJson(
+    val fa: BookendAudio? = null,
+    val en: BookendAudio? = null
+)
+
+@Serializable
+data class BookendAudio(
+    val url: String,
+    val durationSeconds: Double,
+    val voice: String? = null
 )
 
 // --- Story pages + related (for reader) ---
@@ -106,6 +123,16 @@ class SupabaseClient(config: SupabaseConfig = SupabaseConfig()) {
             applyHeaders(authToken)
             params.forEach { (k, v) -> parameter(k, v) }
         }.body()
+    }
+
+    suspend fun getStory(slug: String, authToken: String? = null): StoryRow? {
+        val list: List<StoryRow> = client.get("$baseUrl/stories") {
+            applyHeaders(authToken)
+            parameter("select", "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio")
+            parameter("slug", "eq.$slug")
+            parameter("limit", "1")
+        }.body()
+        return list.firstOrNull()
     }
 
     suspend fun getStoryPages(storySlug: String, authToken: String? = null): List<StoryPageRow> {

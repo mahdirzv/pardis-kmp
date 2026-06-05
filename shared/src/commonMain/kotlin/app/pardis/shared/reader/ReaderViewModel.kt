@@ -3,6 +3,7 @@ package app.pardis.shared.reader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.pardis.core.domain.GetStoryPagesUseCase
+import app.pardis.core.domain.GetStoryUseCase
 import app.pardis.core.model.StoryPage
 import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 class ReaderViewModel(
     private val getStoryPages: GetStoryPagesUseCase,
+    private val getStory: GetStoryUseCase,
     private val analytics: Analytics,
 ) : ViewModel() {
 
@@ -52,9 +54,42 @@ class ReaderViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(storySlug = slug, isLoading = true, errorMessage = null, currentPage = 0) }
             try {
-                val result = getStoryPages(slug)
-                _uiState.update { it.copy(pages = result, isLoading = false) }
-                analytics.track("story_loaded", mapOf("slug" to slug, "pages" to result.size))
+                val story = getStory(slug)
+                val pagesResult = getStoryPages(slug)
+                val introDur = ((story?.introAudio?.fa?.durationSeconds ?: 0.0) + (story?.introAudio?.en?.durationSeconds ?: 0.0)) / 2.0
+                val outroDur = ((story?.outroAudio?.fa?.durationSeconds ?: 0.0) + (story?.outroAudio?.en?.durationSeconds ?: 0.0)) / 2.0
+
+                // Build simple cues (intro -> pages -> outro), using avg fa/en duration for demo
+                val cues = mutableListOf<SubtitleCue>()
+                var time = 0.0
+                // Intro cue (page 0 special or -1, use 0 for simplicity)
+                if (introDur > 0) {
+                    cues.add(SubtitleCue(pageIndex = 0, startSec = time, endSec = time + introDur))
+                    time += introDur
+                }
+                pagesResult.forEachIndexed { idx, p ->
+                    val dur = ((p.narrationFa?.durationSeconds ?: 0.0) + (p.narrationEn?.durationSeconds ?: 0.0)) / 2.0
+                    if (dur > 0) {
+                        cues.add(SubtitleCue(pageIndex = idx, startSec = time, endSec = time + dur))
+                        time += dur
+                    }
+                }
+                if (outroDur > 0) {
+                    cues.add(SubtitleCue(pageIndex = pagesResult.lastIndex, startSec = time, endSec = time + outroDur))
+                }
+
+                _uiState.update {
+                    it.copy(
+                        pages = pagesResult,
+                        videoUrlFa = story?.videoUrlFa,
+                        videoUrlEn = story?.videoUrlEn,
+                        introDuration = introDur,
+                        outroDuration = outroDur,
+                        cues = cues,
+                        isLoading = false
+                    )
+                }
+                analytics.track("story_loaded", mapOf("slug" to slug, "pages" to pagesResult.size))
             } catch (t: Throwable) {
                 _uiState.update { it.copy(pages = emptyList(), isLoading = false, errorMessage = t.message ?: "Failed to load story pages") }
             }

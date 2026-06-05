@@ -107,8 +107,15 @@ struct ReaderScreen: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        // Illustration with AsyncImage
-                        if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
+                        // Video or Illustration
+                        if model.isVideoMode {
+                            // TODO: Full AVPlayer + custom subtitles from cues (matching web)
+                            // video urls available via story load
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(PardisColors.indigoSoft)
+                                .frame(height: 220)
+                                .overlay(Text("VIDEO PLAYER\n(AVPlayer + cues)\n\(model.videoUrlFa ?? model.videoUrlEn ?? "no url")").foregroundStyle(PardisColors.ink))
+                        } else if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {

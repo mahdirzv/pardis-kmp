@@ -1,6 +1,8 @@
 package app.pardis.core.data
 
 import app.pardis.core.domain.StoryRepository
+import app.pardis.core.model.Bookend
+import app.pardis.core.model.BookendAudio
 import app.pardis.core.model.Couplet
 import app.pardis.core.model.Narration
 import app.pardis.core.model.Story
@@ -24,11 +26,38 @@ import kotlinx.coroutines.coroutineScope
 class StoryRepositoryImpl(
     private val supabase: SupabaseClient = SupabaseClient()
 ) : StoryRepository {
+    override suspend fun getStory(slug: String): Story? {
+        val row = supabase.getStory(slug) ?: return null
+        return Story(
+            slug = row.slug,
+            titleEn = row.title_en,
+            titleFa = row.title_fa,
+            ageBand = row.age_band,
+            minutes = row.minutes,
+            pageCount = row.page_count,
+            vocabCount = row.vocab_count,
+            status = row.status,
+            kidReady = row.kid_ready,
+            videoReady = row.video_ready,
+            coverUrl = row.cover_url,
+            videoUrlFa = row.video_url_fa,
+            videoUrlEn = row.video_url_en,
+            introAudio = row.intro_audio?.let { Bookend(
+                fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+            ) },
+            outroAudio = row.outro_audio?.let { Bookend(
+                fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+            ) }
+        )
+    }
+
     override suspend fun getStories(): List<Story> {
         // Public query for available stories. Matches web select + filters.
         val rows: List<StoryRow> = supabase.getStories(
             mapOf(
-                "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url",
+                "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
                 "status" to "eq.available",
                 "order" to "display_order"
             )
@@ -45,7 +74,17 @@ class StoryRepositoryImpl(
                 status = row.status,
                 kidReady = row.kid_ready,
                 videoReady = row.video_ready,
-                coverUrl = row.cover_url
+                coverUrl = row.cover_url,
+                videoUrlFa = row.video_url_fa,
+                videoUrlEn = row.video_url_en,
+                introAudio = row.intro_audio?.let { Bookend(
+                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                ) },
+                outroAudio = row.outro_audio?.let { Bookend(
+                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                ) }
             )
         }
     }

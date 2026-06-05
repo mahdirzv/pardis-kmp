@@ -18,6 +18,8 @@ final class ReaderSharedViewModel {
     var isVideoMode: Bool = false
     var isLoading = false
     var errorMessage: String?
+    var videoUrlFa: String?
+    var videoUrlEn: String?
 
     init(viewModel: ReaderViewModel = PardisViewModelProvider.shared.readerViewModel()) {
         self.viewModel = viewModel
@@ -56,5 +58,7 @@ final class ReaderSharedViewModel {
         self.isVideoMode = state.isVideoMode
         self.isLoading = state.isLoading
         self.errorMessage = state.errorMessage
+        self.videoUrlFa = state.videoUrlFa
+        self.videoUrlEn = state.videoUrlEn
     }
 }

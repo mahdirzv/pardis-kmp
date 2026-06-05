@@ -2,9 +2,11 @@ package app.pardis.core.di
 
 import app.pardis.core.data.GetStoriesUseCaseImpl
 import app.pardis.core.data.GetStoryPagesUseCaseImpl
+import app.pardis.core.data.GetStoryUseCaseImpl
 import app.pardis.core.data.StoryRepositoryImpl
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
+import app.pardis.core.domain.GetStoryUseCase
 import app.pardis.core.domain.StoryRepository
 import app.pardis.core.network.SupabaseClient
 import org.koin.dsl.module
@@ -21,6 +23,7 @@ val pardisCoreModules = listOf(
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }
+        single<GetStoryUseCase> { GetStoryUseCaseImpl(get()) }
         single<GetStoryPagesUseCase> { GetStoryPagesUseCaseImpl(get()) }
     }
 )

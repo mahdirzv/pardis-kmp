@@ -25,6 +25,10 @@ data class Story(
     val coverUrl: String? = null,
     val blurbEn: String? = null,
     val blurbFa: String? = null,
+    val videoUrlFa: String? = null,
+    val videoUrlEn: String? = null,
+    val introAudio: Bookend? = null,
+    val outroAudio: Bookend? = null,
 )
 
 @Serializable
@@ -59,4 +63,17 @@ data class VocabItem(
 data class Couplet(
     val fa: String,
     val en: String,
+)
+
+@Serializable
+data class Bookend(
+    val fa: BookendAudio? = null,
+    val en: BookendAudio? = null,
+)
+
+@Serializable
+data class BookendAudio(
+    val url: String,
+    val durationSeconds: Double,
+    val voice: String? = null,
 )
