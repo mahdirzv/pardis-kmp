@@ -11,6 +11,7 @@ struct ContentView: View {
                     ReaderScreen(slug: slug)
                 }
         }
+        .environment(\.layoutDirection, .rightToLeft) // RTL for Farsi/Persian content (bilingual handled per text)
     }
 }
 
@@ -84,7 +85,7 @@ struct ReaderScreen: View {
 
                 // Placeholder for illustration
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(PardisColors.lilac)
+                    .fill(PardisColors.surfaceLilac)
                     .frame(height: 220)
                     .overlay(Text("🖼️ \(page.illustrationUrl?.split(separator: "/").last ?? "")").foregroundStyle(PardisColors.inkSoft))
 

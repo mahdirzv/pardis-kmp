@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "app.pardis.android"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.pardis.reader"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }
@@ -37,6 +37,7 @@ dependencies {
     implementation(project(":shared"))
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
+    implementation(project(":core:network"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.koin.android)

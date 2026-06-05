@@ -18,6 +18,15 @@ expect object SupabaseSecrets {
     val anonKey: String
 }
 
+/**
+ * Config for Supabase client. anonKey always sent as apikey.
+ * For authenticated calls, pass userToken (JWT) as bearer.
+ */
+data class SupabaseConfig(
+    val baseUrl: String = SupabaseSecrets.baseUrl,
+    val anonKey: String = SupabaseSecrets.anonKey
+)
+
 @Serializable
 data class StoryRow(
     val slug: String,
@@ -71,55 +80,74 @@ data class VocabRow(
 )
 
 /**
- * Basic Ktor client for public Supabase reads (Pardis content).
- * Tables are publicly readable (for select using (true) RLS).
- * Config (URL + anon key) provided exclusively via platform expect/actual in androidMain/iosMain.
- * Never put literals in commonMain.
+ * Basic Ktor client for Supabase reads (Pardis content).
+ * Public tables use anon key (for select using (true) RLS).
+ * For user-specific data (Phase 3+), pass authToken (user JWT) to use Bearer.
+ * Config provided via platform; injectable in DI for auth support.
  */
-object Supabase {
-    private val BASE get() = SupabaseSecrets.baseUrl
-    private val ANON get() = SupabaseSecrets.anonKey
+class SupabaseClient(config: SupabaseConfig = SupabaseConfig()) {
+    private val baseUrl = config.baseUrl
+    private val anonKey = config.anonKey
 
-    val client = HttpClient {
+    private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; isLenient = true })
         }
     }
 
-    suspend fun getStories(params: Map<String, String> = emptyMap()): List<StoryRow> {
-        return client.get("$BASE/stories") {
-            header("apikey", ANON)
-            header("Authorization", "Bearer $ANON")
+    private fun HttpRequestBuilder.applyHeaders(authToken: String? = null) {
+        val bearer = authToken ?: anonKey
+        header("apikey", anonKey)
+        header("Authorization", "Bearer $bearer")
+    }
+
+    suspend fun getStories(params: Map<String, String> = emptyMap(), authToken: String? = null): List<StoryRow> {
+        return client.get("$baseUrl/stories") {
+            applyHeaders(authToken)
             params.forEach { (k, v) -> parameter(k, v) }
         }.body()
     }
 
-    suspend fun getStoryPages(storySlug: String): List<StoryPageRow> {
-        return client.get("$BASE/story_pages") {
-            header("apikey", ANON)
-            header("Authorization", "Bearer $ANON")
+    suspend fun getStoryPages(storySlug: String, authToken: String? = null): List<StoryPageRow> {
+        return client.get("$baseUrl/story_pages") {
+            applyHeaders(authToken)
             parameter("select", "*")
             parameter("story_slug", "eq.$storySlug")
             parameter("order", "page_number")
         }.body()
     }
 
-    suspend fun getCouplets(storySlug: String): List<CoupletRow> {
-        return client.get("$BASE/couplets") {
-            header("apikey", ANON)
-            header("Authorization", "Bearer $ANON")
+    suspend fun getCouplets(storySlug: String, authToken: String? = null): List<CoupletRow> {
+        return client.get("$baseUrl/couplets") {
+            applyHeaders(authToken)
             parameter("select", "fa,en,page_number")
             parameter("story_slug", "eq.$storySlug")
         }.body()
     }
 
-    suspend fun getVocabTerms(storySlug: String): List<VocabRow> {
-        return client.get("$BASE/vocab_terms") {
-            header("apikey", ANON)
-            header("Authorization", "Bearer $ANON")
+    suspend fun getVocabTerms(storySlug: String, authToken: String? = null): List<VocabRow> {
+        return client.get("$baseUrl/vocab_terms") {
+            applyHeaders(authToken)
             parameter("select", "word_fa,translit,meaning_en,context,page_number,audio_url")
             parameter("story_slug", "eq.$storySlug")
             parameter("order", "page_number")
         }.body()
     }
+}
+
+// Backwards-compatible object for existing code (uses public anon only)
+object Supabase {
+    private val client = SupabaseClient()
+
+    suspend fun getStories(params: Map<String, String> = emptyMap()): List<StoryRow> =
+        client.getStories(params)
+
+    suspend fun getStoryPages(storySlug: String): List<StoryPageRow> =
+        client.getStoryPages(storySlug)
+
+    suspend fun getCouplets(storySlug: String): List<CoupletRow> =
+        client.getCouplets(storySlug)
+
+    suspend fun getVocabTerms(storySlug: String): List<VocabRow> =
+        client.getVocabTerms(storySlug)
 }

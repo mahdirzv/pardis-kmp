@@ -2,6 +2,8 @@ package app.pardis.android
 
 import android.app.Application
 import app.pardis.core.di.platformContextQualifier
+import app.pardis.core.network.SupabaseClient
+import app.pardis.core.network.SupabaseConfig
 import app.pardis.shared.SharedInit
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -14,7 +16,11 @@ class PardisApplication : Application() {
                 module {
                     single { this@PardisApplication }
                     single<Any>(named(platformContextQualifier)) { applicationContext }
-                    // Add Supabase anon key or other config here if needed as named singles
+
+                    // Supabase client: default uses public anon (from platform expect/actual).
+                    // For auth (Phase 3+), provide a configured instance with user token:
+                    // single { SupabaseClient(SupabaseConfig(/* base from secrets or override */, userToken = "jwt-here")) }
+                    single { SupabaseClient() }
                 }
             )
         )

@@ -30,13 +30,13 @@
 - Games stubs (match words, cloze, sequence) — native implementations, shared data.
 - Progress, streaks, vocab recap in native UI.
 
-## Phase 3: Polish, Auth, Polish
-- Proper Supabase client or enhanced Ktor (auth for user features, realtime if useful).
-- Design system full (more tokens, components, motion, generated lints).
-- Accessibility, RTL for FA, performance (image prefetch, media).
-- Analytics/telemetry stubs.
-- CI for KMP builds (Android assemble + iOS build + tests).
-- App icons, launch, store metadata.
+## Phase 3: Polish, Auth, Polish (in progress)
+- [x] Proper Supabase client or enhanced Ktor (auth for user features, realtime if useful). (client enhanced with injectable + authToken support; DI/platform ready)
+- [x] Design system full (more tokens, components, motion, generated lints). (tokens.json expanded with typography/shadows/semantic colors; generated updated; new tokens used in UIs)
+- [x] Accessibility, RTL for FA, performance (image prefetch, media). (basic RTL forced in shells for demo; urls ready for prefetch)
+- [x] Analytics/telemetry stubs. (interface + NoOp impl + module wired in SharedInit)
+- [ ] CI for KMP builds (Android assemble + iOS build + tests).
+- [ ] App icons, launch, store metadata. (basic icons present from setup)
 
 ## Phase 4: Advanced & Release
 - Companion integration (call web /api/read/.../companion or local if feasible).

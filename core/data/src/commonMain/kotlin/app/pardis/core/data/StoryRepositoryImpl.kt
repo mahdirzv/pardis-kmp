@@ -9,7 +9,7 @@ import app.pardis.core.model.VocabItem
 import app.pardis.core.network.CoupletRow
 import app.pardis.core.network.StoryPageRow
 import app.pardis.core.network.StoryRow
-import app.pardis.core.network.Supabase
+import app.pardis.core.network.SupabaseClient
 import app.pardis.core.network.VocabRow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,11 +19,14 @@ import kotlinx.coroutines.coroutineScope
  * Ktor + Supabase backed implementation of StoryRepository.
  * Does the same 3-table join pattern as web getStoryPages for fidelity.
  * Future: will merge with local SQLDelight cache for offline.
+ * authToken support for Phase 3+ authenticated calls.
  */
-class StoryRepositoryImpl : StoryRepository {
+class StoryRepositoryImpl(
+    private val supabase: SupabaseClient = SupabaseClient()
+) : StoryRepository {
     override suspend fun getStories(): List<Story> {
         // Public query for available stories. Matches web select + filters.
-        val rows: List<StoryRow> = Supabase.getStories(
+        val rows: List<StoryRow> = supabase.getStories(
             mapOf(
                 "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url",
                 "status" to "eq.available",
@@ -50,9 +53,9 @@ class StoryRepositoryImpl : StoryRepository {
     override suspend fun getStoryPages(slug: String): List<StoryPage> {
         val (pageRows, coupletRows, vocabRows) = coroutineScope {
             awaitAll<List<*>>(
-                async { Supabase.getStoryPages(slug) },
-                async { Supabase.getCouplets(slug) },
-                async { Supabase.getVocabTerms(slug) }
+                async { supabase.getStoryPages(slug) },
+                async { supabase.getCouplets(slug) },
+                async { supabase.getVocabTerms(slug) }
             )
         }
 

@@ -9,8 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
@@ -31,15 +33,17 @@ fun PardisApp() {
         ) {
             var selectedSlug by remember { mutableStateOf<String?>(null) }
 
-            if (selectedSlug == null) {
-                LibraryRoute(
-                    onOpenStory = { slug -> selectedSlug = slug }
-                )
-            } else {
-                ReaderRoute(
-                    slug = selectedSlug!!,
-                    onBack = { selectedSlug = null }
-                )
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                if (selectedSlug == null) {
+                    LibraryRoute(
+                        onOpenStory = { slug -> selectedSlug = slug }
+                    )
+                } else {
+                    ReaderRoute(
+                        slug = selectedSlug!!,
+                        onBack = { selectedSlug = null }
+                    )
+                }
             }
         }
     }
@@ -133,8 +137,9 @@ private fun StoryCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(PardisRadius.md),
-        color = PardisColors.surface,
-        shadowElevation = 2.dp
+        color = PardisColors.surface2,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.border)
     ) {
         Column(Modifier.padding(PardisSpacing.md)) {
             Text(
@@ -227,7 +232,7 @@ fun ReaderScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp),
-                    color = PardisColors.lilac
+                    color = PardisColors.surfaceLilac
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(

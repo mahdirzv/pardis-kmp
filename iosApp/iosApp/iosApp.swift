@@ -5,8 +5,9 @@ import Shared
 struct PardisiOSApp: App {
     init() {
         // Initialize shared KMP logic + DI early.
-        // Platform modules can supply iOS-specific config (e.g. future auth, or overrides).
+        // Platform modules can supply iOS-specific config (e.g. future auth tokens, or overrides).
         // The Supabase public config is provided via iosMain actuals (no literals in common).
+        // Example for auth: provide SupabaseClient(SupabaseConfig(anonKey: ..., userToken: jwt))
         SharedInit().init(platformModules: [])
     }
 
