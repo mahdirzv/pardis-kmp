@@ -111,16 +111,36 @@ struct ReaderScreen: View {
                     VStack(alignment: .leading, spacing: 12) {
                         // Video or Illustration
                         if model.isVideoMode, let videoUrl = model.videoUrlFa ?? model.videoUrlEn {
-                            VideoPlayerView(
-                                videoUrl: videoUrl,
-                                cues: model.cues,
-                                currentPage: model.currentPage,
-                                onPageChange: { newPage in
-                                    model.goToPage(Int32(newPage))
+                            // Player + custom live subtitles overlay (synced via cues, matches Android)
+                            ZStack(alignment: .bottom) {
+                                VideoPlayerView(
+                                    videoUrl: videoUrl,
+                                    cues: model.cues,
+                                    currentPage: model.currentPage,
+                                    onPageChange: { newPage in
+                                        model.goToPage(Int32(newPage))
+                                    }
+                                )
+                                .frame(height: 260)
+                                .cornerRadius(12)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(page.paragraphsFa.joined(separator: "\n\n"))
+                                        .font(.body)
+                                        .foregroundStyle(.white)
+                                        .lineLimit(3)
+                                    Text(page.paragraphsEn.joined(separator: "\n\n"))
+                                        .font(.callout)
+                                        .foregroundStyle(.white.opacity(0.85))
+                                        .lineLimit(2)
                                 }
-                            )
+                                .padding(8)
+                                .background(Color.black.opacity(0.65))
+                                .cornerRadius(8)
+                                .padding(.horizontal, 8)
+                                .padding(.bottom, 8)
+                            }
                             .frame(height: 260)
-                            .cornerRadius(12)
                         } else if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
@@ -137,12 +157,15 @@ struct ReaderScreen: View {
                                 .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
                         }
 
-                        Text(page.paragraphsFa.joined(separator: "\n\n"))
-                            .font(.body)
+                        // In video mode the synced text is the live subtitle overlay on the player.
+                        if !model.isVideoMode {
+                            Text(page.paragraphsFa.joined(separator: "\n\n"))
+                                .font(.body)
 
-                        Text(page.paragraphsEn.joined(separator: "\n\n"))
-                            .font(.callout)
-                            .foregroundStyle(PardisColors.inkSoft)
+                            Text(page.paragraphsEn.joined(separator: "\n\n"))
+                                .font(.callout)
+                                .foregroundStyle(PardisColors.inkSoft)
+                        }
 
                         if !page.vocabulary.isEmpty {
                             Text("Vocab").font(.headline)
@@ -180,7 +203,9 @@ struct ReaderScreen: View {
                     }
                     model.playNarration()
                 }
-                Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
+                if model.videoUrlFa != nil || model.videoUrlEn != nil {
+                    Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
+                }
             }
         }
         .padding()

@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -20,7 +19,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -394,17 +395,48 @@ fun ReaderScreen(
                 ) {
                     // Video player or Illustration
                     if (videoUrl != null && exoPlayer != null) {
-                        AndroidView(
-                            factory = {
-                                PlayerView(it).apply {
-                                    player = exoPlayer
-                                    useController = true
-                                }
-                            },
+                        // Prominent player with live custom subtitles overlay (synced via cues)
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(300.dp)
-                        )
+                                .height(320.dp)
+                        ) {
+                            AndroidView(
+                                factory = {
+                                    PlayerView(it).apply {
+                                        player = exoPlayer
+                                        useController = true
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            // Custom subtitles overlay at bottom (bilingual, updates as page/cue advances)
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .background(Color.Black.copy(alpha = 0.65f))
+                                    .padding(PardisSpacing.sm)
+                            ) {
+                                Column {
+                                    Text(
+                                        page.paragraphsFa.joinToString("\n\n"),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White,
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        page.paragraphsEn.joinToString("\n\n"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.85f),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
                     } else if (page.illustrationUrl != null) {
                         AsyncImage(
                             model = page.illustrationUrl,
@@ -431,14 +463,25 @@ fun ReaderScreen(
 
                     Spacer(Modifier.height(PardisSpacing.md))
 
-                    // Bilingual text (updates live as cues advance page during video)
-                    Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
-                    Spacer(Modifier.height(PardisSpacing.sm))
-                    Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
+                    // In video mode the synced bilingual text is shown as overlay subtitles above.
+                    // Only render the full text + vocab in text/illustration mode.
+                    if (!state.isVideoMode) {
+                        Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
+                        Spacer(Modifier.height(PardisSpacing.sm))
+                        Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
 
-                    Spacer(Modifier.height(PardisSpacing.lg))
+                        Spacer(Modifier.height(PardisSpacing.lg))
 
-                    if (page.vocabulary.isNotEmpty()) {
+                        if (page.vocabulary.isNotEmpty()) {
+                            Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
+                            Column {
+                                page.vocabulary.take(3).forEach { v ->
+                                    PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
+                                }
+                            }
+                        }
+                    } else if (page.vocabulary.isNotEmpty()) {
+                        // Still allow quick vocab access even in video mode
                         Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
                         Column {
                             page.vocabulary.take(3).forEach { v ->
@@ -486,8 +529,10 @@ fun ReaderScreen(
                     }) {
                         Text("Play Audio")
                     }
-                    Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
-                        Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                    if (state.videoUrlFa != null || state.videoUrlEn != null) {
+                        Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
+                            Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                        }
                     }
                 }
 
