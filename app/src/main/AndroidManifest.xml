@@ -10,7 +10,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme">
+        android:theme="@style/Theme.Pardis">
+        <!-- For branded launch screen, consider android:theme="@style/Theme.Pardis.Launch" on activity or use SplashScreen API in modern Android -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

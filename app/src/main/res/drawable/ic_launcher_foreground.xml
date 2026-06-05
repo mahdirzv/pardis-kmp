@@ -4,10 +4,15 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Pardis branded: saffron circle (heritage sun) + indigo accent (lapis) using design tokens -->
     <path
         android:fillColor="#F08A2D"
         android:pathData="M54,54m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
     <path
         android:fillColor="#2436A1"
         android:pathData="M40,40 L68,40 L68,68 L40,68 Z" />
+    <!-- Small mint accent for balance -->
+    <path
+        android:fillColor="#34B57F"
+        android:pathData="M48,48 L60,48 L60,60 L48,60 Z" />
 </vector>
