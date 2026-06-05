@@ -16,7 +16,7 @@
 ## Phase 1: Core Reader Experience (in progress)
 - [x] Full Library list (real data, tokenised cards, refresh) on Android + iOS
 - [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle + good UX (tall fixed player always visible + large dedicated captions scroll below for synced readable text), audio play + auto-advance on end in text mode, tappable vocab sheet, progress save/resume per story) — data + cache + native media + progress end to end
-- Full Library with search/filter by age, cover images (coil or native), meta. (basic list + cards + offline cache + live search by title/age done)
+- Full Library with search/filter by age, cover images (coil or native), meta. (basic list + cards + offline cache + live search by title/age + 'show only cached' toggle + local covers done)
 - Story Reader:
   - Page pager (full-bleed image + bilingual overlay text). (basic wired)
   - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons + native players + auto-advance on completion in text mode on both platforms; hidden in video mode; rate/lang supported with UI controls)
