@@ -1,6 +1,6 @@
 # Phase 3 Plan: Polish, Auth, Polish
 
-**Progress note (as of latest continuation)**: Phase 3 complete. Video mode started per Phase 1 high priority (data fetch + bookends + cues in VM + basic ExoPlayer on Android with player view, iOS stub; player replaces illustration when toggled). See ROADMAP. Next high prio: narration audio, tappable vocab sheet.
+**Progress note (as of latest continuation)**: Phase 3 complete. Phase 1 high prio advanced significantly per "start from whats left + video question": video fully synced with page cues on Android (Exo ticker/seek) + iOS (AVPlayer + observer); per-page audio play buttons + native players demo both platforms; vocab now tappable with native sheets/detail + audio if avail; basic SQLDelight offline cache for stories (drivers, di, repo fallback/upsert) so library works offline. ROADMAP updated + committed on feature/phase1-video-audio-offline. Builds green for Android. Next: progress save, lullabies, library search/filter polish, full auto-advance for audio, real auth.
 
 **Goal**: Take the current working KMP reader (library list + basic pager with real Supabase data) and deliver production-ready polish, auth foundations, and supporting infrastructure while strictly following `docs/kmpSkill.md`, the Pardis KMP delivery skill, and using Beforely **only** as an internal reference for clean architecture (never copy code/names).
 
