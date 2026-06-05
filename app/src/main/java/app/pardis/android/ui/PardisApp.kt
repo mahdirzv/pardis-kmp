@@ -509,25 +509,27 @@ fun ReaderScreen(
                         Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
                     }
                     Spacer(Modifier.weight(1f))
-                    Button(onClick = {
-                        onAction(ReaderAction.PlayNarration)
-                        // Play current page narration (fa preferred), stop/release any prior clip
-                        narrationPlayer.value?.release()
-                        val url = page.narrationFa?.url ?: page.narrationEn?.url
-                        url?.let {
-                            val mp = MediaPlayer().apply {
-                                setDataSource(it)
-                                setOnCompletionListener { completed ->
-                                    completed.release()
-                                    if (narrationPlayer.value == completed) narrationPlayer.value = null
+                    if (!state.isVideoMode) {
+                        Button(onClick = {
+                            onAction(ReaderAction.PlayNarration)
+                            // Play current page narration (fa preferred), stop/release any prior clip
+                            narrationPlayer.value?.release()
+                            val url = page.narrationFa?.url ?: page.narrationEn?.url
+                            url?.let {
+                                val mp = MediaPlayer().apply {
+                                    setDataSource(it)
+                                    setOnCompletionListener { completed ->
+                                        completed.release()
+                                        if (narrationPlayer.value == completed) narrationPlayer.value = null
+                                    }
+                                    prepare()
+                                    start()
                                 }
-                                prepare()
-                                start()
+                                narrationPlayer.value = mp
                             }
-                            narrationPlayer.value = mp
+                        }) {
+                            Text("Play Audio")
                         }
-                    }) {
-                        Text("Play Audio")
                     }
                     if (state.videoUrlFa != null || state.videoUrlEn != null) {
                         Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {

@@ -192,16 +192,18 @@ struct ReaderScreen: View {
                     .buttonStyle(.borderedProminent)
                     .tint(PardisColors.saffron)
                 Spacer()
-                Button("Play Audio") {
-                    if let p = model.pages[safe: model.currentPage] {
-                        let urlStr = p.narrationFa?.url ?? p.narrationEn?.url
-                        if let u = urlStr, let url = URL(string: u) {
-                            // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
-                            let player = AVPlayer(url: url)
-                            player.play()
+                if !model.isVideoMode {
+                    Button("Play Audio") {
+                        if let p = model.pages[safe: model.currentPage] {
+                            let urlStr = p.narrationFa?.url ?? p.narrationEn?.url
+                            if let u = urlStr, let url = URL(string: u) {
+                                // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
+                                let player = AVPlayer(url: url)
+                                player.play()
+                            }
                         }
+                        model.playNarration()
                     }
-                    model.playNarration()
                 }
                 if model.videoUrlFa != nil || model.videoUrlEn != nil {
                     Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
