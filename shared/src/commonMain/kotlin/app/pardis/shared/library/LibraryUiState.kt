@@ -9,6 +9,7 @@ data class LibraryUiState(
     val cachedStorySlugs: Set<String> = emptySet(),  // slugs with local video/assets cached for offline
     val searchQuery: String = "",
     val showOnlyCached: Boolean = false,
+    val localCoverUrls: Map<String, String> = emptyMap(), // slug -> local cover path if cached
 )
 
 sealed interface LibraryAction {

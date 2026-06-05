@@ -18,6 +18,7 @@ final class LibrarySharedViewModel {
     var cachedStorySlugs: Set<String> = []
     var searchQuery: String = ""
     var showOnlyCached = false
+    var localCoverUrls: [String: String] = [:]
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
@@ -48,5 +49,6 @@ final class LibrarySharedViewModel {
         self.cachedStorySlugs = Set(state.cachedStorySlugs)
         self.searchQuery = state.searchQuery
         self.showOnlyCached = state.showOnlyCached
+        self.localCoverUrls = state.localCoverUrls
     }
 }

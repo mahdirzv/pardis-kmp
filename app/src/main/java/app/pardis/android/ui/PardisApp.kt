@@ -160,7 +160,7 @@ fun LibraryScreen(
                     ageBand = story.ageBand,
                     minutes = story.minutes,
                     vocabCount = story.vocabCount,
-                    coverUrl = story.coverUrl,
+                    coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
                     isCachedOffline = state.cachedStorySlugs.contains(story.slug),
                     onClick = { onOpenStory(story.slug) }
                 )

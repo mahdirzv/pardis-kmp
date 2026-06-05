@@ -25,6 +25,7 @@ class DownloadStoryAssetsUseCaseImpl(
             var total = 0
             val videoUrl = story.videoUrlFa ?: story.videoUrlEn
             if (videoUrl != null) total += 1
+            if (story.coverUrl != null) total += 1
             pages.forEach { p ->
                 if (p.illustrationUrl != null) total += 1
                 if (p.narrationFa?.url != null) total += 1
@@ -43,6 +44,16 @@ class DownloadStoryAssetsUseCaseImpl(
                 val lang = if (story.videoUrlFa != null) "fa" else "en"
                 jobs += async {
                     val res = assetCache.downloadAssetIfNeeded(slug, "video", lang, videoUrl)
+                    done++
+                    report()
+                    res
+                }
+            }
+
+            // Also cache the cover for offline library cards
+            story.coverUrl?.let { url ->
+                jobs += async {
+                    val res = assetCache.downloadAssetIfNeeded(slug, "cover", "", url)
                     done++
                     report()
                     res

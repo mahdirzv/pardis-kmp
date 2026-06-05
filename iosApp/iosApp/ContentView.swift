@@ -48,7 +48,8 @@ struct LibraryScreen: View {
 
             List(model.stories, id: \.slug) { story in
                 HStack {
-                    if let cover = story.coverUrl, let url = URL(string: cover) {
+                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
+                    if let cover = coverUrlStr, let url = URL(string: cover) {
                         AsyncImage(url: url) { image in
                             image.resizable().scaledToFill()
                         } placeholder: {

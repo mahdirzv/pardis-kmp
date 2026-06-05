@@ -25,6 +25,7 @@ class LibraryViewModel(
     private val cachedSlugs = MutableStateFlow<Set<String>>(emptySet())
     private val searchQuery = MutableStateFlow("")
     private val showOnlyCached = MutableStateFlow(false)
+    private val localCoverUrls = MutableStateFlow<Map<String, String>>(emptyMap())
 
     val uiState: StateFlow<LibraryUiState> = combine(
         stories,
@@ -33,6 +34,7 @@ class LibraryViewModel(
         cachedSlugs,
         searchQuery,
         showOnlyCached,
+        localCoverUrls,
     ) { args ->
         val currentStories = args[0] as List<Story>
         val loading = args[1] as Boolean
@@ -40,6 +42,7 @@ class LibraryViewModel(
         val cached = args[3] as Set<String>
         val query = args[4] as String
         val showOnly = args[5] as Boolean
+        val covers = args[6] as Map<String, String>
         var filtered = if (query.isBlank()) currentStories else currentStories.filter {
             it.titleEn.contains(query, ignoreCase = true) ||
             it.titleFa.contains(query, ignoreCase = true) ||
@@ -55,6 +58,7 @@ class LibraryViewModel(
             cachedStorySlugs = cached,
             searchQuery = query,
             showOnlyCached = showOnly,
+            localCoverUrls = covers,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -93,6 +97,13 @@ class LibraryViewModel(
                     if (hasFa || hasEn) story.slug else null
                 }.toSet()
                 cachedSlugs.value = cached
+
+                // Resolve local covers for offline library cards
+                val covers = mutableMapOf<String, String>()
+                result.forEach { story ->
+                    getLocalAssetPath(story.slug, "cover", "")?.let { covers[story.slug] = it }
+                }
+                localCoverUrls.value = covers
             } catch (t: Throwable) {
                 error.value = t.message ?: "Failed to load stories"
             } finally {
