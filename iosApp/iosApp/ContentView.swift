@@ -30,6 +30,13 @@ struct LibraryScreen: View {
             Text("Persian heritage stories")
                 .foregroundStyle(PardisColors.inkSoft)
 
+            // Search
+            TextField("Search stories", text: $model.searchQuery)
+                .textFieldStyle(.roundedBorder)
+                .onChange(of: model.searchQuery) { newValue in
+                    model.search(query: newValue)
+                }
+
             if model.isLoading && model.stories.isEmpty {
                 ProgressView().tint(PardisColors.saffron)
             }

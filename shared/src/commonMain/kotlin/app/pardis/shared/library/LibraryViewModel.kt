@@ -23,18 +23,26 @@ class LibraryViewModel(
     private val isLoading = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
     private val cachedSlugs = MutableStateFlow<Set<String>>(emptySet())
+    private val searchQuery = MutableStateFlow("")
 
     val uiState: StateFlow<LibraryUiState> = combine(
         stories,
         isLoading,
         error,
         cachedSlugs,
-    ) { currentStories, loading, err, cached ->
+        searchQuery,
+    ) { currentStories, loading, err, cached, query ->
+        val filtered = if (query.isBlank()) currentStories else currentStories.filter {
+            it.titleEn.contains(query, ignoreCase = true) ||
+            it.titleFa.contains(query, ignoreCase = true) ||
+            it.ageBand.contains(query, ignoreCase = true)
+        }
         LibraryUiState(
-            stories = currentStories,
+            stories = filtered,
             isLoading = loading,
             errorMessage = err,
             cachedStorySlugs = cached,
+            searchQuery = query,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -49,6 +57,7 @@ class LibraryViewModel(
     fun onAction(action: LibraryAction) {
         when (action) {
             is LibraryAction.Refresh -> refresh()
+            is LibraryAction.Search -> searchQuery.value = action.query
             is LibraryAction.OpenStory -> {
                 // Handled by native shell callback
             }

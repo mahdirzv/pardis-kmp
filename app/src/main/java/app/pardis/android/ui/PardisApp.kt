@@ -124,6 +124,15 @@ fun LibraryScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = PardisColors.inkSoft
         )
+        Spacer(Modifier.height(PardisSpacing.sm))
+        // Simple search (filters title/age)
+        OutlinedTextField(
+            value = state.searchQuery,
+            onValueChange = { onAction(LibraryAction.Search(query = it)) },
+            label = { Text("Search stories") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
         Spacer(Modifier.height(PardisSpacing.md))
 
         if (state.isLoading && state.stories.isEmpty()) {
