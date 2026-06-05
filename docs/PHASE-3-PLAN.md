@@ -163,8 +163,8 @@ Current: Basic `PardisColors`, `PardisSpacing`, `PardisRadius`, `PardisMotion` (
 ## Sequencing & Milestones
 - Milestone 3.1: Auth-capable client + design tokens expansion (2-3 PRs).
 - Milestone 3.2: Components + a11y/RTL + performance basics.
-- Milestone 3.3: Analytics + CI.
-- Milestone 3.4: Icons + launch + metadata.
+- Milestone 3.3: Analytics + CI. (done, with iOS placeholder)
+- Milestone 3.4: Icons + launch + metadata. (in progress on branch; icons polished, metadata stubs, launch theme)
 - After each: update ROADMAP checkboxes, run full verification builds, test on device/sim (RTL + FA text critical).
 - Cross-check with parent Pardis AGENTS.md for any web alignment (e.g. event names).
 

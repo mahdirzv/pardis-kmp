@@ -35,7 +35,7 @@
 - [x] Design system full (more tokens, components, motion, generated lints). (tokens.json expanded with typography/shadows/semantic colors; generated updated; PardisCard + PardisVocabChip + token usage in UIs)
 - [x] Accessibility, RTL for FA, performance (image prefetch, media). (basic RTL forced in shells for demo; urls ready for prefetch)
 - [x] Analytics/telemetry stubs. (interface + NoOp impl + module wired; calls in library load, reader page changes)
-- [x] CI for KMP builds (Android assemble + iOS build + tests). (basic GitHub workflow for Android)
+- [x] CI for KMP builds (Android assemble + iOS build + tests). (basic GitHub workflow for Android; iOS skeleton job added)
 - [x] App icons, launch, store metadata. (basic icons present from setup; launcher resources included)
 
 ## Phase 4: Advanced & Release
