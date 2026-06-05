@@ -25,7 +25,7 @@ val pardisCoreModules = listOf(
         single<PardisDatabase?> { getOrNull<SqlDriver>()?.let { createPardisDatabase(it) } }
 
         // Repository layer (data) — uses DB when available for basic offline cache
-        single<StoryRepository> { StoryRepositoryImpl(get(), getOrNull()) }
+        single<StoryRepository> { StoryRepositoryImpl(get(), getOrNull<PardisDatabase>()) }
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }

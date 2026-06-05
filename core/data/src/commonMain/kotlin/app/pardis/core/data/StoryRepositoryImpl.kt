@@ -38,33 +38,39 @@ class StoryRepositoryImpl(
         db?.pardisQueries?.selectStory(slug)?.executeAsOneOrNull()?.let { cached ->
             jsonToStory(cached.data_json)?.let { return it }
         }
-        val row = supabase.getStory(slug) ?: return null
-        val story = Story(
-            slug = row.slug,
-            titleEn = row.title_en,
-            titleFa = row.title_fa,
-            ageBand = row.age_band,
-            minutes = row.minutes,
-            pageCount = row.page_count,
-            vocabCount = row.vocab_count,
-            status = row.status,
-            kidReady = row.kid_ready,
-            videoReady = row.video_ready,
-            coverUrl = row.cover_url,
-            videoUrlFa = row.video_url_fa,
-            videoUrlEn = row.video_url_en,
-            introAudio = row.intro_audio?.let { Bookend(
-                fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-            ) },
-            outroAudio = row.outro_audio?.let { Bookend(
-                fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-            ) }
-        )
-        // Upsert to cache
-        upsertToCache(story)
-        return story
+        return try {
+            val row = supabase.getStory(slug) ?: return null
+            val story = Story(
+                slug = row.slug,
+                titleEn = row.title_en,
+                titleFa = row.title_fa,
+                ageBand = row.age_band,
+                minutes = row.minutes,
+                pageCount = row.page_count,
+                vocabCount = row.vocab_count,
+                status = row.status,
+                kidReady = row.kid_ready,
+                videoReady = row.video_ready,
+                coverUrl = row.cover_url,
+                videoUrlFa = row.video_url_fa,
+                videoUrlEn = row.video_url_en,
+                introAudio = row.intro_audio?.let { Bookend(
+                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                ) },
+                outroAudio = row.outro_audio?.let { Bookend(
+                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                ) }
+            )
+            // Upsert to cache (enriched with video/bookends if present)
+            upsertToCache(story)
+            story
+        } catch (t: Throwable) {
+            // If full video fields not in DB yet, don't break the reader — just no video data.
+            // Pages will still load in the caller (ReaderVM).
+            null
+        }
     }
 
     private fun upsertToCache(story: Story) {
@@ -81,9 +87,11 @@ class StoryRepositoryImpl(
     override suspend fun getStories(): List<Story> {
         return try {
             // Prefer network; on any failure (offline etc) fallback to cache if present
+            // Library list uses minimal select (safe even if video columns not yet added to Supabase table).
+            // Video-specific fields (video_url_*, intro/outro) are only fetched in getStory() for the Reader.
             val rows: List<StoryRow> = supabase.getStories(
                 mapOf(
-                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
+                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url",
                     "status" to "eq.available",
                     "order" to "display_order"
                 )
@@ -117,7 +125,13 @@ class StoryRepositoryImpl(
             stories.forEach { upsertToCache(it) }
             stories
         } catch (t: Throwable) {
-            // Offline / error: use cache
+            // Fallback to cache for offline/network issues. But if it looks like a schema/column error (e.g. video fields not added to DB yet),
+            // rethrow so LibraryScreen shows the real error message + Retry button instead of silent blank list.
+            val msg = t.message?.lowercase() ?: ""
+            val looksLikeSchemaError = msg.contains("column") || msg.contains("does not exist") || msg.contains("schema")
+            if (looksLikeSchemaError) {
+                throw t
+            }
             db?.pardisQueries?.selectAllStories()?.executeAsList()?.mapNotNull { jsonToStory(it.data_json) } ?: emptyList()
         }
     }
