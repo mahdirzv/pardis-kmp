@@ -66,8 +66,15 @@ class ReaderViewModel(
                     val hasVideo = current.videoUrlFa != null || current.videoUrlEn != null
                     val hasLocal = current.localVideoUrlFa != null || current.localVideoUrlEn != null
                     if (hasVideo && !hasLocal) {
-                        // Auto cache on entering video if not yet (for videoReady stories)
-                        downloadVideoForCurrent("fa")
+                        // Auto cache on entering video if not yet (for videoReady stories) -- silent on fail (e.g. no connection)
+                        viewModelScope.launch {
+                            val localVideo = downloadStoryAssets(current.storySlug)
+                            if (localVideo != null) {
+                                updateLocalsAfterSuccessfulDownload(current.storySlug)
+                                analytics.track("story_assets_downloaded_auto", mapOf("slug" to current.storySlug))
+                            }
+                            // no error set for auto
+                        }
                     }
                 }
             }
@@ -176,20 +183,8 @@ class ReaderViewModel(
             _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null) }
             val localVideo = downloadStoryAssets(slug)
             if (localVideo != null) {
-                // Re-resolve locals after download (video + page assets)
-                val localFa = getLocalVideoPath(slug, "fa")
-                val localEn = getLocalVideoPath(slug, "en")
-                val pages = _uiState.value.pages
-                val (localIllos, localNars) = resolveLocalPageAssets(slug, pages)
-                _uiState.update {
-                    it.copy(
-                        localVideoUrlFa = localFa,
-                        localVideoUrlEn = localEn,
-                        localIllustrationUrls = localIllos,
-                        localNarrationUrls = localNars,
-                        isDownloadingVideo = false
-                    )
-                }
+                updateLocalsAfterSuccessfulDownload(slug)
+                _uiState.update { it.copy(isDownloadingVideo = false) }
                 analytics.track("story_assets_downloaded", mapOf("slug" to slug))
             } else {
                 _uiState.update { it.copy(isDownloadingVideo = false, errorMessage = "Download failed (check connection)") }
@@ -222,5 +217,20 @@ class ReaderViewModel(
             }
         }
         return illos to nars
+    }
+
+    private suspend fun updateLocalsAfterSuccessfulDownload(slug: String) {
+        val localFa = getLocalVideoPath(slug, "fa")
+        val localEn = getLocalVideoPath(slug, "en")
+        val pages = _uiState.value.pages
+        val (localIllos, localNars) = resolveLocalPageAssets(slug, pages)
+        _uiState.update {
+            it.copy(
+                localVideoUrlFa = localFa,
+                localVideoUrlEn = localEn,
+                localIllustrationUrls = localIllos,
+                localNarrationUrls = localNars
+            )
+        }
     }
 }
