@@ -16,10 +16,10 @@
 ## Phase 1: Core Reader Experience (in progress)
 - [x] Full Library list (real data, tokenised cards, refresh) on Android + iOS
 - [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle + good UX (tall fixed player always visible + large dedicated captions scroll below for synced readable text), audio play + auto-advance on end in text mode, tappable vocab sheet, progress save/resume per story) — data + cache + native media + progress end to end
-- Full Library with search/filter by age, cover images (coil or native), meta. (basic list + cards + offline cache done)
+- Full Library with search/filter by age, cover images (coil or native), meta. (basic list + cards + offline cache + live search by title/age done)
 - Story Reader:
   - Page pager (full-bleed image + bilingual overlay text). (basic wired)
-  - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons + native players + auto-advance on completion in text mode on both platforms; hidden in video mode; rate/lang pending)
+  - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons + native players + auto-advance on completion in text mode on both platforms; hidden in video mode; rate/lang supported with UI controls)
   - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (full: data+bookends+cues; Android/iOS players with time-driven page sync + seek + end handling; tall fixed player + large captions below (no cramped overlay); only toggle for stories that have video data (you have for anahita/rostam/sohrab); text mode hides player; UX significantly polished)
   - Vocab: tappable in text or list → sheet with translit, en, audio. (chips now onTap/clickable; Android bottom Surface sheet with play if audio; iOS .sheet with detail + play)
   - Progress save (local + sync if auth). (implemented local resume) (local save on page change + video end, resume on open using DB; sync pending auth)
