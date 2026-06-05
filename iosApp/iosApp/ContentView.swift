@@ -24,6 +24,7 @@ struct LibraryScreen: View {
             Text("Pardis")
                 .font(.largeTitle)
                 .foregroundStyle(PardisColors.indigo)
+                .accessibilityAddTraits(.isHeader)
             Text("Persian heritage stories")
                 .foregroundStyle(PardisColors.inkSoft)
 
