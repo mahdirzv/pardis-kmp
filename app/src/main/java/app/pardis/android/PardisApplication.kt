@@ -1,6 +1,7 @@
 package app.pardis.android
 
 import android.app.Application
+import app.pardis.core.database.provideSqlDriver
 import app.pardis.core.di.platformContextQualifier
 import app.pardis.core.network.SupabaseClient
 import app.pardis.core.network.SupabaseConfig
@@ -16,6 +17,9 @@ class PardisApplication : Application() {
                 module {
                     single { this@PardisApplication }
                     single<Any>(named(platformContextQualifier)) { applicationContext }
+
+                    // SQLDelight driver for basic offline cache (used by PardisDatabase in core)
+                    single { provideSqlDriver(applicationContext) }
 
                     // Supabase client: default uses public anon (from platform expect/actual).
                     // For auth (Phase 3+), provide a configured instance with user token:

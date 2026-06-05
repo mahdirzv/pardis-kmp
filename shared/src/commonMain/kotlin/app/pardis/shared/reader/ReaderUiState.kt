@@ -1,6 +1,7 @@
 package app.pardis.shared.reader
 
 import app.pardis.core.model.StoryPage
+import app.pardis.core.model.VocabItem
 
 data class ReaderUiState(
     val storySlug: String = "",
@@ -14,6 +15,7 @@ data class ReaderUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val cues: List<SubtitleCue> = emptyList(),
+    val selectedVocab: VocabItem? = null,
 )
 
 data class SubtitleCue(
@@ -29,5 +31,7 @@ sealed interface ReaderAction {
     data class GoToPage(val page: Int) : ReaderAction
     data object ToggleVideo : ReaderAction
     data object PlayNarration : ReaderAction // per page or current
+    data class ShowVocab(val vocab: VocabItem) : ReaderAction
+    data object DismissVocab : ReaderAction
     data object ErrorDismissed : ReaderAction
 }

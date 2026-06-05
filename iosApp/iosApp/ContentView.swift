@@ -1,5 +1,7 @@
 import SwiftUI
 import Shared
+import AVKit
+import AVFoundation
 
 struct ContentView: View {
     @State private var selectedSlug: String? = nil
@@ -108,13 +110,17 @@ struct ReaderScreen: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         // Video or Illustration
-                        if model.isVideoMode {
-                            // TODO: Full AVPlayer + custom subtitles from cues (matching web)
-                            // video urls available via story load
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(PardisColors.indigoSoft)
-                                .frame(height: 220)
-                                .overlay(Text("VIDEO PLAYER\n(AVPlayer + cues)\n\(model.videoUrlFa ?? model.videoUrlEn ?? "no url")").foregroundStyle(PardisColors.ink))
+                        if model.isVideoMode, let videoUrl = model.videoUrlFa ?? model.videoUrlEn {
+                            VideoPlayerView(
+                                videoUrl: videoUrl,
+                                cues: model.cues,
+                                currentPage: model.currentPage,
+                                onPageChange: { newPage in
+                                    model.goToPage(Int32(newPage))
+                                }
+                            )
+                            .frame(height: 260)
+                            .cornerRadius(12)
                         } else if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
@@ -146,7 +152,9 @@ struct ReaderScreen: View {
                                     .padding(4)
                                     .background(PardisColors.mintSoft)
                                     .cornerRadius(PardisRadius.sm)
+                                    .onTapGesture { model.showVocab(v) }
                                     .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
+                                    .accessibilityAddTraits(.isButton)
                             }
                         }
                     }
@@ -161,11 +169,44 @@ struct ReaderScreen: View {
                     .buttonStyle(.borderedProminent)
                     .tint(PardisColors.saffron)
                 Spacer()
+                Button("Play Audio") {
+                    if let p = model.pages[safe: model.currentPage] {
+                        let urlStr = p.narrationFa?.url ?? p.narrationEn?.url
+                        if let u = urlStr, let url = URL(string: u) {
+                            // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
+                            let player = AVPlayer(url: url)
+                            player.play()
+                        }
+                    }
+                    model.playNarration()
+                }
                 Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
             }
         }
         .padding()
         .background(PardisColors.background.ignoresSafeArea())
+        .sheet(item: $model.selectedVocab) { v in
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Vocab").font(.headline).foregroundStyle(PardisColors.indigo)
+                Text("\(v.fa)  (\(v.translit))").font(.title3)
+                Text(v.en).font(.body)
+                if let ctx = v.context {
+                    Text("in: \(ctx)").font(.caption).foregroundStyle(PardisColors.inkMuted)
+                }
+                if let audio = v.audioUrl, let url = URL(string: audio) {
+                    Button("▶ Play pronunciation") {
+                        let p = AVPlayer(url: url)
+                        p.play()
+                    }.padding(.top, 4)
+                }
+                Button("Close") { model.dismissVocab() }
+                    .padding(.top)
+                    .tint(PardisColors.saffron)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .presentationDetents([.medium, .large])
+        }
         .task {
             await model.activate()
         }
@@ -178,5 +219,85 @@ struct ReaderScreen: View {
 extension Collection {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
+    }
+}
+
+/// Native AVPlayer wrapper for MP4 video mode in Reader.
+/// Syncs playback time to cues to auto-advance pages (via onPageChange -> GoToPage).
+/// Seeks on external currentPage changes (prev/next or from Android sync).
+/// Basic custom "subtitles": the bilingual page text below player updates live as page changes.
+struct VideoPlayerView: UIViewRepresentable {
+    let videoUrl: String
+    let cues: [SubtitleCue]
+    let currentPage: Int
+    let onPageChange: (Int) -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+        let player = AVPlayer(url: URL(string: videoUrl)!)
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspect
+        view.layer.addSublayer(playerLayer)
+        context.coordinator.player = player
+        context.coordinator.playerLayer = playerLayer
+        context.coordinator.cues = cues
+        context.coordinator.onPageChange = onPageChange
+
+        // Start playback
+        player.play()
+
+        // Periodic time observer for cue-driven page sync (every ~300ms)
+        let interval = CMTime(seconds: 0.3, preferredTimescale: 600)
+        context.coordinator.timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+            let pos = time.seconds
+            if let matching = context.coordinator.cues.first(where: { pos >= $0.startSec && pos < $0.endSec }) {
+                if matching.pageIndex != context.coordinator.lastSyncedPage {
+                    context.coordinator.lastSyncedPage = matching.pageIndex
+                    context.coordinator.onPageChange(matching.pageIndex)
+                }
+            }
+        }
+
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // Update layer frame on size changes
+        if let layer = context.coordinator.playerLayer {
+            layer.frame = uiView.bounds
+        }
+        // Seek if currentPage changed externally (user prev/next or other sync)
+        let player = context.coordinator.player
+        if let player = player, let cue = cues.first(where: { $0.pageIndex == currentPage }) {
+            let target = CMTime(seconds: cue.startSec, preferredTimescale: 600)
+            // Only seek if far from current pos (avoid feedback loop)
+            let current = player.currentTime().seconds
+            if abs(current - cue.startSec) > 1.5 {
+                player.seek(to: target)
+            }
+        }
+        // Update coordinator state
+        context.coordinator.cues = cues
+        context.coordinator.onPageChange = onPageChange
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator: NSObject {
+        var player: AVPlayer?
+        var playerLayer: AVPlayerLayer?
+        var timeObserver: Any?
+        var cues: [SubtitleCue] = []
+        var onPageChange: (Int) -> Void = { _ in }
+        var lastSyncedPage: Int = -1
+
+        deinit {
+            if let obs = timeObserver, let p = player {
+                p.removeTimeObserver(obs)
+            }
+            player?.pause()
+        }
     }
 }

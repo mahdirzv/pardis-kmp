@@ -9,18 +9,18 @@
 - [x] Skills/docs/MCP/AGENTS.md and design system in place for Pardis KMP (tokenised with web palette)
 - [x] Gradle multi-module, SKIE, wrapper, versions per best practices
 - [x] Real Supabase public fetch wired end-to-end (stories + pages via repo + 3-table join matching web)
-- [ ] Basic offline (SQLDelight cache) — schema present, drivers not wired yet
+- [x] Basic offline (SQLDelight cache) — schema present + drivers (android/ios actuals), PardisDatabase via DI (optional for iOS), repo getStories/getStory with cache upsert + fallback on net fail using json in cached_story table. Library resilient to offline.
 - [x] Config/secrets moved out of commonMain (platform expect/actual + actuals in androidMain/iosMain only)
 
 ## Phase 1: Core Reader Experience (in progress)
 - [x] Full Library list (real data, tokenised cards, refresh) on Android + iOS
-- [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle + basic player stub) — data loaded end to end
+- [x] Story Reader basic pager (bilingual text + illustration placeholder, next/prev, vocab sample, video toggle + synced player, audio play, tappable vocab sheet) — data + cache + native media end to end
 - Full Library with search/filter by age, cover images (coil or native), meta. (basic list done)
 - Story Reader:
   - Page pager (full-bleed image + bilingual overlay text). (basic wired)
-  - Per-page narration audio (native players, auto-advance, rate, lang switch). (hooks in actions, native impl pending)
-  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (basic ExoPlayer + PlayerView on Android replacing illustration; iOS stub; full data + bookends + cue computation in VM added)
-  - Vocab: tappable in text or list → sheet with translit, en, audio. (sample display done)
+  - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons wired + native players demo (MediaPlayer/Android, AVPlayer/iOS) using current page urls; action hook + no-op in VM; auto-advance not yet)
+  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (data+bookends+cues in VM; Android: ExoPlayer+PlayerView + ticker for GoToPage from pos + seek on page nav; iOS: full AVPlayerView + periodic observer + page sync + seek; text updates live as "subtitles")
+  - Vocab: tappable in text or list → sheet with translit, en, audio. (chips now onTap/clickable; Android bottom Surface sheet with play if audio; iOS .sheet with detail + play)
   - Progress save (local + sync if auth).
 - Lullabies basic support (loop mode).
 

@@ -3,8 +3,17 @@ CREATE TABLE cached_story (
     title_en TEXT NOT NULL,
     title_fa TEXT NOT NULL,
     age_band TEXT NOT NULL,
-    data_json TEXT NOT NULL,  -- full serialized for simplicity in scaffold
+    data_json TEXT NOT NULL,  -- full serialized Story for offline
     downloaded_at INTEGER NOT NULL
 );
 
--- Add pages, vocab cache tables as needed.
+-- Basic cache ops for stories list (Phase 1 offline)
+insertOrReplaceStory:
+INSERT OR REPLACE INTO cached_story(slug, title_en, title_fa, age_band, data_json, downloaded_at)
+VALUES(?, ?, ?, ?, ?, ?);
+
+selectAllStories:
+SELECT slug, title_en, title_fa, age_band, data_json, downloaded_at FROM cached_story ORDER BY title_fa;
+
+selectStory:
+SELECT slug, title_en, title_fa, age_band, data_json, downloaded_at FROM cached_story WHERE slug = ?;

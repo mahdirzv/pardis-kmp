@@ -4,6 +4,9 @@ import app.pardis.core.data.GetStoriesUseCaseImpl
 import app.pardis.core.data.GetStoryPagesUseCaseImpl
 import app.pardis.core.data.GetStoryUseCaseImpl
 import app.pardis.core.data.StoryRepositoryImpl
+import app.cash.sqldelight.db.SqlDriver
+import app.pardis.core.database.PardisDatabase
+import app.pardis.core.database.createPardisDatabase
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
@@ -18,8 +21,11 @@ val pardisCoreModules = listOf(
         // Network client (can be overridden in platform modules for auth tokens)
         single { SupabaseClient() }
 
-        // Repository layer (data)
-        single<StoryRepository> { StoryRepositoryImpl(get()) }
+        // Database (driver provided by platformModules; optional for iOS until Swift bootstrap wired)
+        single<PardisDatabase?> { getOrNull<SqlDriver>()?.let { createPardisDatabase(it) } }
+
+        // Repository layer (data) — uses DB when available for basic offline cache
+        single<StoryRepository> { StoryRepositoryImpl(get(), getOrNull()) }
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }

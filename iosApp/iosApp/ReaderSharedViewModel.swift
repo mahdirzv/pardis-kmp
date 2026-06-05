@@ -20,6 +20,8 @@ final class ReaderSharedViewModel {
     var errorMessage: String?
     var videoUrlFa: String?
     var videoUrlEn: String?
+    var cues: [SubtitleCue] = []
+    var selectedVocab: VocabItem? = nil
 
     init(viewModel: ReaderViewModel = PardisViewModelProvider.shared.readerViewModel()) {
         self.viewModel = viewModel
@@ -51,6 +53,18 @@ final class ReaderSharedViewModel {
         viewModel.onAction(action: ReaderActionToggleVideo.shared)
     }
 
+    func playNarration() {
+        viewModel.onAction(action: ReaderActionPlayNarration.shared)
+    }
+
+    func showVocab(_ v: VocabItem) {
+        viewModel.onAction(action: ReaderActionShowVocab(vocab: v))
+    }
+
+    func dismissVocab() {
+        viewModel.onAction(action: ReaderActionDismissVocab.shared)
+    }
+
     private func apply(_ state: ReaderUiState) {
         self.storySlug = state.storySlug
         self.pages = state.pages
@@ -60,5 +74,7 @@ final class ReaderSharedViewModel {
         self.errorMessage = state.errorMessage
         self.videoUrlFa = state.videoUrlFa
         self.videoUrlEn = state.videoUrlEn
+        self.cues = state.cues
+        self.selectedVocab = state.selectedVocab
     }
 }

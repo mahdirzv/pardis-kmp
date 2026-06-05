@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import app.pardis.design.PardisRadius
 import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
@@ -43,8 +45,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import android.media.MediaPlayer
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -323,6 +323,61 @@ fun ReaderScreen(
             }
             else -> {
                 val page = state.pages.getOrNull(state.currentPage) ?: state.pages.first()
+                val videoUrl = if (state.isVideoMode) (state.videoUrlFa ?: state.videoUrlEn) else null
+                val context = LocalContext.current
+
+                // Stable video player instance (only when in video mode with url)
+                val exoPlayer = remember(videoUrl) {
+                    if (videoUrl != null) {
+                        ExoPlayer.Builder(context).build().apply {
+                            setMediaItem(MediaItem.fromUri(videoUrl))
+                            prepare()
+                            playWhenReady = true
+                        }
+                    } else null
+                }
+
+                // Retained per-page narration audio player (MediaPlayer for short clips; release prior on new)
+                val narrationPlayer = remember { mutableStateOf<MediaPlayer?>(null) }
+
+                // Drive page changes from video playback position using cues (basic ticker)
+                LaunchedEffect(exoPlayer, state.cues, state.isVideoMode) {
+                    val player = exoPlayer
+                    if (player != null && state.isVideoMode && state.cues.isNotEmpty()) {
+                        while (isActive) {
+                            val posSec = player.currentPosition / 1000.0
+                            val matching = state.cues.firstOrNull { posSec >= it.startSec && posSec < it.endSec }
+                            if (matching != null && matching.pageIndex != state.currentPage) {
+                                onAction(ReaderAction.GoToPage(matching.pageIndex))
+                            }
+                            delay(350)
+                        }
+                    }
+                }
+
+                // When page changes (by user or cue), seek video to the cue start for that page
+                LaunchedEffect(state.currentPage, exoPlayer, state.isVideoMode) {
+                    val player = exoPlayer
+                    if (player != null && state.isVideoMode) {
+                        val cue = state.cues.firstOrNull { it.pageIndex == state.currentPage }
+                        if (cue != null) {
+                            player.seekTo((cue.startSec * 1000).toLong().coerceAtLeast(0))
+                        }
+                    }
+                }
+
+                DisposableEffect(exoPlayer) {
+                    onDispose {
+                        exoPlayer?.release()
+                    }
+                }
+
+                DisposableEffect(narrationPlayer.value) {
+                    onDispose {
+                        narrationPlayer.value?.release()
+                        narrationPlayer.value = null
+                    }
+                }
 
                 Text(
                     "Page ${page.page}",
@@ -338,16 +393,7 @@ fun ReaderScreen(
                         .verticalScroll(rememberScrollState())
                 ) {
                     // Video player or Illustration
-                    if (state.isVideoMode && (state.videoUrlFa != null || state.videoUrlEn != null)) {
-                        val videoUrl = state.videoUrlFa ?: state.videoUrlEn
-                        val context = LocalContext.current
-                        val exoPlayer = remember(videoUrl) {
-                            ExoPlayer.Builder(context).build().apply {
-                                setMediaItem(MediaItem.fromUri(videoUrl!!))
-                                prepare()
-                                playWhenReady = true
-                            }
-                        }
+                    if (videoUrl != null && exoPlayer != null) {
                         AndroidView(
                             factory = {
                                 PlayerView(it).apply {
@@ -359,9 +405,6 @@ fun ReaderScreen(
                                 .fillMaxWidth()
                                 .height(300.dp)
                         )
-                        DisposableEffect(exoPlayer) {
-                            onDispose { exoPlayer.release() }
-                        }
                     } else if (page.illustrationUrl != null) {
                         AsyncImage(
                             model = page.illustrationUrl,
@@ -388,7 +431,7 @@ fun ReaderScreen(
 
                     Spacer(Modifier.height(PardisSpacing.md))
 
-                    // Bilingual text
+                    // Bilingual text (updates live as cues advance page during video)
                     Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
                     Spacer(Modifier.height(PardisSpacing.sm))
                     Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
@@ -399,7 +442,7 @@ fun ReaderScreen(
                         Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
                         Column {
                             page.vocabulary.take(3).forEach { v ->
-                                PardisVocabChip(vocab = v)
+                                PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
                             }
                         }
                     }
@@ -425,24 +468,58 @@ fun ReaderScreen(
                     Spacer(Modifier.weight(1f))
                     Button(onClick = {
                         onAction(ReaderAction.PlayNarration)
-                        // Basic narration play for current page (fa preferred)
-                        val narrationUrl = page.narrationFa?.url ?: page.narrationEn?.url
-                        narrationUrl?.let { url ->
-                            val mediaPlayer = MediaPlayer()
-                            try {
-                                mediaPlayer.setDataSource(url)
-                                mediaPlayer.prepare()
-                                mediaPlayer.start()
-                                // Note: no auto release for demo; in real use Disposable or Exo
-                            } catch (e: Exception) {
-                                mediaPlayer.release()
+                        // Play current page narration (fa preferred), stop/release any prior clip
+                        narrationPlayer.value?.release()
+                        val url = page.narrationFa?.url ?: page.narrationEn?.url
+                        url?.let {
+                            val mp = MediaPlayer().apply {
+                                setDataSource(it)
+                                setOnCompletionListener { completed ->
+                                    completed.release()
+                                    if (narrationPlayer.value == completed) narrationPlayer.value = null
+                                }
+                                prepare()
+                                start()
                             }
+                            narrationPlayer.value = mp
                         }
                     }) {
                         Text("Play Audio")
                     }
                     Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
                         Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                    }
+                }
+
+                // Basic bottom "sheet" for selected vocab (tappable chips open this)
+                state.selectedVocab?.let { v ->
+                    Spacer(Modifier.height(PardisSpacing.sm))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = PardisColors.surface2,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(PardisRadius.md),
+                        shadowElevation = 4.dp
+                    ) {
+                        Column(Modifier.padding(PardisSpacing.md)) {
+                            Text("Vocab", style = MaterialTheme.typography.labelMedium, color = PardisColors.indigo)
+                            Spacer(Modifier.height(PardisSpacing.xs))
+                            Text("${v.fa}  (${v.translit})", style = MaterialTheme.typography.titleMedium, color = PardisColors.ink)
+                            Text(v.en, style = MaterialTheme.typography.bodyLarge, color = PardisColors.inkSoft)
+                            if (v.context != null) {
+                                Spacer(Modifier.height(PardisSpacing.xs))
+                                Text("in: ${v.context}", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
+                            }
+                            if (v.audioUrl != null) {
+                                TextButton(onClick = {
+                                    // reuse narration style play for vocab audio if present
+                                    val mp = android.media.MediaPlayer()
+                                    try { mp.setDataSource(v.audioUrl); mp.prepare(); mp.start() } catch (_: Exception) { mp.release() }
+                                }) { Text("▶ Play pronunciation") }
+                            }
+                            TextButton(onClick = { onAction(ReaderAction.DismissVocab) }) {
+                                Text("Close", color = PardisColors.saffron)
+                            }
+                        }
                     }
                 }
             }

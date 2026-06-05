@@ -1,5 +1,6 @@
 package app.pardis.core.data
 
+import app.pardis.core.database.PardisDatabase
 import app.pardis.core.domain.StoryRepository
 import app.pardis.core.model.Bookend
 import app.pardis.core.model.BookendAudio
@@ -16,19 +17,29 @@ import app.pardis.core.network.VocabRow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.Json
 
 /**
  * Ktor + Supabase backed implementation of StoryRepository.
  * Does the same 3-table join pattern as web getStoryPages for fidelity.
- * Future: will merge with local SQLDelight cache for offline.
+ * Basic offline: uses SQLDelight cache for stories when provided (fallback on net fail).
  * authToken support for Phase 3+ authenticated calls.
  */
 class StoryRepositoryImpl(
-    private val supabase: SupabaseClient = SupabaseClient()
+    private val supabase: SupabaseClient = SupabaseClient(),
+    private val db: PardisDatabase? = null
 ) : StoryRepository {
+    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+
+    private fun Story.toJson(): String = json.encodeToString(Story.serializer(), this)
+    private fun jsonToStory(s: String): Story? = try { json.decodeFromString(Story.serializer(), s) } catch (_: Exception) { null }
     override suspend fun getStory(slug: String): Story? {
+        // Try cache first for basic offline
+        db?.pardisQueries?.selectStory(slug)?.executeAsOneOrNull()?.let { cached ->
+            jsonToStory(cached.data_json)?.let { return it }
+        }
         val row = supabase.getStory(slug) ?: return null
-        return Story(
+        val story = Story(
             slug = row.slug,
             titleEn = row.title_en,
             titleFa = row.title_fa,
@@ -51,41 +62,63 @@ class StoryRepositoryImpl(
                 en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
             ) }
         )
+        // Upsert to cache
+        upsertToCache(story)
+        return story
+    }
+
+    private fun upsertToCache(story: Story) {
+        db?.pardisQueries?.insertOrReplaceStory(
+            slug = story.slug,
+            title_en = story.titleEn,
+            title_fa = story.titleFa,
+            age_band = story.ageBand,
+            data_json = story.toJson(),
+            downloaded_at = System.currentTimeMillis()
+        )
     }
 
     override suspend fun getStories(): List<Story> {
-        // Public query for available stories. Matches web select + filters.
-        val rows: List<StoryRow> = supabase.getStories(
-            mapOf(
-                "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
-                "status" to "eq.available",
-                "order" to "display_order"
+        return try {
+            // Prefer network; on any failure (offline etc) fallback to cache if present
+            val rows: List<StoryRow> = supabase.getStories(
+                mapOf(
+                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
+                    "status" to "eq.available",
+                    "order" to "display_order"
+                )
             )
-        )
-        return rows.map { row ->
-            Story(
-                slug = row.slug,
-                titleEn = row.title_en,
-                titleFa = row.title_fa,
-                ageBand = row.age_band,
-                minutes = row.minutes,
-                pageCount = row.page_count,
-                vocabCount = row.vocab_count,
-                status = row.status,
-                kidReady = row.kid_ready,
-                videoReady = row.video_ready,
-                coverUrl = row.cover_url,
-                videoUrlFa = row.video_url_fa,
-                videoUrlEn = row.video_url_en,
-                introAudio = row.intro_audio?.let { Bookend(
-                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-                ) },
-                outroAudio = row.outro_audio?.let { Bookend(
-                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-                ) }
-            )
+            val stories = rows.map { row ->
+                Story(
+                    slug = row.slug,
+                    titleEn = row.title_en,
+                    titleFa = row.title_fa,
+                    ageBand = row.age_band,
+                    minutes = row.minutes,
+                    pageCount = row.page_count,
+                    vocabCount = row.vocab_count,
+                    status = row.status,
+                    kidReady = row.kid_ready,
+                    videoReady = row.video_ready,
+                    coverUrl = row.cover_url,
+                    videoUrlFa = row.video_url_fa,
+                    videoUrlEn = row.video_url_en,
+                    introAudio = row.intro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) },
+                    outroAudio = row.outro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) }
+                )
+            }
+            // Cache for offline
+            stories.forEach { upsertToCache(it) }
+            stories
+        } catch (t: Throwable) {
+            // Offline / error: use cache
+            db?.pardisQueries?.selectAllStories()?.executeAsList()?.mapNotNull { jsonToStory(it.data_json) } ?: emptyList()
         }
     }
 

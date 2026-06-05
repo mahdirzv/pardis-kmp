@@ -44,6 +44,11 @@ class ReaderViewModel(
             is ReaderAction.PlayNarration -> {
                 // Native shell handles actual playback using current page's narration urls
             }
+            is ReaderAction.ShowVocab -> {
+                analytics.track("vocab_opened", mapOf("fa" to action.vocab.fa))
+                _uiState.update { it.copy(selectedVocab = action.vocab) }
+            }
+            is ReaderAction.DismissVocab -> _uiState.update { it.copy(selectedVocab = null) }
             is ReaderAction.ErrorDismissed -> _uiState.update { it.copy(errorMessage = null) }
         }
     }
