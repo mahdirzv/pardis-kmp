@@ -5,6 +5,43 @@
 **Date of this report:** 2026-06-05 (session context)  
 **Maintainer note:** This is a self-contained handover document. Follow the parent Pardis `AGENTS.md` (at `../pardis/AGENTS.md`) + this project's `docs/kmpSkill.md` + `docs/skills/pardis-kmp-delivery/SKILL.md` + `.github/instructions/kmp.instructions.md` + `docs/code-rules.md` strictly.
 
+## ✅ RESOLUTION UPDATE — 2026-06-05: "Download failed" root cause found & fixed
+
+The "Cache video + assets → Download failed" blocker is **resolved**. Important correction to the
+original report below: the real Android asset cache had in fact **never run** — so the "works
+end-to-end on Android" claims in *Current State* were not actually true until these commits.
+
+**Root cause (a Koin DI bug, masked twice):**
+1. `SharedInit` loaded modules as `platformModules + pardisCoreModules + pardisSharedModules`.
+   Koin resolves duplicate definitions **last-wins**, so `CoreModules`' `NoOpOfflineAssetCache`
+   (whose `downloadAssetIfNeeded` is `return null`) **overrode** the real `AndroidOfflineAssetCache`.
+   Every symptom matched: instant failure, **no `cache/pardis/assets` dir created**, **zero
+   `AndroidOfflineAssetCache` logs**, while the story still loaded (a different binding).
+2. The real binding was broken anyway: `AndroidOfflineAssetCache(get())` asked Koin for a
+   `Context` that was never registered as a bare `single<Context>`. Dormant while the no-op won;
+   it surfaced as a startup crash the instant #1 was fixed — proving the no-op had silently won
+   all along (the real cache had never executed).
+
+Network/URL/Supabase policy/file size/memory/timeouts were all measured and **ruled out** (a plain
+GET pulls the full 33 MB in ~1.3 s, no auth).
+
+**Fixes (commits `b90471d`, `9285cd4`):**
+- `SharedInit`: load `platformModules` **last** so real impls override core no-op defaults (also fixes iOS).
+- `PardisApplication`: `AndroidOfflineAssetCache(applicationContext)` (like `provideSqlDriver` above it).
+- Hardening: `expectSuccess=true` on both caches (HTTP errors now throw + log); Android streams
+  the video to disk (`bodyAsChannel().copyTo`) instead of a full `ByteArray`; iOS gains
+  `HttpTimeout` + size guard + failure logging; `DownloadStoryAssetsUseCase` returns a
+  `StoryAssetsResult` so partial success is reported honestly and offline images/audio survive a
+  video failure; the ViewModel's download `catch` blocks now log instead of swallowing silently.
+
+**Verified on-device (Samsung Galaxy A32):** `rostam-and-sohrab` caches all **68 assets (~109 MB)**
+under `cache/pardis/assets/rostam-and-sohrab/` — `video-fa.mp4` byte-exact (33,025,448), 22
+illustrations, 44 narrations (fa+en), cover. Android `assembleDebug` + iOS `compileKotlinIosArm64`
+both green. The *What Is Left* items below for "diagnose download failed", "streaming download",
+and "partial success UX" are now **done**.
+
+---
+
 ## Goal of This Work
 
 Deliver **foundational offline support** so that "videoReady" stories (e.g. Anahita, Rostam, Sohrab) can be fully consumed without network:
@@ -100,15 +137,19 @@ The "Cache video + assets" flow is the main explicit user gesture for offline.
 ## What Is Left / Open / Next (Prioritized)
 
 ### Immediate / Polish (still on this branch or quick follow-up)
-- **Diagnose remaining "download failed" reports.** The last change added detailed logging. Reproduce the click, filter logcat for `AndroidOfflineAssetCache`, and share the exception + the exact `video_url_*` it tried. Common suspects once logged:
-  - Timeout / network during the (still large) ByteArray load for video.
-  - The Supabase storage URL for video returns 4xx (not publicly fetchable the same way the player streams it, needs anon key header, signed URL handling, or different bucket policy).
-  - Partial/empty write (we now delete + return null).
-  - OOM on very large videos.
-- Improve video download to true streaming (`ByteReadChannel` → `OutputStream` pump) to eliminate ByteArray memory spike.
-- Surface download errors more visibly / persistently in the UI (currently just flashes in the button area).
-- iOS: add equivalent "pause during download" logic if AVPlayer keeps resources.
-- Handle the case where video download fails but other assets succeeded (currently whole operation reports failed; partial success + "video failed, other assets cached" might be better).
+- ✅ **DONE — Diagnose "download failed".** Root cause was the Koin DI module-order bug (no-op cache
+  overrode the real one) + an unresolvable `Context` in the real binding. Not network/URL/size. See the
+  Resolution Update at the top. Fixed in `b90471d`.
+- ✅ **DONE — True streaming video download** (`bodyAsChannel().copyTo(OutputStream)` on Android),
+  eliminating the full-ByteArray memory spike. `9285cd4`.
+- ✅ **DONE — Partial success.** `DownloadStoryAssetsUseCase` returns `StoryAssetsResult`; the ViewModel
+  resolves locals on partial success and shows "Video unavailable offline — saved N/M other assets"
+  instead of a flat failure. `9285cd4`.
+- ✅ **DONE — Loud failures.** `expectSuccess=true` (4xx/5xx now throw + log) on both platforms; the
+  ViewModel download `catch` blocks log instead of swallowing. `9285cd4`.
+- Surface download errors more visibly / persistently in the UI (currently flashes in the button area).
+- iOS: stream the video to disk too (still buffers a ByteArray — fine for ~30 MB, but match Android);
+  add equivalent "pause during download" logic if AVPlayer keeps resources.
 - Make `DownloadVideo(lang)` actually respect the lang parameter (currently use case always prefers Fa).
 - Test edge cases: very large video, no cover, story with only one lang narration, clear while playing, rapid toggle + cache clicks, reinstall (migration state).
 
@@ -194,6 +235,15 @@ adb install -r app/build/outputs/apk/debug/PardisAndroidApp-debug.apk
 
 ## Risks & Gotchas (from experience on this branch)
 
+- **Koin module order = last-wins.** `SharedInit` must load `platformModules` LAST so real platform
+  impls (e.g. `AndroidOfflineAssetCache`) override the core no-op defaults. Loading platform first
+  silently hands resolution to the no-op — the asset cache does nothing and "Download failed" with no
+  logs and no files. This was THE root cause of the long-standing download failure.
+- **Don't `get()` an Android `Context` in a platform module** unless a bare `single<Context>` is
+  registered — only a qualified `single<Any>(named(platformContextQualifier))` exists. Use
+  `applicationContext` directly in the module lambda (as `provideSqlDriver` does).
+- A no-op fallback binding can mask a broken real binding: the real `AndroidOfflineAssetCache(get())`
+  would have crashed on `Context`, but the no-op (no deps) won and hid it. Prefer failing loud.
 - Stale `cached_story` JSON from the library list path was the #1 source of "video toggle missing" and "download failed" (fixed by expanding the select + relying on the detailed `getStory` path).
 - `errorMessage` in reader state is **fatal** (replaces the whole content area and disposes the player) – never use it for download problems.
 - `remember(videoUrl)` on the player = repeated release cycles = scary log spam. We moved to stable instance.

@@ -11,6 +11,13 @@
 - [x] Real Supabase public fetch wired end-to-end (stories + pages via repo + 3-table join matching web)
 - [x] Basic offline (SQLDelight cache) — schema present + drivers (android/ios actuals), PardisDatabase via DI (optional for iOS), repo getStories/getStory with cache upsert + fallback on net fail using json in cached_story table. Library resilient to offline.
 - [x] Pages cache + video + page assets download (for offline video playback) — cached_pages table + fallback in getStoryPages + migration; generalized OfflineAssetCache supporting video/illustration/narration; DownloadStoryAssetsUseCase downloads video + all page illustrations + narration audio; VM + UiState resolve local paths; shells prefer local files for video player, images (Coil/AsyncImage), and audio playback; "Cache video + assets" button + cached indicator. (builds toward full bundle in Phase 2). Reliability fix: library getStories now selects video+audio fields (rich cache for fallbacks); download calls wrapped try/catch + non-fatal progress feedback (prevents spurious "download failed" + fatal error UI on cache click); Android player now stable instance + source update via LaunchedEffect (no recreate on local switch or toggle, reduces MediaCodec buffer detach spam on release).  
+  **2026-06-05 — "Cache video + assets" download failure RESOLVED.** Root cause was a Koin DI bug
+  (module load order made the no-op `OfflineAssetCache` override the real Android impl, which itself
+  couldn't resolve `Context`) — so the real cache had never actually run on Android. Fixed (load
+  platform modules last + construct with `applicationContext`). Also hardened: `expectSuccess` on both
+  caches, true streaming video download on Android, partial-success result + honest messaging, and the
+  ViewModel no longer swallows download exceptions. Verified on-device (68 assets / ~109 MB cached,
+  video byte-exact). Commits `b90471d`, `9285cd4`.  
   **Full hands-off status + what is left + how to continue:** See `docs/PHASE1-OFFLINE-ASSETS-HANDOFF.md`.
 - [x] Config/secrets moved out of commonMain (platform expect/actual + actuals in androidMain/iosMain only)
 
