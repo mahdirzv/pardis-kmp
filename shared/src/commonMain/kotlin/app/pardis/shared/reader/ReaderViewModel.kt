@@ -2,8 +2,10 @@ package app.pardis.shared.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
+import app.pardis.core.domain.SaveProgressUseCase
 import app.pardis.core.model.StoryPage
 import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
 class ReaderViewModel(
     private val getStoryPages: GetStoryPagesUseCase,
     private val getStory: GetStoryUseCase,
+    private val saveProgress: SaveProgressUseCase,
+    private val getProgress: GetProgressUseCase,
     private val analytics: Analytics,
 ) : ViewModel() {
 
@@ -29,16 +33,20 @@ class ReaderViewModel(
                     val max = (current.pages.size - 1).coerceAtLeast(0)
                     val newPage = (current.currentPage + 1).coerceAtMost(max)
                     analytics.track("page_changed", mapOf("slug" to current.storySlug, "page" to newPage))
+                    viewModelScope.launch { saveProgress(current.storySlug, newPage) }
                     current.copy(currentPage = newPage)
                 }
             }
             is ReaderAction.PrevPage -> _uiState.update { current ->
                 val newPage = (current.currentPage - 1).coerceAtLeast(0)
                 analytics.track("page_changed", mapOf("slug" to current.storySlug, "page" to newPage))
+                viewModelScope.launch { saveProgress(current.storySlug, newPage) }
                 current.copy(currentPage = newPage)
             }
             is ReaderAction.GoToPage -> _uiState.update { current ->
-                current.copy(currentPage = action.page.coerceIn(0, (current.pages.size - 1).coerceAtLeast(0)))
+                val newPage = action.page.coerceIn(0, (current.pages.size - 1).coerceAtLeast(0))
+                viewModelScope.launch { saveProgress(current.storySlug, newPage) }
+                current.copy(currentPage = newPage)
             }
             is ReaderAction.ToggleVideo -> _uiState.update { it.copy(isVideoMode = !it.isVideoMode) }
             is ReaderAction.PlayNarration -> {
@@ -83,6 +91,10 @@ class ReaderViewModel(
                     cues.add(SubtitleCue(pageIndex = pagesResult.lastIndex, startSec = time, endSec = time + outroDur))
                 }
 
+                // Restore last read page if we have saved progress
+                val savedPage = getProgress(slug) ?: 0
+                val startPage = savedPage.coerceIn(0, (pagesResult.lastIndex).coerceAtLeast(0))
+
                 _uiState.update {
                     it.copy(
                         pages = pagesResult,
@@ -91,6 +103,7 @@ class ReaderViewModel(
                         introDuration = introDur,
                         outroDuration = outroDur,
                         cues = cues,
+                        currentPage = startPage,
                         isLoading = false
                     )
                 }

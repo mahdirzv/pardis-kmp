@@ -81,6 +81,18 @@ class StoryRepositoryImpl(
         }
     }
 
+    override suspend fun saveProgress(slug: String, page: Int) {
+        db?.pardisQueries?.upsertProgress(
+            slug = slug,
+            last_page = page.toLong(),
+            updated_at = System.currentTimeMillis()
+        )
+    }
+
+    override suspend fun getProgress(slug: String): Int? {
+        return db?.pardisQueries?.getProgress(slug)?.executeAsOneOrNull()?.toInt()
+    }
+
     private fun upsertToCache(story: Story) {
         db?.pardisQueries?.insertOrReplaceStory(
             slug = story.slug,

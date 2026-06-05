@@ -1,15 +1,19 @@
 package app.pardis.core.di
 
+import app.pardis.core.data.GetProgressUseCaseImpl
 import app.pardis.core.data.GetStoriesUseCaseImpl
 import app.pardis.core.data.GetStoryPagesUseCaseImpl
 import app.pardis.core.data.GetStoryUseCaseImpl
+import app.pardis.core.data.SaveProgressUseCaseImpl
 import app.pardis.core.data.StoryRepositoryImpl
 import app.cash.sqldelight.db.SqlDriver
 import app.pardis.core.database.PardisDatabase
 import app.pardis.core.database.createPardisDatabase
+import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
+import app.pardis.core.domain.SaveProgressUseCase
 import app.pardis.core.domain.StoryRepository
 import app.pardis.core.network.SupabaseClient
 import org.koin.dsl.module
@@ -31,5 +35,7 @@ val pardisCoreModules = listOf(
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }
         single<GetStoryUseCase> { GetStoryUseCaseImpl(get()) }
         single<GetStoryPagesUseCase> { GetStoryPagesUseCaseImpl(get()) }
+        single<SaveProgressUseCase> { SaveProgressUseCaseImpl(get()) }
+        single<GetProgressUseCase> { GetProgressUseCaseImpl(get()) }
     }
 )
