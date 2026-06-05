@@ -13,6 +13,7 @@ import app.pardis.core.domain.GetStoryUseCase
 import app.pardis.core.domain.SaveProgressUseCase
 import app.pardis.core.model.StoryPage
 import app.pardis.shared.analytics.Analytics
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,6 +72,9 @@ class ReaderViewModel(
                             val localVideo = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
                             if (localVideo != null) {
                                 updateLocalsAfterSuccessfulDownload(current.storySlug)
+                                _uiState.update { it.copy(downloadProgress = "Download complete!") }
+                                delay(1200)
+                                _uiState.update { it.copy(downloadProgress = null) }
                                 analytics.track("story_assets_downloaded_auto", mapOf("slug" to current.storySlug))
                             }
                             // no error set for auto
@@ -186,7 +190,9 @@ class ReaderViewModel(
             }
             if (localVideo != null) {
                 updateLocalsAfterSuccessfulDownload(slug)
-                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null) }
+                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download complete!") }
+                delay(1200)
+                _uiState.update { it.copy(downloadProgress = null) }
                 analytics.track("story_assets_downloaded", mapOf("slug" to slug))
             } else if (showErrorOnFail) {
                 _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null, errorMessage = "Download failed (check connection)") }
