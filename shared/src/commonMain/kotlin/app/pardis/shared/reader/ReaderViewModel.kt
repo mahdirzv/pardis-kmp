@@ -69,15 +69,19 @@ class ReaderViewModel(
                     if (hasVideo && !hasLocal) {
                         // Auto cache on entering video if not yet (for videoReady stories) -- silent on fail (e.g. no connection)
                         viewModelScope.launch {
-                            val localVideo = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
-                            if (localVideo != null) {
-                                updateLocalsAfterSuccessfulDownload(current.storySlug)
-                                _uiState.update { it.copy(downloadProgress = "Download complete!") }
-                                delay(1200)
-                                _uiState.update { it.copy(downloadProgress = null) }
-                                analytics.track("story_assets_downloaded_auto", mapOf("slug" to current.storySlug))
+                            try {
+                                val localVideo = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
+                                if (localVideo != null) {
+                                    updateLocalsAfterSuccessfulDownload(current.storySlug)
+                                    _uiState.update { it.copy(downloadProgress = "Download complete!") }
+                                    delay(1200)
+                                    _uiState.update { it.copy(downloadProgress = null) }
+                                    analytics.track("story_assets_downloaded_auto", mapOf("slug" to current.storySlug))
+                                }
+                                // silent for auto; do not set errorMessage
+                            } catch (e: Exception) {
+                                // silent for auto
                             }
-                            // no error set for auto
                         }
                     }
                 }
@@ -185,17 +189,28 @@ class ReaderViewModel(
         // This makes offline video actually complete (captions have images, audio fallback works)
         viewModelScope.launch {
             _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null, downloadProgress = "Starting download...") }
-            val localVideo = downloadStoryAssets(slug) { progress ->
-                _uiState.update { it.copy(downloadProgress = progress) }
-            }
-            if (localVideo != null) {
-                updateLocalsAfterSuccessfulDownload(slug)
-                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download complete!") }
-                delay(1200)
-                _uiState.update { it.copy(downloadProgress = null) }
-                analytics.track("story_assets_downloaded", mapOf("slug" to slug))
-            } else if (showErrorOnFail) {
-                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null, errorMessage = "Download failed (check connection)") }
+            try {
+                val localVideo = downloadStoryAssets(slug) { progress ->
+                    _uiState.update { it.copy(downloadProgress = progress) }
+                }
+                if (localVideo != null) {
+                    updateLocalsAfterSuccessfulDownload(slug)
+                    _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download complete!") }
+                    delay(1200)
+                    _uiState.update { it.copy(downloadProgress = null) }
+                    analytics.track("story_assets_downloaded", mapOf("slug" to slug))
+                } else if (showErrorOnFail) {
+                    // Report via progress area (non-fatal to reader UI, avoids replacing content + player release)
+                    _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download failed (check connection)") }
+                    delay(2200)
+                    _uiState.update { it.copy(downloadProgress = null) }
+                }
+            } catch (e: Exception) {
+                if (showErrorOnFail) {
+                    _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = "Download failed (check connection)") }
+                    delay(2200)
+                    _uiState.update { it.copy(downloadProgress = null) }
+                }
             }
         }
     }

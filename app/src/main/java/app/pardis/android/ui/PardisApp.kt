@@ -358,23 +358,39 @@ fun ReaderScreen(
                 } else null
                 val context = LocalContext.current
 
-                // Stable video player instance (only when in video mode with url)
-                val exoPlayer = remember(videoUrl) {
-                    if (videoUrl != null) {
-                        ExoPlayer.Builder(context).build().apply {
-                            setMediaItem(MediaItem.fromUri(videoUrl))
-                            prepare()
-                            playWhenReady = true
-                            addListener(object : Player.Listener {
-                                override fun onPlaybackStateChanged(playbackState: Int) {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        // Video finished - go to last page / end of story
-                                        onAction(ReaderAction.GoToPage(state.pages.lastIndex.coerceAtLeast(0)))
-                                    }
+                // Stable ExoPlayer instance for the reader session (created once, reused across text<->video toggles and remote->local after cache).
+                // Updating via setMediaItem avoids full release/create which triggers noisy MediaCodec/BufferQueue detach/cancel logs.
+                val exoPlayer = remember {
+                    ExoPlayer.Builder(context).build().apply {
+                        addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(playbackState: Int) {
+                                if (playbackState == Player.STATE_ENDED) {
+                                    // Video finished - go to last page / end of story
+                                    onAction(ReaderAction.GoToPage(state.pages.lastIndex.coerceAtLeast(0)))
                                 }
-                            })
-                        }
-                    } else null
+                            }
+                        })
+                    }
+                }
+
+                // React to effective video source (remote or local file path) changes: set on player (create once).
+                // Also handles initial entry into video mode, and switch after successful "Cache video + assets".
+                LaunchedEffect(videoUrl) {
+                    if (videoUrl != null) {
+                        exoPlayer.setMediaItem(MediaItem.fromUri(videoUrl))
+                        exoPlayer.prepare()
+                        exoPlayer.playWhenReady = true
+                    } else {
+                        exoPlayer.pause()
+                    }
+                }
+
+                // Pause decode during explicit asset download (frees decoder / bandwidth while Ktor pulls large video + many assets).
+                // After success the source-update effect above will re-prepare from local.
+                LaunchedEffect(state.isDownloadingVideo, exoPlayer) {
+                    if (state.isDownloadingVideo && exoPlayer.isPlaying) {
+                        exoPlayer.pause()
+                    }
                 }
 
                 // Retained per-page narration audio player (MediaPlayer for short clips; release prior on new)
@@ -382,10 +398,9 @@ fun ReaderScreen(
 
                 // Drive page changes from video playback position using cues (basic ticker)
                 LaunchedEffect(exoPlayer, state.cues, state.isVideoMode) {
-                    val player = exoPlayer
-                    if (player != null && state.isVideoMode && state.cues.isNotEmpty()) {
+                    if (state.isVideoMode && state.cues.isNotEmpty()) {
                         while (isActive) {
-                            val posSec = player.currentPosition / 1000.0
+                            val posSec = exoPlayer.currentPosition / 1000.0
                             val matching = state.cues.firstOrNull { posSec >= it.startSec && posSec < it.endSec }
                             if (matching != null && matching.pageIndex != state.currentPage) {
                                 onAction(ReaderAction.GoToPage(matching.pageIndex))
@@ -397,18 +412,17 @@ fun ReaderScreen(
 
                 // When page changes (by user or cue), seek video to the cue start for that page
                 LaunchedEffect(state.currentPage, exoPlayer, state.isVideoMode) {
-                    val player = exoPlayer
-                    if (player != null && state.isVideoMode) {
+                    if (state.isVideoMode) {
                         val cue = state.cues.firstOrNull { it.pageIndex == state.currentPage }
                         if (cue != null) {
-                            player.seekTo((cue.startSec * 1000).toLong().coerceAtLeast(0))
+                            exoPlayer.seekTo((cue.startSec * 1000).toLong().coerceAtLeast(0))
                         }
                     }
                 }
 
                 DisposableEffect(exoPlayer) {
                     onDispose {
-                        exoPlayer?.release()
+                        exoPlayer.release()
                     }
                 }
 
@@ -426,7 +440,7 @@ fun ReaderScreen(
                 )
                 Spacer(Modifier.height(PardisSpacing.sm))
 
-                if (videoUrl != null && exoPlayer != null) {
+                if (videoUrl != null) {
                     // Video mode: player always visible at top (tall, prominent), 
                     // dedicated scrollable captions area below for readable synced text.
                     // Much better UX than cramped scroll + tiny overlay.
@@ -667,9 +681,9 @@ fun ReaderScreen(
                             Spacer(Modifier.height(PardisSpacing.xs))
                             Text("${v.fa}  (${v.translit})", style = MaterialTheme.typography.titleMedium, color = PardisColors.ink)
                             Text(v.en, style = MaterialTheme.typography.bodyLarge, color = PardisColors.inkSoft)
-                            if (v.context != null) {
+                            v.context?.let { ctx ->
                                 Spacer(Modifier.height(PardisSpacing.xs))
-                                Text("in: ${v.context}", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
+                                Text("in: $ctx", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
                             }
                             if (v.audioUrl != null) {
                                 TextButton(onClick = {

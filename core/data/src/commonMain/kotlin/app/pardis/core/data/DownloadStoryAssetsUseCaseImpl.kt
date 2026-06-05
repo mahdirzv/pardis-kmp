@@ -96,8 +96,15 @@ class DownloadStoryAssetsUseCaseImpl(
             // Wait for all (best effort)
             jobs.awaitAll()
 
-            // Return the video local path if we have one (for caller)
-            assetCache.getLocalAssetPath(slug, "video", if (story.videoUrlFa != null) "fa" else "en")
+            // Return the video local path if we have one (for caller success signal).
+            // If the fetched story had no video urls (e.g. stale basic cache entry), still return non-null sentinel
+            // so callers treat as success and resolve any other locals (cover/illos/narrations) that were downloaded.
+            val videoKey = if (story.videoUrlFa != null) "fa" else if (story.videoUrlEn != null) "en" else null
+            if (videoKey != null) {
+                assetCache.getLocalAssetPath(slug, "video", videoKey)
+            } else {
+                "assets-cached" // sentinel: page assets or cover may have been cached; updateLocals will pick what exists
+            }
         }
     }
 }

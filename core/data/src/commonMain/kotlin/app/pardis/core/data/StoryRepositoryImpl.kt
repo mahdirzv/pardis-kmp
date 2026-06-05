@@ -121,7 +121,7 @@ class StoryRepositoryImpl(
             // Video-specific fields (video_url_*, intro/outro) are only fetched in getStory() for the Reader.
             val rows: List<StoryRow> = supabase.getStories(
                 mapOf(
-                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url",
+                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
                     "status" to "eq.available",
                     "order" to "display_order"
                 )
