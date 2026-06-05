@@ -511,9 +511,11 @@ fun ReaderScreen(
 
                 Spacer(Modifier.height(PardisSpacing.md))
 
-                // Transport (fixed at bottom)
+                // Transport (fixed at bottom) - split for better UX and accessibility
+                // Main nav row
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedButton(onClick = { onAction(ReaderAction.PrevPage) }, enabled = state.currentPage > 0) {
@@ -527,7 +529,39 @@ fun ReaderScreen(
                         Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
                     }
                     Spacer(Modifier.weight(1f))
-                    if (!state.isVideoMode) {
+                    if (state.videoUrlFa != null || state.videoUrlEn != null) {
+                        Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
+                            Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                        }
+
+                        // Offline video download affordance (appears for video stories; only in video mode to not clutter text mode).
+                        // Uses the polished video UX area. "Cache video" triggers MP4 download to local cache for offline play.
+                        // Once cached, player will use the local file path (no net needed).
+                        if (state.isVideoMode) {
+                            val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null
+                            if (!hasLocal) {
+                                Button(
+                                    onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
+                                    enabled = !state.isDownloadingVideo
+                                ) {
+                                    Text(if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
+                                }
+                            } else {
+                                // Simple cached indicator using existing design tokens (no new visuals/tokens added).
+                                Text("✓ Video + assets cached", color = PardisColors.mint)
+                            }
+                        }
+                    }
+                }
+
+                // Separate accessible row for audio controls (only in text mode) - avoids cramming, better touch targets
+                if (!state.isVideoMode) {
+                    Spacer(Modifier.height(PardisSpacing.xs))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Button(onClick = {
                             onAction(ReaderAction.PlayNarration)
                             // Play current page narration (fa preferred), stop/release any prior clip
@@ -569,40 +603,21 @@ fun ReaderScreen(
                         }) {
                             Text("Play Audio")
                         }
-                        // Simple lang switch for narration audio
-                        Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
-                            Text("FA")
-                        }
-                        Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
-                            Text("EN")
-                        }
-                        // Rate controls for audio
-                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x") }
-                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x") }
-                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x") }
-                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(2.0f)) }) { Text("2x") }
-                    }
-                    if (state.videoUrlFa != null || state.videoUrlEn != null) {
-                        Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
-                            Text(if (state.isVideoMode) "Text mode" else "Video mode")
-                        }
-
-                        // Offline video download affordance (appears for video stories; only in video mode to not clutter text mode).
-                        // Uses the polished video UX area. "Cache video" triggers MP4 download to local cache for offline play.
-                        // Once cached, player will use the local file path (no net needed).
-                        if (state.isVideoMode) {
-                            val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null
-                            if (!hasLocal) {
-                                Button(
-                                    onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
-                                    enabled = !state.isDownloadingVideo
-                                ) {
-                                    Text(if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
-                                }
-                            } else {
-                                // Simple cached indicator using existing design tokens (no new visuals/tokens added).
-                                Text("✓ Video + assets cached", color = PardisColors.mint)
+                        // Lang switch - grouped
+                        Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
+                            Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
+                                Text("FA")
                             }
+                            Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
+                                Text("EN")
+                            }
+                        }
+                        // Rate controls - grouped, smaller for density but still accessible
+                        Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
+                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x", style = MaterialTheme.typography.labelSmall) }
+                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x", style = MaterialTheme.typography.labelSmall) }
+                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x", style = MaterialTheme.typography.labelSmall) }
+                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(2.0f)) }) { Text("2x", style = MaterialTheme.typography.labelSmall) }
                         }
                     }
                 }

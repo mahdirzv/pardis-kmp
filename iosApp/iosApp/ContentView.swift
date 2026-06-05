@@ -205,71 +205,81 @@ struct ReaderScreen: View {
                 Text("Loading story \(slug)...")
             }
 
-            HStack {
-                Button("Prev") { model.prevPage() }.disabled(model.currentPage == 0)
-                Button("Next") { model.nextPage() }
-                    .buttonStyle(.borderedProminent)
-                    .tint(PardisColors.saffron)
-                Spacer()
-                if !model.isVideoMode {
-                    Button("Play Audio") {
-                        if let p = model.pages[safe: model.currentPage] {
-                            let pageNum = p.page
-                            let faKey = "fa-\(pageNum)"
-                            let enKey = "en-\(pageNum)"
-                            let localNar = if model.preferredNarrationLang == "fa" {
-                                model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
+            // Transport split into rows for better UX/accessibility (avoid long cramped row)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Button("Prev") { model.prevPage() }.disabled(model.currentPage == 0)
+                    Button("Next") { model.nextPage() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(PardisColors.saffron)
+                    Spacer()
+                    if model.videoUrlFa != nil || model.videoUrlEn != nil {
+                        Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
+
+                        // Mirror Android: download/cache button for offline video (the main remaining Phase1 item).
+                        // Only show in video mode; "Cache for offline" calls the new DownloadVideo action.
+                        // Once done, player uses local file path (AVPlayer supports file: URLs).
+                        if model.isVideoMode {
+                            let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil
+                            if !hasLocal {
+                                Button {
+                                    model.downloadVideo(lang: "fa")
+                                } label: {
+                                    Text(model.isDownloadingVideo ? "Downloading video + assets..." : "Cache video + assets")
+                                }
+                                .disabled(model.isDownloadingVideo)
                             } else {
-                                model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
+                                Text("✓ Video + assets cached")
+                                    .foregroundStyle(PardisColors.mint)
                             }
-                            let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
-                            if let u = urlStr, let url = URL(string: u) {
-                                // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
-                                let player = AVPlayer(url: url)
-                                player.play()
-                                player.rate = model.playbackRate
-                                // Basic auto-advance after clip ends (text mode only)
-                                if let item = player.currentItem {
-                                    NotificationCenter.default.addObserver(
-                                        forName: .AVPlayerItemDidPlayToEndTime,
-                                        object: item,
-                                        queue: .main
-                                    ) { _ in
-                                        if !model.isVideoMode {
-                                            model.nextPage()
+                        }
+                    }
+                }
+
+                if !model.isVideoMode {
+                    HStack(spacing: 8) {
+                        Button("Play Audio") {
+                            if let p = model.pages[safe: model.currentPage] {
+                                let pageNum = p.page
+                                let faKey = "fa-\(pageNum)"
+                                let enKey = "en-\(pageNum)"
+                                let localNar = if model.preferredNarrationLang == "fa" {
+                                    model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
+                                } else {
+                                    model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
+                                }
+                                let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
+                                if let u = urlStr, let url = URL(string: u) {
+                                    // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
+                                    let player = AVPlayer(url: url)
+                                    player.play()
+                                    player.rate = model.playbackRate
+                                    // Basic auto-advance after clip ends (text mode only)
+                                    if let item = player.currentItem {
+                                        NotificationCenter.default.addObserver(
+                                            forName: .AVPlayerItemDidPlayToEndTime,
+                                            object: item,
+                                            queue: .main
+                                        ) { _ in
+                                            if !model.isVideoMode {
+                                                model.nextPage()
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                        model.playNarration()
-                    }
-                    Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
-                    Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
-                    // Rate controls
-                    Button("0.5x") { model.setPlaybackRate(0.5) }
-                    Button("1x") { model.setPlaybackRate(1.0) }
-                    Button("1.5x") { model.setPlaybackRate(1.5) }
-                    Button("2x") { model.setPlaybackRate(2.0) }
-                }
-                if model.videoUrlFa != nil || model.videoUrlEn != nil {
-                    Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
-
-                    // Mirror Android: download/cache button for offline video (the main remaining Phase1 item).
-                    // Only show in video mode; "Cache for offline" calls the new DownloadVideo action.
-                    // Once done, player uses local file path (AVPlayer supports file: URLs).
-                    if model.isVideoMode {
-                        let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil
-                        if !hasLocal {
-                            Button {
-                                model.downloadVideo(lang: "fa")
-                            } label: {
-                                Text(model.isDownloadingVideo ? "Downloading video + assets..." : "Cache video + assets")
-                            }
-                            .disabled(model.isDownloadingVideo)
-                        } else {
-                            Text("✓ Video + assets cached")
-                                .foregroundStyle(PardisColors.mint)
+                        // Lang group
+                        HStack(spacing: 4) {
+                            Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
+                            Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
+                        }
+                        // Rate group - compact
+                        HStack(spacing: 4) {
+                            Button("0.5x") { model.setPlaybackRate(0.5) }
+                            Button("1x") { model.setPlaybackRate(1.0) }
+                            Button("1.5x") { model.setPlaybackRate(1.5) }
+                            Button("2x") { model.setPlaybackRate(2.0) }
                         }
                     }
                 }
