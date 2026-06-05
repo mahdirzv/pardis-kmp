@@ -96,9 +96,6 @@ class DownloadStoryAssetsUseCaseImpl(
             // Wait for all (best effort)
             jobs.awaitAll()
 
-            // Final report
-            onProgress("Download complete ($done/$total)")
-
             // Return the video local path if we have one (for caller)
             assetCache.getLocalAssetPath(slug, "video", if (story.videoUrlFa != null) "fa" else "en")
         }
