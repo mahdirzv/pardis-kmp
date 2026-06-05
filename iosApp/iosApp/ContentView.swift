@@ -227,6 +227,7 @@ struct ReaderScreen: View {
                                 // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
                                 let player = AVPlayer(url: url)
                                 player.play()
+                                player.rate = model.playbackRate
                                 // Basic auto-advance after clip ends (text mode only)
                                 if let item = player.currentItem {
                                     NotificationCenter.default.addObserver(
@@ -245,6 +246,11 @@ struct ReaderScreen: View {
                     }
                     Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
                     Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
+                    // Rate controls
+                    Button("0.5x") { model.setPlaybackRate(0.5) }
+                    Button("1x") { model.setPlaybackRate(1.0) }
+                    Button("1.5x") { model.setPlaybackRate(1.5) }
+                    Button("2x") { model.setPlaybackRate(2.0) }
                 }
                 if model.videoUrlFa != nil || model.videoUrlEn != nil {
                     Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }

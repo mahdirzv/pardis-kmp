@@ -68,6 +68,10 @@ final class ReaderSharedViewModel {
         viewModel.onAction(action: ReaderActionSetNarrationLang(lang: lang))
     }
 
+    func setPlaybackRate(rate: Float) {
+        viewModel.onAction(action: ReaderActionSetPlaybackRate(rate: rate))
+    }
+
     func playNarration() {
         viewModel.onAction(action: ReaderActionPlayNarration.shared)
     }

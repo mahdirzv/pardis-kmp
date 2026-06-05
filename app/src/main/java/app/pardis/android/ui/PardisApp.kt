@@ -544,6 +544,10 @@ fun ReaderScreen(
                                 url?.let {
                                     val mp = MediaPlayer().apply {
                                         setDataSource(it)
+                                        // Set rate (API 23+)
+                                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                            playbackParams = playbackParams.setSpeed(state.playbackRate)
+                                        }
                                         setOnCompletionListener { completed ->
                                             completed.release()
                                             if (narrationPlayer.value == completed) narrationPlayer.value = null
@@ -572,6 +576,11 @@ fun ReaderScreen(
                         Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
                             Text("EN")
                         }
+                        // Rate controls for audio
+                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x") }
+                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x") }
+                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x") }
+                        Button(onClick = { onAction(ReaderAction.SetPlaybackRate(2.0f)) }) { Text("2x") }
                     }
                     if (state.videoUrlFa != null || state.videoUrlEn != null) {
                         Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
