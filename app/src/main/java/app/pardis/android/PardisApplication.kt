@@ -29,7 +29,9 @@ class PardisApplication : Application() {
                     single { SupabaseClient() }
 
                     // Real Android asset cache (FS + download) overriding the no-op. Enables offline video + page assets.
-                    single<OfflineAssetCache> { AndroidOfflineAssetCache(get()) }
+                    // Use applicationContext directly (like provideSqlDriver above): there is no bare
+                    // single<Context> registered, so get() would fail to resolve android.content.Context.
+                    single<OfflineAssetCache> { AndroidOfflineAssetCache(applicationContext) }
                 }
             )
         )

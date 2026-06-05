@@ -20,7 +20,12 @@ object SharedInit {
         if (koinContext.getOrNull() != null) return
 
         startKoin {
-            modules(platformModules + pardisCoreModules + pardisSharedModules)
+            // Order matters: Koin resolves duplicate definitions with last-loaded-wins.
+            // Core modules provide safe defaults (e.g. NoOpOfflineAssetCache); platform modules
+            // provide the real implementations (e.g. AndroidOfflineAssetCache / IosOfflineAssetCache).
+            // Platform modules MUST load LAST so their real impls override the core defaults —
+            // otherwise the no-op cache wins and offline asset downloads silently do nothing.
+            modules(pardisCoreModules + pardisSharedModules + platformModules)
         }
     }
 }
