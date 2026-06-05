@@ -18,8 +18,8 @@
 - Full Library with search/filter by age, cover images (coil or native), meta. (basic list done)
 - Story Reader:
   - Page pager (full-bleed image + bilingual overlay text). (basic wired)
-  - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons wired + native players demo (MediaPlayer/Android, AVPlayer/iOS) using current page urls; action hook + no-op in VM; auto-advance not yet)
-  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (data+bookends+cues in VM; Android: ExoPlayer+PlayerView + ticker for GoToPage from pos + seek on page nav; iOS: full AVPlayerView + periodic observer + page sync + seek; text updates live as "subtitles")
+  - Per-page narration audio (native players, auto-advance, rate, lang switch). (Play Audio buttons + native players; auto-advance on completion in text mode on both platforms; hidden in video mode)
+  - MP4 video mode (when videoReady): native player + custom subtitles from cues (build cues from narration durations + intro/outro, match web logic). (full: data+bookends+cues; Android/iOS players with time-driven page sync + seek; custom bilingual subtitles as live overlay bar on the player itself; only toggle for stories that have video data (you have for anahita/rostam/sohrab); text mode hides player)
   - Vocab: tappable in text or list → sheet with translit, en, audio. (chips now onTap/clickable; Android bottom Surface sheet with play if audio; iOS .sheet with detail + play)
   - Progress save (local + sync if auth).
 - Lullabies basic support (loop mode).
