@@ -276,11 +276,13 @@ struct ReaderScreen: View {
                             }
                         }
                         // Lang group
+                        Text("Lang:").font(.caption)
                         HStack(spacing: 4) {
                             Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
                             Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
                         }
                         // Rate group - compact
+                        Text("Rate:").font(.caption)
                         HStack(spacing: 4) {
                             Button("0.5x") { model.setPlaybackRate(0.5) }
                             Button("1x") { model.setPlaybackRate(1.0) }

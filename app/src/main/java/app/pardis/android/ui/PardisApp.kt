@@ -609,6 +609,7 @@ fun ReaderScreen(
                             Text("Play Audio")
                         }
                         // Lang switch - grouped
+                        Text("Lang:", style = MaterialTheme.typography.labelSmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
                             Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
                                 Text("FA")
@@ -618,6 +619,7 @@ fun ReaderScreen(
                             }
                         }
                         // Rate controls - grouped, smaller for density but still accessible
+                        Text("Rate:", style = MaterialTheme.typography.labelSmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x", style = MaterialTheme.typography.labelSmall) }
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x", style = MaterialTheme.typography.labelSmall) }
