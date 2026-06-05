@@ -18,7 +18,9 @@ class DownloadStoryAssetsUseCaseImpl(
         // Ensure we have story metadata (for video urls)
         val story = getStory(slug) ?: return null
         val pages = getPages(slug)
-        if (pages.isEmpty()) return null
+        // Do not early-return on empty pages. We still want to allow caching the video (+ cover)
+        // even if the per-page cached_pages row is missing for some reason. The loops below will
+        // simply add 0 page-asset jobs. This makes "Cache video + assets" more robust.
 
         return coroutineScope {
             // Pre-count total assets for progress
