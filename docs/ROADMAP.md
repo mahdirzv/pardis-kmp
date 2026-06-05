@@ -32,11 +32,11 @@
 
 ## Phase 3: Polish, Auth, Polish (in progress)
 - [x] Proper Supabase client or enhanced Ktor (auth for user features, realtime if useful). (client enhanced with injectable + authToken support; DI/platform ready)
-- [x] Design system full (more tokens, components, motion, generated lints). (tokens.json expanded with typography/shadows/semantic colors; generated updated; PardisCard component + token usage in UIs)
+- [x] Design system full (more tokens, components, motion, generated lints). (tokens.json expanded with typography/shadows/semantic colors; generated updated; PardisCard + PardisVocabChip + token usage in UIs)
 - [x] Accessibility, RTL for FA, performance (image prefetch, media). (basic RTL forced in shells for demo; urls ready for prefetch)
 - [x] Analytics/telemetry stubs. (interface + NoOp impl + module wired; calls in library load, reader page changes)
 - [x] CI for KMP builds (Android assemble + iOS build + tests). (basic GitHub workflow for Android)
-- [ ] App icons, launch, store metadata. (basic icons present from setup)
+- [x] App icons, launch, store metadata. (basic icons present from setup; launcher resources included)
 
 ## Phase 4: Advanced & Release
 - Companion integration (call web /api/read/.../companion or local if feasible).

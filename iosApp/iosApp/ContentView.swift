@@ -32,12 +32,24 @@ struct LibraryScreen: View {
             }
 
             List(model.stories, id: \.slug) { story in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(story.titleEn).font(.headline)
-                    Text(story.titleFa).font(.subheadline).foregroundStyle(PardisColors.indigo)
-                    Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
-                        .font(.caption)
-                        .foregroundStyle(PardisColors.inkMuted)
+                HStack {
+                    if let cover = story.coverUrl, let url = URL(string: cover) {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            Color(PardisColors.surfaceLilac)
+                        }
+                        .frame(width: 50, height: 50)
+                        .cornerRadius(PardisRadius.sm)
+                        .padding(.trailing, PardisSpacing.sm)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(story.titleEn).font(.headline)
+                        Text(story.titleFa).font(.subheadline).foregroundStyle(PardisColors.indigo)
+                        Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
+                            .font(.caption)
+                            .foregroundStyle(PardisColors.inkMuted)
+                    }
                 }
                 .padding(PardisSpacing.md)
                 .background(PardisColors.surface2)
@@ -91,11 +103,21 @@ struct ReaderScreen: View {
                     .font(.caption)
                     .foregroundStyle(PardisColors.inkMuted)
 
-                // Placeholder for illustration
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(PardisColors.surfaceLilac)
+                // Illustration with AsyncImage
+                if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Color(PardisColors.surfaceLilac)
+                    }
                     .frame(height: 220)
-                    .overlay(Text("🖼️ \(page.illustrationUrl?.split(separator: "/").last ?? "")").foregroundStyle(PardisColors.inkSoft))
+                    .cornerRadius(12)
+                } else {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(PardisColors.surfaceLilac)
+                        .frame(height: 220)
+                        .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
+                }
 
                 Text(page.paragraphsFa.joined(separator: "\n\n"))
                     .font(.body)
@@ -107,7 +129,11 @@ struct ReaderScreen: View {
                 if !page.vocabulary.isEmpty {
                     Text("Vocab").font(.headline)
                     ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
-                        Text("• \(v.fa) — \(v.en)").font(.caption)
+                        Text("\(v.fa) (\(v.translit)) — \(v.en)")
+                            .font(.caption)
+                            .padding(4)
+                            .background(PardisColors.mintSoft)
+                            .cornerRadius(PardisRadius.sm)
                     }
                 }
             } else {

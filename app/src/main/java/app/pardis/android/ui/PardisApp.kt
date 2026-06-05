@@ -24,6 +24,9 @@ import app.pardis.shared.library.LibraryAction
 import app.pardis.shared.library.LibraryViewModel
 import app.pardis.shared.reader.ReaderAction
 import app.pardis.shared.reader.ReaderViewModel
+import coil.compose.AsyncImage
+import coil.imageLoader
+import coil.request.ImageRequest
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -109,6 +112,7 @@ fun LibraryScreen(
                     ageBand = story.ageBand,
                     minutes = story.minutes,
                     vocabCount = story.vocabCount,
+                    coverUrl = story.coverUrl,
                     onClick = { onOpenStory(story.slug) }
                 )
             }
@@ -132,6 +136,7 @@ private fun StoryCard(
     ageBand: String,
     minutes: Int,
     vocabCount: Int,
+    coverUrl: String?,
     onClick: () -> Unit
 ) {
     PardisCard(
@@ -140,24 +145,35 @@ private fun StoryCard(
             .clickable(onClick = onClick),
         onClick = onClick
     ) {
-        Column(Modifier.padding(PardisSpacing.md)) {
-            Text(
-                titleEn,
-                style = MaterialTheme.typography.titleMedium,
-                color = PardisColors.ink,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                titleFa,
-                style = MaterialTheme.typography.bodyLarge,
-                color = PardisColors.indigo
-            )
-            Spacer(Modifier.height(PardisSpacing.xs))
-            Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-                Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
-                Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+        Row(Modifier.padding(PardisSpacing.md)) {
+            if (coverUrl != null) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = "Cover for $titleEn",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(end = PardisSpacing.sm)
+                )
+            }
+            Column {
+                Text(
+                    titleEn,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = PardisColors.ink,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    titleFa,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = PardisColors.indigo
+                )
+                Spacer(Modifier.height(PardisSpacing.xs))
+                Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                    Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
+                    Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+                }
             }
         }
     }
@@ -186,6 +202,27 @@ fun PardisCard(
     }
 }
 
+/**
+ * Simple vocab chip component using tokens.
+ */
+@Composable
+fun PardisVocabChip(vocab: app.pardis.core.model.VocabItem, onClick: () -> Unit = {}) {
+    Surface(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = PardisSpacing.xs),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(PardisRadius.sm),
+        color = PardisColors.mintSoft
+    ) {
+        Text(
+            "${vocab.fa} (${vocab.translit}) — ${vocab.en}",
+            modifier = Modifier.padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs / 2),
+            style = MaterialTheme.typography.bodySmall,
+            color = PardisColors.ink
+        )
+    }
+}
+
 @Composable
 fun ReaderRoute(
     slug: String,
@@ -197,6 +234,18 @@ fun ReaderRoute(
     // Load when slug changes (Route owns the VM and triggers load)
     LaunchedEffect(slug) {
         viewModel.onAction(ReaderAction.LoadStory(slug))
+    }
+
+    // Basic prefetch for next illustration (performance, using Coil)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(state.currentPage, state.pages) {
+        val nextPage = state.pages.getOrNull(state.currentPage + 1)
+        nextPage?.illustrationUrl?.let { url ->
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .build()
+            context.imageLoader.enqueue(request)
+        }
     }
 
     ReaderScreen(
@@ -249,18 +298,28 @@ fun ReaderScreen(
                 )
                 Spacer(Modifier.height(PardisSpacing.sm))
 
-                // Illustration placeholder (url available in page.illustrationUrl for Coil later)
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp),
-                    color = PardisColors.surfaceLilac
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            "🖼️ ${page.illustrationUrl?.substringAfterLast('/') ?: "illustration"}",
-                            color = PardisColors.inkSoft
-                        )
+                // Illustration with Coil
+                if (page.illustrationUrl != null) {
+                    AsyncImage(
+                        model = page.illustrationUrl,
+                        contentDescription = "Illustration for page ${page.page}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                    )
+                } else {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp),
+                        color = PardisColors.surfaceLilac
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                "No illustration",
+                                color = PardisColors.inkSoft
+                            )
+                        }
                     }
                 }
 
@@ -297,8 +356,10 @@ fun ReaderScreen(
                 if (page.vocabulary.isNotEmpty()) {
                     Spacer(Modifier.height(PardisSpacing.md))
                     Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
-                    page.vocabulary.take(3).forEach { v ->
-                        Text("• ${v.fa} (${v.translit}) — ${v.en}", style = MaterialTheme.typography.bodySmall)
+                    Column {
+                        page.vocabulary.take(3).forEach { v ->
+                            PardisVocabChip(vocab = v)
+                        }
                     }
                 }
             }
