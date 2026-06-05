@@ -147,6 +147,7 @@ fun LibraryScreen(
                     minutes = story.minutes,
                     vocabCount = story.vocabCount,
                     coverUrl = story.coverUrl,
+                    isCachedOffline = state.cachedStorySlugs.contains(story.slug),
                     onClick = { onOpenStory(story.slug) }
                 )
             }
@@ -171,6 +172,7 @@ private fun StoryCard(
     minutes: Int,
     vocabCount: Int,
     coverUrl: String?,
+    isCachedOffline: Boolean = false,
     onClick: () -> Unit
 ) {
     PardisCard(
@@ -204,9 +206,13 @@ private fun StoryCard(
                     color = PardisColors.indigo
                 )
                 Spacer(Modifier.height(PardisSpacing.xs))
-                Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm), verticalAlignment = Alignment.CenterVertically) {
                     Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
                     Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+                    if (isCachedOffline) {
+                        Spacer(Modifier.width(PardisSpacing.xs))
+                        Text("✓ Offline", style = MaterialTheme.typography.labelSmall, color = PardisColors.mint)
+                    }
                 }
             }
         }
@@ -271,13 +277,14 @@ fun ReaderRoute(
         viewModel.onAction(ReaderAction.LoadStory(slug))
     }
 
-    // Basic prefetch for next illustration (performance, using Coil)
+    // Basic prefetch for next illustration (performance, using Coil) - prefer local cached if available
     val context = androidx.compose.ui.platform.LocalContext.current
-    LaunchedEffect(state.currentPage, state.pages) {
+    LaunchedEffect(state.currentPage, state.pages, state.localIllustrationUrls) {
         val nextPage = state.pages.getOrNull(state.currentPage + 1)
-        nextPage?.illustrationUrl?.let { url ->
+        val url = nextPage?.let { state.localIllustrationUrls[it.page] ?: it.illustrationUrl }
+        url?.let {
             val request = ImageRequest.Builder(context)
-                .data(url)
+                .data(it)
                 .build()
             context.imageLoader.enqueue(request)
         }
@@ -326,7 +333,7 @@ fun ReaderScreen(
             else -> {
                 val page = state.pages.getOrNull(state.currentPage) ?: state.pages.first()
                 // Prefer locally cached video file (offline video support) over remote Supabase URL.
-                // The local paths are absolute file paths from VideoCache (Android cacheDir/.../video-fa.mp4).
+                // The local paths are absolute file paths from OfflineAssetCache (Android cacheDir/pardis/assets/...).
                 val videoUrl = if (state.isVideoMode) {
                     (state.localVideoUrlFa ?: state.localVideoUrlEn ?: state.videoUrlFa ?: state.videoUrlEn)
                 } else null
@@ -458,9 +465,10 @@ fun ReaderScreen(
                             .weight(1f)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        if (page.illustrationUrl != null) {
+                        val illoUrl = state.localIllustrationUrls[page.page] ?: page.illustrationUrl
+                        if (illoUrl != null) {
                             AsyncImage(
-                                model = page.illustrationUrl,
+                                model = illoUrl,
                                 contentDescription = "Illustration for page ${page.page} of story",
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -526,7 +534,11 @@ fun ReaderScreen(
                             try {
                                 narrationPlayer.value?.release()
                                 val current = state.pages.getOrNull(state.currentPage)
-                                val url = current?.narrationFa?.url ?: current?.narrationEn?.url
+                                val pageNum = current?.page ?: 0
+                                val faKey = "fa-$pageNum"
+                                val enKey = "en-$pageNum"
+                                val localNar = state.localNarrationUrls[faKey] ?: state.localNarrationUrls[enKey]
+                                val url = localNar ?: current?.narrationFa?.url ?: current?.narrationEn?.url
                                 url?.let {
                                     val mp = MediaPlayer().apply {
                                         setDataSource(it)
@@ -567,11 +579,11 @@ fun ReaderScreen(
                                     onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
                                     enabled = !state.isDownloadingVideo
                                 ) {
-                                    Text(if (state.isDownloadingVideo) "Downloading video..." else "Cache for offline")
+                                    Text(if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
                                 }
                             } else {
                                 // Simple cached indicator using existing design tokens (no new visuals/tokens added).
-                                Text("✓ Cached offline", color = PardisColors.mint)
+                                Text("✓ Video + assets cached", color = PardisColors.mint)
                             }
                         }
                     }

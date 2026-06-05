@@ -1,10 +1,10 @@
 package app.pardis.android
 
 import android.app.Application
-import app.pardis.core.data.AndroidVideoCache
+import app.pardis.core.data.AndroidOfflineAssetCache
 import app.pardis.core.database.provideSqlDriver
 import app.pardis.core.di.platformContextQualifier
-import app.pardis.core.domain.VideoCache
+import app.pardis.core.domain.OfflineAssetCache
 import app.pardis.core.network.SupabaseClient
 import app.pardis.core.network.SupabaseConfig
 import app.pardis.shared.SharedInit
@@ -28,8 +28,8 @@ class PardisApplication : Application() {
                     // single { SupabaseClient(SupabaseConfig(/* base from secrets or override */, userToken = "jwt-here")) }
                     single { SupabaseClient() }
 
-                    // Real Android video cache (FS + download) overriding the no-op. Enables offline MP4 video.
-                    single<VideoCache> { AndroidVideoCache(get()) }
+                    // Real Android asset cache (FS + download) overriding the no-op. Enables offline video + page assets.
+                    single<OfflineAssetCache> { AndroidOfflineAssetCache(get()) }
                 }
             )
         )

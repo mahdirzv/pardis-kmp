@@ -1,11 +1,11 @@
 package app.pardis.core.data
 
 import app.pardis.core.domain.GetLocalVideoPathUseCase
-import app.pardis.core.domain.VideoCache
+import app.pardis.core.domain.OfflineAssetCache
 
 class GetLocalVideoPathUseCaseImpl(
-    private val videoCache: VideoCache
+    private val assetCache: OfflineAssetCache
 ) : GetLocalVideoPathUseCase {
     override suspend fun invoke(slug: String, lang: String): String? =
-        videoCache.getLocalVideoPath(slug, lang)
+        assetCache.getLocalAssetPath(slug, "video", lang)
 }

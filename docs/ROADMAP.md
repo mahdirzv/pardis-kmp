@@ -10,7 +10,7 @@
 - [x] Gradle multi-module, SKIE, wrapper, versions per best practices
 - [x] Real Supabase public fetch wired end-to-end (stories + pages via repo + 3-table join matching web)
 - [x] Basic offline (SQLDelight cache) — schema present + drivers (android/ios actuals), PardisDatabase via DI (optional for iOS), repo getStories/getStory with cache upsert + fallback on net fail using json in cached_story table. Library resilient to offline.
-- [~] Pages cache + video asset download (for offline video playback) — cached_pages table + fallback in getStoryPages; VideoCache + Download/GetLocal use cases + platform (Android/Ios) impls using cache dir + Ktor download to deterministic video-{lang}.mp4 paths; VM + UiState + shells prefer local file paths for players (tall fixed player + captions now work offline once cached); explicit "Cache for offline" affordance in video mode on both platforms. (pages + video files; full bundle manifest in Phase 2)
+- [x] Pages cache + video + page assets download (for offline video playback) — cached_pages table + fallback in getStoryPages + migration; generalized OfflineAssetCache supporting video/illustration/narration; DownloadStoryAssetsUseCase downloads video + all page illustrations + narration audio; VM + UiState resolve local paths; shells prefer local files for video player, images (Coil/AsyncImage), and audio playback; "Cache video + assets" button + cached indicator. (builds toward full bundle in Phase 2)
 - [x] Config/secrets moved out of commonMain (platform expect/actual + actuals in androidMain/iosMain only)
 
 ## Phase 1: Core Reader Experience (in progress)
@@ -27,7 +27,7 @@
 
 ## Phase 2: Child Experience & Offline
 - Child profiles + active child + PIN gate (secure local + Supabase Auth/RLS for family data).
-- Full offline: download story bundle (pages JSON + images + audio + optional MP4), manifest, play from cache.
+- Full offline: download story bundle (pages JSON + images + audio + optional MP4), manifest, play from cache. (foundational asset caching + pages JSON + video download done in Phase 1; bundle UI/manifest next)
 - Games stubs (match words, cloze, sequence) — native implementations, shared data.
 - Progress, streaks, vocab recap in native UI.
 

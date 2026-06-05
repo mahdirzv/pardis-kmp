@@ -15,6 +15,7 @@ final class LibrarySharedViewModel {
     var stories: [Story] = []
     var isLoading = false
     var errorMessage: String?
+    var cachedStorySlugs: Set<String> = []
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
@@ -34,5 +35,6 @@ final class LibrarySharedViewModel {
         self.stories = state.stories
         self.isLoading = state.isLoading
         self.errorMessage = state.errorMessage
+        self.cachedStorySlugs = Set(state.cachedStorySlugs)
     }
 }

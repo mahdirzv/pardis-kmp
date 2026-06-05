@@ -15,6 +15,9 @@ data class ReaderUiState(
     val localVideoUrlFa: String? = null,
     val localVideoUrlEn: String? = null,
     val isDownloadingVideo: Boolean = false,
+    // Local asset paths for page content (keyed by page number for illustration, "fa-3"/"en-3" for narration)
+    val localIllustrationUrls: Map<Int, String> = emptyMap(),
+    val localNarrationUrls: Map<String, String> = emptyMap(), // e.g. "fa-0" -> local path
     val introDuration: Double = 0.0,
     val outroDuration: Double = 0.0,
     val isLoading: Boolean = false,

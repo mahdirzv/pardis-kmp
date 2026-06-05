@@ -24,6 +24,8 @@ final class ReaderSharedViewModel {
     var localVideoUrlFa: String?
     var localVideoUrlEn: String?
     var isDownloadingVideo = false
+    var localIllustrationUrls: [Int: String] = [:]
+    var localNarrationUrls: [String: String] = [:] // "fa-3" etc.
     var cues: [SubtitleCue] = []
     var selectedVocab: VocabItem? = nil
 
@@ -85,6 +87,8 @@ final class ReaderSharedViewModel {
         self.localVideoUrlFa = state.localVideoUrlFa
         self.localVideoUrlEn = state.localVideoUrlEn
         self.isDownloadingVideo = state.isDownloadingVideo
+        self.localIllustrationUrls = state.localIllustrationUrls
+        self.localNarrationUrls = state.localNarrationUrls
         self.cues = state.cues
         self.selectedVocab = state.selectedVocab
     }

@@ -53,6 +53,11 @@ struct LibraryScreen: View {
                         Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
                             .font(.caption)
                             .foregroundStyle(PardisColors.inkMuted)
+                        if model.cachedStorySlugs.contains(story.slug) {
+                            Text("✓ Offline")
+                                .font(.caption)
+                                .foregroundStyle(PardisColors.mint)
+                        }
                     }
                 }
                 .padding(PardisSpacing.md)
@@ -108,7 +113,7 @@ struct ReaderScreen: View {
                     .foregroundStyle(PardisColors.inkMuted)
 
                 if model.isVideoMode {
-                    // Prefer local cached video file for offline playback (set by VideoCache + VM after DownloadVideo action).
+                    // Prefer local cached video file for offline playback (set by OfflineAssetCache + VM after DownloadVideo action).
                     // Falls back to remote Supabase MP4. This makes the fixed tall player + captions work fully offline.
                     let effectiveVideoUrl = model.localVideoUrlFa ?? model.localVideoUrlEn ?? model.videoUrlFa ?? model.videoUrlEn
                     if let videoUrl = effectiveVideoUrl {
@@ -156,7 +161,8 @@ struct ReaderScreen: View {
                     // Normal illustration + text mode
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
-                            if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
+                            let illoUrlStr = model.localIllustrationUrls[page.page] ?? page.illustrationUrl
+                            if let urlStr = illoUrlStr, let url = URL(string: urlStr) {
                                 AsyncImage(url: url) { image in
                                     image.resizable().scaledToFill()
                                 } placeholder: {
@@ -208,7 +214,11 @@ struct ReaderScreen: View {
                 if !model.isVideoMode {
                     Button("Play Audio") {
                         if let p = model.pages[safe: model.currentPage] {
-                            let urlStr = p.narrationFa?.url ?? p.narrationEn?.url
+                            let pageNum = p.page
+                            let faKey = "fa-\(pageNum)"
+                            let enKey = "en-\(pageNum)"
+                            let localNar = model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
+                            let urlStr = localNar ?? p.narrationFa?.url ?? p.narrationEn?.url
                             if let u = urlStr, let url = URL(string: u) {
                                 // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
                                 let player = AVPlayer(url: url)
@@ -242,11 +252,11 @@ struct ReaderScreen: View {
                             Button {
                                 model.downloadVideo(lang: "fa")
                             } label: {
-                                Text(model.isDownloadingVideo ? "Downloading..." : "Cache for offline")
+                                Text(model.isDownloadingVideo ? "Downloading video + assets..." : "Cache video + assets")
                             }
                             .disabled(model.isDownloadingVideo)
                         } else {
-                            Text("✓ Cached offline")
+                            Text("✓ Video + assets cached")
                                 .foregroundStyle(PardisColors.mint)
                         }
                     }

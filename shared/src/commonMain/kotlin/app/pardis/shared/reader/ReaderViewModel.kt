@@ -2,7 +2,9 @@ package app.pardis.shared.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
+import app.pardis.core.domain.GetLocalAssetPathUseCase
 import app.pardis.core.domain.GetLocalVideoPathUseCase
 import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
@@ -24,6 +26,8 @@ class ReaderViewModel(
     private val analytics: Analytics,
     private val getLocalVideoPath: GetLocalVideoPathUseCase,
     private val downloadVideo: DownloadVideoUseCase,
+    private val downloadStoryAssets: DownloadStoryAssetsUseCase,
+    private val getLocalAssetPath: GetLocalAssetPathUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReaderUiState(isLoading = true))
@@ -100,9 +104,12 @@ class ReaderViewModel(
                 val savedPage = getProgress(slug) ?: 0
                 val startPage = savedPage.coerceIn(0, (pagesResult.lastIndex).coerceAtLeast(0))
 
-                // Resolve any previously downloaded local video files (enables offline video playback)
+                // Resolve any previously downloaded local video files (enables offline video playback). Uses the asset cache under the hood.
                 val localFa = story?.videoUrlFa?.let { getLocalVideoPath(slug, "fa") }
                 val localEn = story?.videoUrlEn?.let { getLocalVideoPath(slug, "en") }
+
+                // Resolve local page assets (illustrations + narration) if cached
+                val (localIllos, localNars) = resolveLocalPageAssets(slug, pagesResult)
 
                 _uiState.update {
                     it.copy(
@@ -111,6 +118,8 @@ class ReaderViewModel(
                         videoUrlEn = story?.videoUrlEn,
                         localVideoUrlFa = localFa,
                         localVideoUrlEn = localEn,
+                        localIllustrationUrls = localIllos,
+                        localNarrationUrls = localNars,
                         introDuration = introDur,
                         outroDuration = outroDur,
                         cues = cues,
@@ -130,25 +139,58 @@ class ReaderViewModel(
         val current = _uiState.value
         val slug = current.storySlug
         if (slug.isEmpty()) return
-        val remote = if (lang == "fa") current.videoUrlFa else current.videoUrlEn
-        if (remote.isNullOrBlank()) return
 
-        // Already have local? no-op
-        val existing = if (lang == "fa") current.localVideoUrlFa else current.localVideoUrlEn
-        if (!existing.isNullOrBlank()) return
-
+        // Use the full assets downloader (video + illustrations + narration audio for pages)
+        // This makes offline video actually complete (captions have images, audio fallback works)
         viewModelScope.launch {
             _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null) }
-            val local = downloadVideo(slug, lang, remote)
-            if (local != null) {
+            val localVideo = downloadStoryAssets(slug)
+            if (localVideo != null) {
+                // Re-resolve locals after download (video + page assets)
+                val localFa = getLocalVideoPath(slug, "fa")
+                val localEn = getLocalVideoPath(slug, "en")
+                val pages = _uiState.value.pages
+                val (localIllos, localNars) = resolveLocalPageAssets(slug, pages)
                 _uiState.update {
-                    if (lang == "fa") it.copy(localVideoUrlFa = local, isDownloadingVideo = false)
-                    else it.copy(localVideoUrlEn = local, isDownloadingVideo = false)
+                    it.copy(
+                        localVideoUrlFa = localFa,
+                        localVideoUrlEn = localEn,
+                        localIllustrationUrls = localIllos,
+                        localNarrationUrls = localNars,
+                        isDownloadingVideo = false
+                    )
                 }
-                analytics.track("video_downloaded", mapOf("slug" to slug, "lang" to lang))
+                analytics.track("story_assets_downloaded", mapOf("slug" to slug))
             } else {
-                _uiState.update { it.copy(isDownloadingVideo = false, errorMessage = "Video download failed (check connection)") }
+                _uiState.update { it.copy(isDownloadingVideo = false, errorMessage = "Download failed (check connection)") }
             }
         }
+    }
+
+    private suspend fun resolveLocalPageAssets(slug: String, pages: List<StoryPage>): Pair<Map<Int, String>, Map<String, String>> {
+        val illos = mutableMapOf<Int, String>()
+        val nars = mutableMapOf<String, String>()
+
+        pages.forEach { p ->
+            // Illustration
+            p.illustrationUrl?.let {
+                getLocalAssetPath(slug, "illustration", p.page.toString())?.let { local ->
+                    illos[p.page] = local
+                }
+            }
+            // Narration fa
+            p.narrationFa?.url?.let {
+                getLocalAssetPath(slug, "narration", "fa-${p.page}")?.let { local ->
+                    nars["fa-${p.page}"] = local
+                }
+            }
+            // Narration en
+            p.narrationEn?.url?.let {
+                getLocalAssetPath(slug, "narration", "en-${p.page}")?.let { local ->
+                    nars["en-${p.page}"] = local
+                }
+            }
+        }
+        return illos to nars
     }
 }

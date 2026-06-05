@@ -2,6 +2,7 @@ package app.pardis.shared.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.pardis.core.domain.GetLocalAssetPathUseCase
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.model.Story
 import app.pardis.shared.analytics.Analytics
@@ -14,22 +15,26 @@ import kotlinx.coroutines.launch
 
 class LibraryViewModel(
     private val getStoriesUseCase: GetStoriesUseCase,
+    private val getLocalAssetPath: GetLocalAssetPathUseCase,
     private val analytics: Analytics,
 ) : ViewModel() {
 
     private val stories = MutableStateFlow<List<Story>>(emptyList())
     private val isLoading = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
+    private val cachedSlugs = MutableStateFlow<Set<String>>(emptySet())
 
     val uiState: StateFlow<LibraryUiState> = combine(
         stories,
         isLoading,
         error,
-    ) { currentStories, loading, err ->
+        cachedSlugs,
+    ) { currentStories, loading, err, cached ->
         LibraryUiState(
             stories = currentStories,
             isLoading = loading,
             errorMessage = err,
+            cachedStorySlugs = cached,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -58,6 +63,14 @@ class LibraryViewModel(
                 val result = getStoriesUseCase()
                 stories.value = result
                 analytics.track("library_loaded", mapOf("count" to result.size))
+
+                // Check which stories have local video assets cached (for offline badge in list)
+                val cached = result.mapNotNull { story ->
+                    val hasFa = getLocalAssetPath(story.slug, "video", "fa") != null
+                    val hasEn = getLocalAssetPath(story.slug, "video", "en") != null
+                    if (hasFa || hasEn) story.slug else null
+                }.toSet()
+                cachedSlugs.value = cached
             } catch (t: Throwable) {
                 error.value = t.message ?: "Failed to load stories"
             } finally {
