@@ -100,6 +100,12 @@ struct ReaderScreen: View {
                 if !model.pages.isEmpty {
                     Text("\(model.currentPage + 1) / \(model.pages.count)")
                         .foregroundStyle(PardisColors.inkSoft)
+                    let hasOffline = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
+                    if hasOffline {
+                        Text("✓ Offline")
+                            .font(.caption)
+                            .foregroundStyle(PardisColors.mint)
+                    }
                 }
             }
 

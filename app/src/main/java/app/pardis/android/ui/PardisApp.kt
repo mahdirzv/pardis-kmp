@@ -314,6 +314,11 @@ fun ReaderScreen(
             Spacer(Modifier.weight(1f))
             if (state.pages.isNotEmpty()) {
                 Text("${state.currentPage + 1} / ${state.pages.size}", color = PardisColors.inkSoft)
+                val hasOfflineAssets = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
+                if (hasOfflineAssets) {
+                    Spacer(Modifier.width(PardisSpacing.sm))
+                    Text("✓ Offline", color = PardisColors.mint, style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
 
