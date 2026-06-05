@@ -42,6 +42,7 @@ struct LibraryScreen: View {
                         .frame(width: 50, height: 50)
                         .cornerRadius(PardisRadius.sm)
                         .padding(.trailing, PardisSpacing.sm)
+                        .accessibilityLabel("Cover image for \(story.titleEn)")
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text(story.titleEn).font(.headline)
@@ -112,6 +113,7 @@ struct ReaderScreen: View {
                     }
                     .frame(height: 220)
                     .cornerRadius(12)
+                    .accessibilityLabel("Illustration for page \(page.page)")
                 } else {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(PardisColors.surfaceLilac)
@@ -134,6 +136,7 @@ struct ReaderScreen: View {
                             .padding(4)
                             .background(PardisColors.mintSoft)
                             .cornerRadius(PardisRadius.sm)
+                            .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
                     }
                 }
             } else {

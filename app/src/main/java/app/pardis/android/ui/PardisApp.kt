@@ -13,6 +13,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -149,7 +151,7 @@ private fun StoryCard(
             if (coverUrl != null) {
                 AsyncImage(
                     model = coverUrl,
-                    contentDescription = "Cover for $titleEn",
+                    contentDescription = "Cover image for story: $titleEn in $ageBand age band",
                     modifier = Modifier
                         .size(60.dp)
                         .padding(end = PardisSpacing.sm)
@@ -216,7 +218,8 @@ fun PardisVocabChip(vocab: app.pardis.core.model.VocabItem, onClick: () -> Unit 
     ) {
         Text(
             "${vocab.fa} (${vocab.translit}) — ${vocab.en}",
-            modifier = Modifier.padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs / 2),
+            modifier = Modifier.padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs / 2)
+                .semantics { contentDescription = "Vocabulary term: ${vocab.fa} transliterated as ${vocab.translit}, English ${vocab.en}" },
             style = MaterialTheme.typography.bodySmall,
             color = PardisColors.ink
         )
@@ -302,7 +305,7 @@ fun ReaderScreen(
                 if (page.illustrationUrl != null) {
                     AsyncImage(
                         model = page.illustrationUrl,
-                        contentDescription = "Illustration for page ${page.page}",
+                        contentDescription = "Illustration for page ${page.page} of story",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(220.dp)
