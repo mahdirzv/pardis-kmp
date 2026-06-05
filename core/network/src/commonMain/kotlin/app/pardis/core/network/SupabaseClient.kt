@@ -54,8 +54,8 @@ data class BookendJson(
 
 @Serializable
 data class BookendAudio(
-    val url: String,
-    val durationSeconds: Double,
+    val url: String = "",
+    val durationSeconds: Double = 0.0,
     val voice: String? = null
 )
 
@@ -74,8 +74,8 @@ data class StoryPageRow(
 
 @Serializable
 data class NarrationRow(
-    val url: String,
-    val durationSeconds: Double,
+    val url: String = "",
+    val durationSeconds: Double = 0.0,
     val voice: String? = null
 )
 

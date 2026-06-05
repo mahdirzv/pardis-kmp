@@ -513,19 +513,30 @@ fun ReaderScreen(
                         Button(onClick = {
                             onAction(ReaderAction.PlayNarration)
                             // Play current page narration (fa preferred), stop/release any prior clip
-                            narrationPlayer.value?.release()
-                            val url = page.narrationFa?.url ?: page.narrationEn?.url
-                            url?.let {
-                                val mp = MediaPlayer().apply {
-                                    setDataSource(it)
-                                    setOnCompletionListener { completed ->
-                                        completed.release()
-                                        if (narrationPlayer.value == completed) narrationPlayer.value = null
+                            try {
+                                narrationPlayer.value?.release()
+                                val current = state.pages.getOrNull(state.currentPage)
+                                val url = current?.narrationFa?.url ?: current?.narrationEn?.url
+                                url?.let {
+                                    val mp = MediaPlayer().apply {
+                                        setDataSource(it)
+                                        setOnCompletionListener { completed ->
+                                            completed.release()
+                                            if (narrationPlayer.value == completed) narrationPlayer.value = null
+                                            // Auto-advance to next page after narration clip ends (only in text mode)
+                                            if (!state.isVideoMode && state.currentPage < (state.pages.lastIndex)) {
+                                                onAction(ReaderAction.NextPage)
+                                            }
+                                        }
+                                        prepare()
+                                        start()
                                     }
-                                    prepare()
-                                    start()
+                                    narrationPlayer.value = mp
                                 }
-                                narrationPlayer.value = mp
+                            } catch (e: Exception) {
+                                // Silent fail for demo; in real app surface error (e.g. no audio for this page)
+                                narrationPlayer.value?.release()
+                                narrationPlayer.value = null
                             }
                         }) {
                             Text("Play Audio")

@@ -200,6 +200,18 @@ struct ReaderScreen: View {
                                 // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
                                 let player = AVPlayer(url: url)
                                 player.play()
+                                // Basic auto-advance after clip ends (text mode only)
+                                if let item = player.currentItem {
+                                    NotificationCenter.default.addObserver(
+                                        forName: .AVPlayerItemDidPlayToEndTime,
+                                        object: item,
+                                        queue: .main
+                                    ) { _ in
+                                        if !model.isVideoMode {
+                                            model.nextPage()
+                                        }
+                                    }
+                                }
                             }
                         }
                         model.playNarration()

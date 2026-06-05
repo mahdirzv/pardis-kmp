@@ -34,42 +34,50 @@ class StoryRepositoryImpl(
     private fun Story.toJson(): String = json.encodeToString(Story.serializer(), this)
     private fun jsonToStory(s: String): Story? = try { json.decodeFromString(Story.serializer(), s) } catch (_: Exception) { null }
     override suspend fun getStory(slug: String): Story? {
-        // Try cache first for basic offline
-        db?.pardisQueries?.selectStory(slug)?.executeAsOneOrNull()?.let { cached ->
-            jsonToStory(cached.data_json)?.let { return it }
-        }
+        // Prefer network to fetch the *full* story (video URLs + bookends for cues).
+        // This is critical for reader: library may have cached a "basic" version (minimal select, video=null).
+        // Only fall back to cache on network failure / offline.
+        // Once successful, upsert will overwrite cache with rich data (including video).
         return try {
-            val row = supabase.getStory(slug) ?: return null
-            val story = Story(
-                slug = row.slug,
-                titleEn = row.title_en,
-                titleFa = row.title_fa,
-                ageBand = row.age_band,
-                minutes = row.minutes,
-                pageCount = row.page_count,
-                vocabCount = row.vocab_count,
-                status = row.status,
-                kidReady = row.kid_ready,
-                videoReady = row.video_ready,
-                coverUrl = row.cover_url,
-                videoUrlFa = row.video_url_fa,
-                videoUrlEn = row.video_url_en,
-                introAudio = row.intro_audio?.let { Bookend(
-                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-                ) },
-                outroAudio = row.outro_audio?.let { Bookend(
-                    fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
-                    en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
-                ) }
-            )
-            // Upsert to cache (enriched with video/bookends if present)
-            upsertToCache(story)
-            story
+            val row = supabase.getStory(slug)
+            if (row != null) {
+                val story = Story(
+                    slug = row.slug,
+                    titleEn = row.title_en,
+                    titleFa = row.title_fa,
+                    ageBand = row.age_band,
+                    minutes = row.minutes,
+                    pageCount = row.page_count,
+                    vocabCount = row.vocab_count,
+                    status = row.status,
+                    kidReady = row.kid_ready,
+                    videoReady = row.video_ready,
+                    coverUrl = row.cover_url,
+                    videoUrlFa = row.video_url_fa,
+                    videoUrlEn = row.video_url_en,
+                    introAudio = row.intro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) },
+                    outroAudio = row.outro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) }
+                )
+                upsertToCache(story)
+                return story
+            }
+            // Net returned no row — try cache as last resort
+            getFromCache(slug)
         } catch (t: Throwable) {
-            // If full video fields not in DB yet, don't break the reader — just no video data.
-            // Pages will still load in the caller (ReaderVM).
-            null
+            // Offline or error: fall back to whatever (possibly basic) version is cached
+            getFromCache(slug)
+        }
+    }
+
+    private fun getFromCache(slug: String): Story? {
+        return db?.pardisQueries?.selectStory(slug)?.executeAsOneOrNull()?.let { cached ->
+            jsonToStory(cached.data_json)
         }
     }
 
