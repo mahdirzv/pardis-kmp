@@ -58,7 +58,19 @@ class ReaderViewModel(
                 viewModelScope.launch { saveProgress(current.storySlug, newPage) }
                 current.copy(currentPage = newPage)
             }
-            is ReaderAction.ToggleVideo -> _uiState.update { it.copy(isVideoMode = !it.isVideoMode) }
+            is ReaderAction.ToggleVideo -> {
+                val current = _uiState.value
+                val nowVideo = !current.isVideoMode
+                _uiState.update { it.copy(isVideoMode = nowVideo) }
+                if (nowVideo) {
+                    val hasVideo = current.videoUrlFa != null || current.videoUrlEn != null
+                    val hasLocal = current.localVideoUrlFa != null || current.localVideoUrlEn != null
+                    if (hasVideo && !hasLocal) {
+                        // Auto cache on entering video if not yet (for videoReady stories)
+                        downloadVideoForCurrent("fa")
+                    }
+                }
+            }
             is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang)
             is ReaderAction.SetNarrationLang -> _uiState.update { it.copy(preferredNarrationLang = action.lang) }
             is ReaderAction.SetPlaybackRate -> _uiState.update { it.copy(playbackRate = action.rate.coerceIn(0.5f, 2.0f)) }
