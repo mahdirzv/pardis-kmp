@@ -363,7 +363,7 @@ struct VideoPlayerView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
-        // Support remote http(s) URLs and local absolute file paths (offline video cache from AndroidVideoCache / IosVideoCache).
+        // Support remote http(s) URLs and local absolute file paths (offline asset cache from OfflineAssetCache).
         let playerURL: URL = {
             if videoUrl.hasPrefix("/") || videoUrl.hasPrefix("file:") {
                 return URL(fileURLWithPath: videoUrl.replacingOccurrences(of: "file://", with: ""))
