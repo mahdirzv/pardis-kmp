@@ -46,6 +46,9 @@ dependencies {
     // Coil for images with prefetch support
     implementation(libs.coil.compose)
 
+    // Proper navigation
+    implementation(libs.androidx.navigation.compose)
+
     // Compose (use BOM or direct; for simplicity direct from versions)
     implementation("androidx.compose.ui:ui:1.7.6")
     implementation("androidx.compose.material3:material3:1.3.1")

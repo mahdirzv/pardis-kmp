@@ -105,39 +105,43 @@ struct ReaderScreen: View {
                     .font(.caption)
                     .foregroundStyle(PardisColors.inkMuted)
 
-                // Illustration with AsyncImage
-                if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        Color(PardisColors.surfaceLilac)
-                    }
-                    .frame(height: 220)
-                    .cornerRadius(12)
-                    .accessibilityLabel("Illustration for page \(page.page)")
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(PardisColors.surfaceLilac)
-                        .frame(height: 220)
-                        .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
-                }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Illustration with AsyncImage
+                        if let urlStr = page.illustrationUrl, let url = URL(string: urlStr) {
+                            AsyncImage(url: url) { image in
+                                image.resizable().scaledToFill()
+                            } placeholder: {
+                                Color(PardisColors.surfaceLilac)
+                            }
+                            .frame(height: 220)
+                            .cornerRadius(12)
+                            .accessibilityLabel("Illustration for page \(page.page)")
+                        } else {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(PardisColors.surfaceLilac)
+                                .frame(height: 220)
+                                .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
+                        }
 
-                Text(page.paragraphsFa.joined(separator: "\n\n"))
-                    .font(.body)
+                        Text(page.paragraphsFa.joined(separator: "\n\n"))
+                            .font(.body)
 
-                Text(page.paragraphsEn.joined(separator: "\n\n"))
-                    .font(.callout)
-                    .foregroundStyle(PardisColors.inkSoft)
+                        Text(page.paragraphsEn.joined(separator: "\n\n"))
+                            .font(.callout)
+                            .foregroundStyle(PardisColors.inkSoft)
 
-                if !page.vocabulary.isEmpty {
-                    Text("Vocab").font(.headline)
-                    ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
-                        Text("\(v.fa) (\(v.translit)) — \(v.en)")
-                            .font(.caption)
-                            .padding(4)
-                            .background(PardisColors.mintSoft)
-                            .cornerRadius(PardisRadius.sm)
-                            .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
+                        if !page.vocabulary.isEmpty {
+                            Text("Vocab").font(.headline)
+                            ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                                Text("\(v.fa) (\(v.translit)) — \(v.en)")
+                                    .font(.caption)
+                                    .padding(4)
+                                    .background(PardisColors.mintSoft)
+                                    .cornerRadius(PardisRadius.sm)
+                                    .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
+                            }
+                        }
                     }
                 }
             } else {

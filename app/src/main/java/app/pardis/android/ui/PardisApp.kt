@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,6 +35,11 @@ import app.pardis.core.model.VocabItem
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -42,18 +49,26 @@ fun PardisApp() {
             modifier = Modifier.fillMaxSize(),
             color = PardisColors.background
         ) {
-            var selectedSlug by remember { mutableStateOf<String?>(null) }
-
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                if (selectedSlug == null) {
-                    LibraryRoute(
-                        onOpenStory = { slug -> selectedSlug = slug }
-                    )
-                } else {
-                    ReaderRoute(
-                        slug = selectedSlug!!,
-                        onBack = { selectedSlug = null }
-                    )
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "library") {
+                    composable("library") {
+                        LibraryRoute(
+                            onOpenStory = { slug ->
+                                navController.navigate("reader/$slug")
+                            }
+                        )
+                    }
+                    composable(
+                        "reader/{slug}",
+                        arguments = listOf(navArgument("slug") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val slug = backStackEntry.arguments?.getString("slug") ?: ""
+                        ReaderRoute(
+                            slug = slug,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
@@ -306,41 +321,59 @@ fun ReaderScreen(
                 )
                 Spacer(Modifier.height(PardisSpacing.sm))
 
-                // Illustration with Coil
-                if (page.illustrationUrl != null) {
-                    AsyncImage(
-                        model = page.illustrationUrl,
-                        contentDescription = "Illustration for page ${page.page} of story",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                    )
-                } else {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp),
-                        color = PardisColors.surfaceLilac
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                "No illustration",
-                                color = PardisColors.inkSoft
-                            )
+                // Scrollable content for the story page
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // Illustration with Coil
+                    if (page.illustrationUrl != null) {
+                        AsyncImage(
+                            model = page.illustrationUrl,
+                            contentDescription = "Illustration for page ${page.page} of story",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                        )
+                    } else {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp),
+                            color = PardisColors.surfaceLilac
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    "No illustration",
+                                    color = PardisColors.inkSoft
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(PardisSpacing.md))
+
+                    // Bilingual text
+                    Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
+                    Spacer(Modifier.height(PardisSpacing.sm))
+                    Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
+
+                    Spacer(Modifier.height(PardisSpacing.lg))
+
+                    if (page.vocabulary.isNotEmpty()) {
+                        Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
+                        Column {
+                            page.vocabulary.take(3).forEach { v ->
+                                PardisVocabChip(vocab = v)
+                            }
                         }
                     }
                 }
 
                 Spacer(Modifier.height(PardisSpacing.md))
 
-                // Bilingual text
-                Text(page.paragraphsFa.joinToString("\n\n"), style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink)
-                Spacer(Modifier.height(PardisSpacing.sm))
-                Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
-
-                Spacer(Modifier.height(PardisSpacing.lg))
-
-                // Transport
+                // Transport (fixed at bottom)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
                     modifier = Modifier.fillMaxWidth()
@@ -358,16 +391,6 @@ fun ReaderScreen(
                     Spacer(Modifier.weight(1f))
                     Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
                         Text(if (state.isVideoMode) "Text mode" else "Video mode")
-                    }
-                }
-
-                if (page.vocabulary.isNotEmpty()) {
-                    Spacer(Modifier.height(PardisSpacing.md))
-                    Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
-                    Column {
-                        page.vocabulary.take(3).forEach { v ->
-                            PardisVocabChip(vocab = v)
-                        }
                     }
                 }
             }
