@@ -1,6 +1,6 @@
 # Phase 3 Plan: Polish, Auth, Polish
 
-**Progress note (as of latest continuation)**: Phase 3 initial + continuation done: tokens, Supabase auth prep, RTL, analytics, components (PardisCard + VocabChip), image loading/prefetch (Coil+AsyncImage), CI basic. Builds verified. See ROADMAP for checkboxes. Remaining polish can be incremental.
+**Progress note (as of latest continuation)**: Phase 3 initial + continuation done: tokens, Supabase auth prep, RTL, analytics, components (PardisCard + VocabChip), image loading/prefetch (Coil+AsyncImage), CI basic, icons/launch/metadata stubs, a11y labels/semantics. Builds verified. See ROADMAP for checkboxes. Remaining: full testing, more components if needed.
 
 **Goal**: Take the current working KMP reader (library list + basic pager with real Supabase data) and deliver production-ready polish, auth foundations, and supporting infrastructure while strictly following `docs/kmpSkill.md`, the Pardis KMP delivery skill, and using Beforely **only** as an internal reference for clean architecture (never copy code/names).
 
