@@ -68,7 +68,7 @@ class ReaderViewModel(
                     if (hasVideo && !hasLocal) {
                         // Auto cache on entering video if not yet (for videoReady stories) -- silent on fail (e.g. no connection)
                         viewModelScope.launch {
-                            val localVideo = downloadStoryAssets(current.storySlug)
+                            val localVideo = downloadStoryAssets(current.storySlug) { /* silent progress for auto */ }
                             if (localVideo != null) {
                                 updateLocalsAfterSuccessfulDownload(current.storySlug)
                                 analytics.track("story_assets_downloaded_auto", mapOf("slug" to current.storySlug))
@@ -78,7 +78,7 @@ class ReaderViewModel(
                     }
                 }
             }
-            is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang)
+            is ReaderAction.DownloadVideo -> downloadVideoForCurrent(action.lang, showErrorOnFail = true)
             is ReaderAction.SetNarrationLang -> _uiState.update { it.copy(preferredNarrationLang = action.lang) }
             is ReaderAction.SetPlaybackRate -> _uiState.update { it.copy(playbackRate = action.rate.coerceIn(0.5f, 2.0f)) }
             is ReaderAction.ClearAssets -> {
@@ -172,7 +172,7 @@ class ReaderViewModel(
         }
     }
 
-    private fun downloadVideoForCurrent(lang: String) {
+    private fun downloadVideoForCurrent(lang: String, showErrorOnFail: Boolean = true) {
         val current = _uiState.value
         val slug = current.storySlug
         if (slug.isEmpty()) return
@@ -180,14 +180,16 @@ class ReaderViewModel(
         // Use the full assets downloader (video + illustrations + narration audio for pages)
         // This makes offline video actually complete (captions have images, audio fallback works)
         viewModelScope.launch {
-            _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null) }
-            val localVideo = downloadStoryAssets(slug)
+            _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null, downloadProgress = "Starting download...") }
+            val localVideo = downloadStoryAssets(slug) { progress ->
+                _uiState.update { it.copy(downloadProgress = progress) }
+            }
             if (localVideo != null) {
                 updateLocalsAfterSuccessfulDownload(slug)
-                _uiState.update { it.copy(isDownloadingVideo = false) }
+                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null) }
                 analytics.track("story_assets_downloaded", mapOf("slug" to slug))
-            } else {
-                _uiState.update { it.copy(isDownloadingVideo = false, errorMessage = "Download failed (check connection)") }
+            } else if (showErrorOnFail) {
+                _uiState.update { it.copy(isDownloadingVideo = false, downloadProgress = null, errorMessage = "Download failed (check connection)") }
             }
         }
     }

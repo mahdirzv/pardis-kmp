@@ -558,7 +558,7 @@ fun ReaderScreen(
                                     onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
                                     enabled = !state.isDownloadingVideo
                                 ) {
-                                    Text(if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
+                                    Text(state.downloadProgress ?: if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
                                 }
                             } else {
                                 // Simple cached indicator using existing design tokens (no new visuals/tokens added).

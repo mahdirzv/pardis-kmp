@@ -24,6 +24,7 @@ final class ReaderSharedViewModel {
     var localVideoUrlFa: String?
     var localVideoUrlEn: String?
     var isDownloadingVideo = false
+    var downloadProgress: String? = nil
     var localIllustrationUrls: [Int: String] = [:]
     var localNarrationUrls: [String: String] = [:] // "fa-3" etc.
     var preferredNarrationLang: String = "fa"
@@ -100,6 +101,7 @@ final class ReaderSharedViewModel {
         self.localVideoUrlFa = state.localVideoUrlFa
         self.localVideoUrlEn = state.localVideoUrlEn
         self.isDownloadingVideo = state.isDownloadingVideo
+        self.downloadProgress = state.downloadProgress
         self.localIllustrationUrls = state.localIllustrationUrls
         self.localNarrationUrls = state.localNarrationUrls
         self.preferredNarrationLang = state.preferredNarrationLang

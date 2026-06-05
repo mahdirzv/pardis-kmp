@@ -238,7 +238,7 @@ struct ReaderScreen: View {
                                 Button {
                                     model.downloadVideo(lang: "fa")
                                 } label: {
-                                    Text(model.isDownloadingVideo ? "Downloading video + assets..." : "Cache video + assets")
+                                    Text(model.downloadProgress ?? (model.isDownloadingVideo ? "Downloading video + assets..." : "Cache video + assets"))
                                 }
                                 .disabled(model.isDownloadingVideo)
                             } else {

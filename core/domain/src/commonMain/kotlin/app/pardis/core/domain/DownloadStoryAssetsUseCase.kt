@@ -6,7 +6,8 @@ package app.pardis.core.domain
  */
 interface DownloadStoryAssetsUseCase {
     /**
-     * @return summary or local video path on success, null on critical failure.
+     * @param onProgress callback for status updates like "Downloaded 3/12 assets..."
+     * @return local video path on success (or null if no video), null on critical failure.
      */
-    suspend operator fun invoke(slug: String): String?
+    suspend operator fun invoke(slug: String, onProgress: (String) -> Unit = {}): String?
 }
