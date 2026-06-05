@@ -3,6 +3,7 @@ package app.pardis.shared.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.pardis.core.model.Story
+import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.launch
 
 class LibraryViewModel(
     private val getStoriesUseCase: app.pardis.core.domain.GetStoriesUseCase,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val stories = MutableStateFlow<List<app.pardis.core.model.Story>>(emptyList())
@@ -54,6 +56,7 @@ class LibraryViewModel(
             try {
                 val result = getStoriesUseCase()
                 stories.value = result
+                analytics.track("library_loaded", mapOf("count" to result.size))
             } catch (t: Throwable) {
                 error.value = t.message ?: "Failed to load stories"
             } finally {

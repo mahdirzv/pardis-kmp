@@ -86,8 +86,8 @@ object PardisTypography {
 }
 
 object PardisShadows {
-    // For Compose, use shadow() modifier or custom; values are reference
-    const val smBlur = 2
-    const val mdBlur = 8
-    const val lgBlur = 20
+    // For Compose, use .shadow(elevation) or custom; values are reference (in dp)
+    val sm = 2.dp
+    val md = 8.dp
+    val lg = 20.dp
 }

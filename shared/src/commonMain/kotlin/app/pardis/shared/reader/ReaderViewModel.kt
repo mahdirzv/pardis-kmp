@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.model.StoryPage
+import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ReaderViewModel(
-    private val getStoryPages: GetStoryPagesUseCase
+    private val getStoryPages: GetStoryPagesUseCase,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReaderUiState(isLoading = true))
@@ -23,10 +25,16 @@ class ReaderViewModel(
             is ReaderAction.NextPage -> {
                 _uiState.update { current ->
                     val max = (current.pages.size - 1).coerceAtLeast(0)
-                    current.copy(currentPage = (current.currentPage + 1).coerceAtMost(max))
+                    val newPage = (current.currentPage + 1).coerceAtMost(max)
+                    analytics.track("page_changed", mapOf("slug" to current.storySlug, "page" to newPage))
+                    current.copy(currentPage = newPage)
                 }
             }
-            is ReaderAction.PrevPage -> _uiState.update { it.copy(currentPage = (it.currentPage - 1).coerceAtLeast(0)) }
+            is ReaderAction.PrevPage -> _uiState.update { current ->
+                val newPage = (current.currentPage - 1).coerceAtLeast(0)
+                analytics.track("page_changed", mapOf("slug" to current.storySlug, "page" to newPage))
+                current.copy(currentPage = newPage)
+            }
             is ReaderAction.GoToPage -> _uiState.update { current ->
                 current.copy(currentPage = action.page.coerceIn(0, (current.pages.size - 1).coerceAtLeast(0)))
             }
@@ -46,6 +54,7 @@ class ReaderViewModel(
             try {
                 val result = getStoryPages(slug)
                 _uiState.update { it.copy(pages = result, isLoading = false) }
+                analytics.track("story_loaded", mapOf("slug" to slug, "pages" to result.size))
             } catch (t: Throwable) {
                 _uiState.update { it.copy(pages = emptyList(), isLoading = false, errorMessage = t.message ?: "Failed to load story pages") }
             }

@@ -12,11 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisRadius
+import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
 import app.pardis.shared.library.LibraryAction
 import app.pardis.shared.library.LibraryViewModel
@@ -132,14 +134,11 @@ private fun StoryCard(
     vocabCount: Int,
     onClick: () -> Unit
 ) {
-    Surface(
+    PardisCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(PardisRadius.md),
-        color = PardisColors.surface2,
-        shadowElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.border)
+        onClick = onClick
     ) {
         Column(Modifier.padding(PardisSpacing.md)) {
             Text(
@@ -161,6 +160,29 @@ private fun StoryCard(
                 Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
             }
         }
+    }
+}
+
+/**
+ * Basic PardisCard component using design tokens (colors, radius, spacing, shadows).
+ * Follows kmpSkill + Phase 3 plan: tokenised, native only.
+ */
+@Composable
+fun PardisCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(PardisRadius.md)
+    Surface(
+        modifier = modifier
+            .shadow(PardisShadows.md, shape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = shape,
+        color = PardisColors.surface2,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.border)
+    ) {
+        content()
     }
 }
 

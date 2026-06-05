@@ -39,8 +39,16 @@ struct LibraryScreen: View {
                         .font(.caption)
                         .foregroundStyle(PardisColors.inkMuted)
                 }
+                .padding(PardisSpacing.md)
+                .background(PardisColors.surface2)
+                .cornerRadius(PardisRadius.md)
+                .overlay(
+                    RoundedRectangle(cornerRadius: PardisRadius.md)
+                        .stroke(PardisColors.border, lineWidth: 1)
+                )
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(story.slug) }
+                // TODO: Extract to PardisCard view modifier / struct per Phase 3 design system plan
             }
 
             Button("Refresh") {

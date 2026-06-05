@@ -1,5 +1,7 @@
 # Phase 3 Plan: Polish, Auth, Polish
 
+**Progress note (as of latest continuation)**: Initial implementation done for tokens, Supabase auth prep, RTL, analytics wiring, basic components (PardisCard), CI. Builds verified. See ROADMAP for checkboxes.
+
 **Goal**: Take the current working KMP reader (library list + basic pager with real Supabase data) and deliver production-ready polish, auth foundations, and supporting infrastructure while strictly following `docs/kmpSkill.md`, the Pardis KMP delivery skill, and using Beforely **only** as an internal reference for clean architecture (never copy code/names).
 
 **Status at start of Phase 3**: Phase 0 foundations + basic Phase 1 reader experience complete (per updated ROADMAP). All changes committed and pushed.
