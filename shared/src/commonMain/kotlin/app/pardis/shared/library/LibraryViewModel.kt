@@ -6,6 +6,9 @@ import app.pardis.core.domain.GetLocalAssetPathUseCase
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.model.Story
 import app.pardis.shared.analytics.Analytics
+import app.pardis.shared.offline.OfflineDownloadManager
+import app.pardis.shared.offline.StoryDownloadState
+import app.pardis.shared.offline.formatBytes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +20,7 @@ class LibraryViewModel(
     private val getStoriesUseCase: GetStoriesUseCase,
     private val getLocalAssetPath: GetLocalAssetPathUseCase,
     private val analytics: Analytics,
+    private val downloadManager: OfflineDownloadManager,
 ) : ViewModel() {
 
     private val stories = MutableStateFlow<List<Story>>(emptyList())
@@ -37,6 +41,7 @@ class LibraryViewModel(
         showOnlyCached,
         localCoverUrls,
         selectedAgeBand,
+        downloadManager.states,
     ) { args ->
         val currentStories = args[0] as List<Story>
         val loading = args[1] as Boolean
@@ -46,6 +51,17 @@ class LibraryViewModel(
         val showOnly = args[5] as Boolean
         val covers = args[6] as Map<String, String>
         val ageBand = args[7] as String?
+        @Suppress("UNCHECKED_CAST")
+        val dlStates = args[8] as Map<String, StoryDownloadState>
+        val downloadProgress = dlStates.mapNotNull { (s, st) ->
+            (st as? StoryDownloadState.Downloading)?.let { s to it.progress }
+        }.toMap()
+        val downloadedSizeLabels = dlStates.mapNotNull { (s, st) ->
+            (st as? StoryDownloadState.Downloaded)?.let { s to formatBytes(it.sizeBytes) }
+        }.toMap()
+        val failedDownloads = dlStates.filterValues { it is StoryDownloadState.Failed }.keys.toSet()
+        val totalBytes = dlStates.values.filterIsInstance<StoryDownloadState.Downloaded>().sumOf { it.sizeBytes }
+        val totalCachedLabel = if (totalBytes > 0L) formatBytes(totalBytes) else ""
 
         // Age bands available for filtering, derived from the data and ordered young -> old by the
         // leading number ("4–7", "7–10", "10–14"); avoids hardcoding bands that may change server-side.
@@ -74,6 +90,10 @@ class LibraryViewModel(
             localCoverUrls = covers,
             ageBands = ageBands,
             selectedAgeBand = ageBand,
+            downloadProgress = downloadProgress,
+            downloadedSizeLabels = downloadedSizeLabels,
+            failedDownloads = failedDownloads,
+            totalCachedLabel = totalCachedLabel,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -91,6 +111,9 @@ class LibraryViewModel(
             is LibraryAction.Search -> searchQuery.value = action.query
             is LibraryAction.ToggleShowOnlyCached -> showOnlyCached.value = !showOnlyCached.value
             is LibraryAction.SetAgeBand -> selectedAgeBand.value = action.band
+            is LibraryAction.DownloadStory -> downloadManager.download(action.slug)
+            is LibraryAction.CancelDownload -> downloadManager.cancel(action.slug)
+            is LibraryAction.RemoveDownload -> downloadManager.remove(action.slug)
             is LibraryAction.OpenStory -> {
                 // Handled by native shell callback
             }
@@ -122,6 +145,7 @@ class LibraryViewModel(
                     if (hasVideo || covers.containsKey(story.slug)) story.slug else null
                 }.toSet()
                 cachedSlugs.value = cached
+                downloadManager.refreshState(result.map { it.slug })
             } catch (t: Throwable) {
                 error.value = t.message ?: "Failed to load stories"
             } finally {
