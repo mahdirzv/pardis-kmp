@@ -1,85 +1,67 @@
-# Handoff — Native Primitive Rollout
+# Handoff — Native Theme, Primitives, and Root Shell
 
 _Date: 2026-06-06_
 
-## Summary
+## Current State
 
-This handoff captures the current state of the Pardis KMP native UI rollout after:
+- Branch: `main`
+- Local state: clean
+- Remote state: `main` is synced with `origin/main`
+- Current `HEAD`: `92b29eb Add native Today tab composite`
 
-1. fixing the iOS bootstrap / SQLDelight wiring,
-2. scoping RTL correctly for Persian content,
-3. syncing the mobile theme to the attached Rivana design tokens,
-4. and beginning the next phase: extracting reusable **native primitives** and applying them to `Library` + `Reader`.
+Recent commits on `main`:
 
-The design is implementable natively. The chosen implementation strategy is:
+- `92b29eb` Add native Today tab composite
+- `f35b689` Add native root tab shell
+- `1a19782` Add native font roles and icon primitives
+- `f2f0cee` Build native theme and story composites
+- `2006bef` Extract native reader and library primitives
+- `ec3318b` Refresh native theme from Rivana tokens
+- `04ecd4b` Fix iOS bootstrap and scope reader RTL
 
-- keep **shared state and logic** in `shared/`
-- keep **all UI native** in `app/` and `iosApp/`
-- use the attached web design as a **visual/design spec**, not as code to mechanically convert
-- build a reusable primitive layer first, then restyle screens with those primitives
+All work described below is committed and pushed to `origin/main`.
 
----
+## Strategy
 
-## Current repo state
+The attached standalone Rivana design has been treated as a visual/design reference, not as code to port directly.
 
-### Branch / commit
+Implementation rules remain:
 
-- Current branch: `main`
-- Current `HEAD`: `ec3318b`
+- shared state and business logic stay in `shared/` and `core/*`
+- Android UI stays native Compose in `app/`
+- iOS UI stays native SwiftUI in `iosApp/`
+- no shared UI layer
+- all visuals use Pardis tokens and palette
+- Persian RTL is scoped to Persian content only, not the whole app shell
 
-### Important distinction
+## Completed
 
-`ec3318b` is the **last committed merged baseline** on `main`.
+### iOS Bootstrap And RTL
 
-There is also **uncommitted working tree progress** on top of that baseline for the native primitive rollout.
+- iOS platform DI provides the SQLDelight driver.
+- shared framework links `sqlite3`.
+- iOS startup no longer crashes on the missing DB path.
+- Global RTL was removed from the app shell.
+- Persian reader text, titles, and vocab blocks keep scoped RTL behavior.
 
-### Current working tree status
+Key files:
 
-Modified:
-- `app/src/main/java/app/pardis/android/ui/PardisApp.kt`
-- `iosApp/iosApp/ContentView.swift`
-- `iosApp/iosApp/PardisTheme.swift`
-- `tasks/lessons.md`
-- `tasks/todo.md`
-
-New, untracked:
-- `app/src/main/java/app/pardis/android/ui/PardisPrimitives.kt`
-- `iosApp/iosApp/PardisPrimitives.swift`
-
----
-
-## What has already been completed and merged to `main`
-
-These items are already part of the committed baseline:
-
-### 1. iOS bootstrap / DI / SQLDelight fixes
-- iOS platform DI now provides the SQLDelight driver
-- shared framework links `sqlite3` correctly on iOS
-- iOS startup path no longer crashes on the missing DB path
-
-Primary files involved earlier:
 - `core/data/src/iosMain/kotlin/app/pardis/core/data/IosPlatformModule.kt`
 - `core/di/src/commonMain/kotlin/app/pardis/core/di/CoreModules.kt`
 - `shared/build.gradle.kts`
 - `iosApp/iosApp/iosApp.swift`
-
-### 2. RTL fix
-- global app-wide RTL was removed
-- RTL was scoped only to Persian reader content
-- titles / vocab / Persian blocks render RTL where appropriate
-- shell/navigation remain LTR for English-first UX
-
-Primary files involved earlier:
 - `app/src/main/java/app/pardis/android/ui/PardisApp.kt`
 - `iosApp/iosApp/ContentView.swift`
 
-### 3. Theme/token sync from the attached Rivana design
-- `design-system/tokens.json` updated as source of truth
-- Android token mirror synced
-- generated Android/iOS token snapshots synced
-- native theme wrappers added
+### Theme And Token Sync
 
-Primary files already committed:
+- `design-system/tokens.json` is the source of truth.
+- Android and iOS token mirrors are synced.
+- Native theme wrappers are in place.
+- Font roles and icon primitives were added, but final branded font/icon assets are still pending.
+
+Key files:
+
 - `design-system/tokens.json`
 - `design-system/generated/android/PardisTokens.kt`
 - `design-system/generated/ios/PardisTokens.swift`
@@ -87,37 +69,25 @@ Primary files already committed:
 - `app/src/main/java/app/pardis/design/PardisTheme.kt`
 - `iosApp/iosApp/PardisTheme.swift`
 
----
+### Native Primitive Layer
 
-## What is being done now
+Android primitive file:
 
-## Goal of the current phase
-
-Build a reusable native primitive layer for the two most important screens first:
-
-- `Library`
-- `Reader`
-
-This is the first real screen-level application of the design system after token/theme alignment.
-
-The purpose is to avoid ad hoc styling in each screen and instead establish reusable native building blocks for both platforms.
-
----
-
-## What has been done in the current uncommitted primitive rollout
-
-## Android
-
-### New file created
 - `app/src/main/java/app/pardis/android/ui/PardisPrimitives.kt`
 
-### Primitives extracted there
+Android primitives include:
+
 - `PardisScreenHeader`
+- `PardisSectionHeader`
+- `PardisMetricStrip`
+- `PardisBottomTabBar`
 - `PardisFilterPill`
 - `PardisMetaPill`
 - `PardisCard`
 - `PardisPanel`
 - `PardisRemoteImageFrame`
+- `PardisFeaturedStoryCard`
+- `PardisStoryCard`
 - `PardisReaderHeaderBar`
 - `PardisControlGroup`
 - `PardisVocabChip`
@@ -125,233 +95,181 @@ The purpose is to avoid ad hoc styling in each screen and instead establish reus
 - `PersianReaderParagraph`
 - `PersianReaderInline`
 
-### Android screen refactor done
-`app/src/main/java/app/pardis/android/ui/PardisApp.kt` now uses the primitive layer for:
+iOS primitive file:
 
-- `LibraryScreen`
-  - header
-  - search panel
-  - filter pills
-  - cached-only panel
-  - story card metadata pills
-  - media frames
-- `ReaderScreen`
-  - reader header bar
-  - page pill
-  - video frame card
-  - text panel
-  - vocab chip list
-  - transport panel
-  - vocab sheet panel
-
-### Android verification status
-Verified successfully with:
-
-```zsh
-cd /Users/mahdi/pardis-kmp
-./gradlew :PardisAndroidApp:compileDebugKotlin --no-daemon
-```
-
-Result: build succeeded.
-
----
-
-## iOS
-
-### New file created
 - `iosApp/iosApp/PardisPrimitives.swift`
 
-### Primitives extracted there
+iOS primitives include:
+
 - `PersianReaderText`
 - `PardisScreenHeader`
+- `PardisSectionHeader`
+- `PardisMetricStrip`
+- `PardisBottomTabBar`
 - `PardisMetaPill`
 - `PardisFilterPill`
 - `PardisPanel`
 - `PardisAsyncImageFrame`
+- `PardisFeaturedStoryCard`
+- `PardisStoryCard`
 - `PardisReaderHeaderBar`
 - `PardisControlGroup`
 - `PardisVocabChipView`
 - `PardisVocabSheetContent`
 
-### iOS theme adjustment for primitive support
-- `iosApp/iosApp/PardisTheme.swift`
-  - `pardisCardSurface(...)` now accepts configurable corner radius
+### Library And Reader Restyle
 
-### iOS screen refactor done
-`iosApp/iosApp/ContentView.swift` now uses the primitive layer for:
+`Library` and `Reader` now use native primitive components on both platforms.
 
-- `LibraryScreen`
-  - header
-  - search panel
-  - filter pills
-  - cached-only panel
-  - media frame
-  - metadata pills
-- `ReaderScreen`
-  - reader header bar
-  - page pill
-  - framed video player surface
-  - text panel
-  - vocab chip list
-  - transport panel
-  - vocab sheet content
+Library uses primitives for:
 
-### iOS verification status
-Verified successfully with:
+- screen header
+- metrics
+- featured story
+- search panel
+- age filter pills
+- cached-only panel
+- story cards
+- offline controls
 
-```zsh
-cd /Users/mahdi/pardis-kmp/iosApp
-xcodegen generate
+Reader uses primitives for:
 
-cd /Users/mahdi/pardis-kmp
-xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Debug -destination 'generic/platform=iOS Simulator' build
-```
+- reader header
+- page pill
+- video/player surface
+- text panels
+- vocab chips
+- transport controls
+- vocab sheet
 
-Result: build succeeded.
+Key files:
 
----
-
-## Current checklist state
-
-From `tasks/todo.md`:
-
-- [x] Define the native primitive set for `Library` + `Reader`
-- [x] Extract reusable Android primitives and apply them to `Library` + `Reader`
-- [x] Extract reusable iOS primitives and apply them to `Library` + `Reader`
-- [x] Validate the edited files and run platform verification builds
-- [ ] Roll the primitive layer out to the remaining native screens (`Today`, `Bedtime`, `Rewards`, `You`)
-
----
-
-## Recommended next steps
-
-## Immediate next step
-Commit the current working tree once reviewed:
-
-- `app/src/main/java/app/pardis/android/ui/PardisPrimitives.kt`
 - `app/src/main/java/app/pardis/android/ui/PardisApp.kt`
-- `iosApp/iosApp/PardisPrimitives.swift`
-- `iosApp/iosApp/PardisTheme.swift`
 - `iosApp/iosApp/ContentView.swift`
-- `tasks/todo.md`
-- `tasks/lessons.md`
 
-## Next product/design rollout phase
-Apply the same primitive system to the rest of the app in this order:
+### Root Tab Shell
 
-### 1. Home / Today
-Likely primitives/composites to add:
-- hero continue-reading card
-- streak/stat strip
-- section header with optional action
-- horizontal shelf row
-- collection tile
-- word-of-the-day card
+The app now has a native root tab shell on Android and iOS:
 
-### 2. Bedtime / Lullaby
-Likely primitives/composites to add:
-- dark hero panel
-- bedtime transport surface
-- night-mode themed cards
+- `Today`
+- `Library`
+- `Bedtime`
+- `Rewards`
+- `You`
 
-### 3. Rewards / You
-Likely primitives/composites to add:
-- achievement card
-- profile summary card
-- stats row
-- collection progress tiles
+`Library` remains fully wired to the existing shared `LibraryViewModel`.
 
----
+`Bedtime`, `Rewards`, and `You` currently render tokenized native placeholder panels. They are ready for shared state contracts when those features are implemented.
 
-## Important implementation notes
+### Today Composite
 
-### Design conversion rule
-Do **not** try to convert the attached React/CSS code directly into Compose or SwiftUI.
+`Today` is no longer a placeholder. It is the first native child/home composite built from existing shared Library state.
 
-Correct approach:
-- extract tokens
-- extract primitives
-- build composites
-- apply screen-by-screen
+It includes:
 
-### Architecture rule
-Do not move UI into `shared/`.
+- daily header
+- story/offline/age-band metrics
+- continue-reading featured story
+- short "For later" story list
+- offline controls on story cards
+- vocabulary-focus panel
 
-Keep:
-- `shared/` = view models, state, actions, shared logic
-- `app/` = Android native UI
-- `iosApp/` = iOS native UI
+Android:
 
-### RTL rule
-Do not reintroduce global RTL.
-Only Persian text blocks and inline Persian elements should force RTL.
+- `RootShellRoute` owns the shared `LibraryViewModel`
+- `TodayScreen` and `LibraryScreen` both render from the same `LibraryUiState`
+- `TodayScreen` sends existing `LibraryAction` values for download/cancel/remove
 
-### Token rule
-Any future palette/scale changes must start in:
-- `design-system/tokens.json`
+iOS:
 
-Then sync:
-- `design-system/generated/android/PardisTokens.kt`
-- `design-system/generated/ios/PardisTokens.swift`
-- `app/src/main/java/app/pardis/design/PardisTokens.kt`
+- `RootShellView` owns one `LibrarySharedViewModel`
+- the model is activated once with `.task`
+- `TodayScreen` and `LibraryScreen` both consume that same adapter
 
----
+## Verification
 
-## Lessons captured during this phase
-
-Key current lessons already tracked in `tasks/lessons.md`:
-
-- nullable Koin singletons caused iOS startup failure
-- iOS SQLDelight native framework requires `-lsqlite3`
-- English-first shell should not be forced global RTL
-- Persian RTL should be scoped only to Persian reader content
-- design token source of truth must stay synchronized across generated/native mirrors
-- native design rollout should start with primitives before screen restyling
-
----
-
-## If resuming from this handoff
-
-Start with:
-
-1. inspect working tree status
-2. review the new primitive files
-3. commit the primitive rollout if it looks correct
-4. continue the same pattern for `Today`, `Bedtime`, `Rewards`, `You`
-
-Recommended verification after each screen batch:
+Last verified after `92b29eb`:
 
 ```zsh
 cd /Users/mahdi/pardis-kmp
 ./gradlew :PardisAndroidApp:compileDebugKotlin --no-daemon
 ```
 
-```zsh
-cd /Users/mahdi/pardis-kmp/iosApp
-xcodegen generate
+Result: build succeeded.
 
+```zsh
 cd /Users/mahdi/pardis-kmp
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Debug -destination 'generic/platform=iOS Simulator' build
 ```
 
----
+Result: build succeeded.
 
-## Files most relevant for the next person
+## Next Work
 
-### Design system
-- `design-system/tokens.json`
-- `app/src/main/java/app/pardis/design/PardisTheme.kt`
-- `iosApp/iosApp/PardisTheme.swift`
+Continue in this order:
 
-### New primitive layer
-- `app/src/main/java/app/pardis/android/ui/PardisPrimitives.kt`
-- `iosApp/iosApp/PardisPrimitives.swift`
+### 1. Bedtime / Lullabies
 
-### Current screen usage
-- `app/src/main/java/app/pardis/android/ui/PardisApp.kt`
-- `iosApp/iosApp/ContentView.swift`
+Build the native Bedtime screen with:
 
-### Tracking
-- `tasks/todo.md`
-- `tasks/lessons.md`
+- dark/night tokenized hero panel
+- lullaby/loop-mode surface
+- calm story or lullaby list
+- shared state contract only if existing Library state is not enough
 
+### 2. Rewards
+
+Build native progress primitives:
+
+- achievement card
+- reading streak/status panel
+- vocab recap surface
+- collection progress tiles
+
+This likely needs new shared progress/rewards state rather than local-only UI.
+
+### 3. You / Child Profile
+
+Build the profile area around the future child profile/PIN contract:
+
+- profile summary card
+- family settings entry points
+- offline/manage-downloads entry point
+- PIN/auth placeholders only until shared contracts exist
+
+### 4. Assets
+
+Fonts and final branded icons are not yet in the app. Current font roles and icon primitives are structural placeholders that compile and keep UI native.
+
+## Resume Checklist
+
+Start every follow-up with:
+
+```zsh
+cd /Users/mahdi/pardis-kmp
+git status --short --branch
+git log --oneline -5
+```
+
+Expected clean baseline at this handoff:
+
+```text
+## main...origin/main
+92b29eb Add native Today tab composite
+f35b689 Add native root tab shell
+1a19782 Add native font roles and icon primitives
+f2f0cee Build native theme and story composites
+2006bef Extract native reader and library primitives
+```
+
+If `main` has moved, inspect the new commits before continuing.
+
+## Rules To Keep
+
+- Do not convert the standalone HTML/React design directly into Compose or SwiftUI.
+- Extract tokens, primitives, then native composites.
+- Do not put UI in `shared/`.
+- Do not add platform types to shared `UiState`.
+- Do not add navigation events to shared ViewModels.
+- Use Pardis tokens only; no raw colors or ad hoc dimensions for new visuals.
+- Keep Persian RTL scoped to Persian content.
