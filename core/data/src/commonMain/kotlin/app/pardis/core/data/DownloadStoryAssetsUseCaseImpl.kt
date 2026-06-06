@@ -16,7 +16,7 @@ class DownloadStoryAssetsUseCaseImpl(
     private val getPages: GetStoryPagesUseCase
 ) : DownloadStoryAssetsUseCase {
 
-    override suspend fun invoke(slug: String, onProgress: (String) -> Unit): StoryAssetsResult {
+    override suspend fun invoke(slug: String, preferVideoLang: String, onProgress: (String) -> Unit): StoryAssetsResult {
         // Ensure we have story metadata (for video urls)
         val story = getStory(slug)
             ?: return StoryAssetsResult(hadVideo = false, videoCached = false, total = 0, succeeded = 0)
@@ -26,7 +26,13 @@ class DownloadStoryAssetsUseCaseImpl(
         // simply add 0 page-asset jobs. This makes "Cache video + assets" more robust.
 
         return coroutineScope {
-            val videoUrl = story.videoUrlFa ?: story.videoUrlEn
+            // Honor the requested language, falling back to the other track when only one exists.
+            val videoUrl = if (preferVideoLang == "en") {
+                story.videoUrlEn ?: story.videoUrlFa
+            } else {
+                story.videoUrlFa ?: story.videoUrlEn
+            }
+            val videoLang = if (videoUrl != null && videoUrl == story.videoUrlEn) "en" else "fa"
             val hadVideo = videoUrl != null
 
             // Pre-count total assets for progress
@@ -47,11 +53,10 @@ class DownloadStoryAssetsUseCaseImpl(
             val jobs = mutableListOf<Deferred<String?>>()
             var videoJob: Deferred<String?>? = null
 
-            // Prefer fa video
+            // Cache the requested-language video (key matches getLocalVideoPath used by the reader).
             if (videoUrl != null) {
-                val lang = if (story.videoUrlFa != null) "fa" else "en"
                 val job = async {
-                    val res = assetCache.downloadAssetIfNeeded(slug, "video", lang, videoUrl)
+                    val res = assetCache.downloadAssetIfNeeded(slug, "video", videoLang, videoUrl)
                     done++
                     report()
                     res

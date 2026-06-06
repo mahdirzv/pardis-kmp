@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import Shared
 import SwiftUI
@@ -28,11 +29,53 @@ final class ReaderSharedViewModel {
     var localIllustrationUrls: [Int: String] = [:]
     var localNarrationUrls: [String: String] = [:] // "fa-3" etc.
     var preferredNarrationLang: String = "fa"
+    var playbackRate: Float = 1.0
     var cues: [SubtitleCue] = []
     var selectedVocab: VocabItem? = nil
 
+    // Retained one-shot audio player for narration / vocab pronunciation. A local AVPlayer would be
+    // deallocated when the button closure returns (so it wouldn't reliably play); we keep a single
+    // strong reference and clean up its end-observer to avoid leaking observers on every tap.
+    private var audioPlayer: AVPlayer?
+    private var audioEndObserver: NSObjectProtocol?
+
     init(viewModel: ReaderViewModel = PardisViewModelProvider.shared.readerViewModel()) {
         self.viewModel = viewModel
+    }
+
+    /// Play a one-shot audio clip (narration or vocab). Retains the player so it actually plays,
+    /// applies the playback rate, and (for narration) auto-advances to the next page on completion.
+    func playAudio(urlString: String, rate: Float = 1.0, autoAdvance: Bool = false) {
+        guard let url = URL(string: urlString) else { return }
+        stopAudio() // tear down any prior clip + its observer first
+
+        let player = AVPlayer(url: url)
+        audioPlayer = player
+        if let item = player.currentItem {
+            audioEndObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: item,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                if autoAdvance && !self.isVideoMode && self.currentPage < self.pages.count - 1 {
+                    self.nextPage()
+                }
+                self.stopAudio()
+            }
+        }
+        player.play()
+        player.rate = rate
+    }
+
+    /// Stop any playing clip and remove its end-observer (idempotent).
+    func stopAudio() {
+        audioPlayer?.pause()
+        if let observer = audioEndObserver {
+            NotificationCenter.default.removeObserver(observer)
+            audioEndObserver = nil
+        }
+        audioPlayer = nil
     }
 
     func activate() async {
@@ -105,6 +148,7 @@ final class ReaderSharedViewModel {
         self.localIllustrationUrls = state.localIllustrationUrls
         self.localNarrationUrls = state.localNarrationUrls
         self.preferredNarrationLang = state.preferredNarrationLang
+        self.playbackRate = state.playbackRate
         self.cues = state.cues
         self.selectedVocab = state.selectedVocab
     }

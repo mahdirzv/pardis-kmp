@@ -192,7 +192,7 @@ class ReaderViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null, downloadProgress = "Starting download...") }
             try {
-                val result = downloadStoryAssets(slug) { progress ->
+                val result = downloadStoryAssets(slug, lang) { progress ->
                     _uiState.update { it.copy(downloadProgress = progress) }
                 }
                 // Resolve whatever cached — partial success still enables offline illustrations/audio.

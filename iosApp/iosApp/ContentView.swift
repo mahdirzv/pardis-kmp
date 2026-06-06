@@ -272,23 +272,9 @@ struct ReaderScreen: View {
                                     model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
                                 }
                                 let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
-                                if let u = urlStr, let url = URL(string: u) {
-                                    // Demo: fire-and-forget AVPlayer for narration clip (real: retain + control in VM/adapter)
-                                    let player = AVPlayer(url: url)
-                                    player.play()
-                                    player.rate = model.playbackRate
-                                    // Basic auto-advance after clip ends (text mode only)
-                                    if let item = player.currentItem {
-                                        NotificationCenter.default.addObserver(
-                                            forName: .AVPlayerItemDidPlayToEndTime,
-                                            object: item,
-                                            queue: .main
-                                        ) { _ in
-                                            if !model.isVideoMode {
-                                                model.nextPage()
-                                            }
-                                        }
-                                    }
+                                if let u = urlStr {
+                                    // Retained player in the VM: plays reliably, applies rate, auto-advances on end.
+                                    model.playAudio(urlString: u, rate: model.playbackRate, autoAdvance: true)
                                 }
                             }
                         }
@@ -328,10 +314,10 @@ struct ReaderScreen: View {
                 if let ctx = v.context {
                     Text("in: \(ctx)").font(.caption).foregroundStyle(PardisColors.inkMuted)
                 }
-                if let audio = v.audioUrl, let url = URL(string: audio) {
+                if let audio = v.audioUrl {
                     Button("▶ Play pronunciation") {
-                        let p = AVPlayer(url: url)
-                        p.play()
+                        // Retained player in the VM so it isn't deallocated before it plays.
+                        model.playAudio(urlString: audio, rate: 1.0, autoAdvance: false)
                     }.padding(.top, 4)
                 }
                 Button("Close") { model.dismissVocab() }

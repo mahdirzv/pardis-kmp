@@ -27,8 +27,14 @@ data class StoryAssetsResult(
  */
 interface DownloadStoryAssetsUseCase {
     /**
+     * @param preferVideoLang which video track to cache when the story has both ("fa" or "en");
+     *        falls back to the other language if the preferred one is missing.
      * @param onProgress callback for status updates like "Downloaded 3/12 assets..."
      * @return a [StoryAssetsResult] describing how many assets cached and whether the video is offline-ready.
      */
-    suspend operator fun invoke(slug: String, onProgress: (String) -> Unit = {}): StoryAssetsResult
+    suspend operator fun invoke(
+        slug: String,
+        preferVideoLang: String = "fa",
+        onProgress: (String) -> Unit = {},
+    ): StoryAssetsResult
 }

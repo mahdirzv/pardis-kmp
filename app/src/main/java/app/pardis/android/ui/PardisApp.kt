@@ -410,12 +410,19 @@ fun ReaderScreen(
                     }
                 }
 
-                // When page changes (by user or cue), seek video to the cue start for that page
+                // When the page changes, seek the video to that page's cue start — but ONLY for
+                // user-initiated jumps (Prev/Next/restore). When the video itself drives the page
+                // change (cue ticker above), the playback position is already inside the new cue,
+                // so seeking would rewind the video to the cue start and stutter at every boundary.
                 LaunchedEffect(state.currentPage, exoPlayer, state.isVideoMode) {
                     if (state.isVideoMode) {
                         val cue = state.cues.firstOrNull { it.pageIndex == state.currentPage }
                         if (cue != null) {
-                            exoPlayer.seekTo((cue.startSec * 1000).toLong().coerceAtLeast(0))
+                            val posSec = exoPlayer.currentPosition / 1000.0
+                            val alreadyInCue = posSec >= cue.startSec && posSec < cue.endSec
+                            if (!alreadyInCue) {
+                                exoPlayer.seekTo((cue.startSec * 1000).toLong().coerceAtLeast(0))
+                            }
                         }
                     }
                 }
@@ -614,9 +621,14 @@ fun ReaderScreen(
                                 url?.let {
                                     val mp = MediaPlayer().apply {
                                         setDataSource(it)
-                                        // Set rate (API 23+)
-                                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                                            playbackParams = playbackParams.setSpeed(state.playbackRate)
+                                        setOnPreparedListener { prepared ->
+                                            prepared.start()
+                                            // Set rate (API 23+) once playing; ignore if device rejects it.
+                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                                try {
+                                                    prepared.playbackParams = prepared.playbackParams.setSpeed(state.playbackRate)
+                                                } catch (_: Exception) { /* keep default rate */ }
+                                            }
                                         }
                                         setOnCompletionListener { completed ->
                                             completed.release()
@@ -626,8 +638,13 @@ fun ReaderScreen(
                                                 onAction(ReaderAction.NextPage)
                                             }
                                         }
-                                        prepare()
-                                        start()
+                                        setOnErrorListener { p, _, _ ->
+                                            p.release()
+                                            if (narrationPlayer.value == p) narrationPlayer.value = null
+                                            true
+                                        }
+                                        // Async prepare: never block the UI thread on a (possibly remote) narration URL.
+                                        prepareAsync()
                                     }
                                     narrationPlayer.value = mp
                                 }
@@ -687,9 +704,16 @@ fun ReaderScreen(
                             }
                             if (v.audioUrl != null) {
                                 TextButton(onClick = {
-                                    // reuse narration style play for vocab audio if present
+                                    // One-shot vocab pronunciation. prepareAsync (no main-thread block) and
+                                    // always release on completion/error so we don't leak a player per tap.
                                     val mp = android.media.MediaPlayer()
-                                    try { mp.setDataSource(v.audioUrl); mp.prepare(); mp.start() } catch (_: Exception) { mp.release() }
+                                    try {
+                                        mp.setDataSource(v.audioUrl)
+                                        mp.setOnPreparedListener { it.start() }
+                                        mp.setOnCompletionListener { it.release() }
+                                        mp.setOnErrorListener { p, _, _ -> p.release(); true }
+                                        mp.prepareAsync()
+                                    } catch (_: Exception) { mp.release() }
                                 }) { Text("▶ Play pronunciation") }
                             }
                             TextButton(onClick = { onAction(ReaderAction.DismissVocab) }) {

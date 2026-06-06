@@ -90,20 +90,22 @@ class LibraryViewModel(
                 stories.value = result
                 analytics.track("library_loaded", mapOf("count" to result.size))
 
-                // Check which stories have local video assets cached (for offline badge in list)
-                val cached = result.mapNotNull { story ->
-                    val hasFa = getLocalAssetPath(story.slug, "video", "fa") != null
-                    val hasEn = getLocalAssetPath(story.slug, "video", "en") != null
-                    if (hasFa || hasEn) story.slug else null
-                }.toSet()
-                cachedSlugs.value = cached
-
                 // Resolve local covers for offline library cards
                 val covers = mutableMapOf<String, String>()
                 result.forEach { story ->
                     getLocalAssetPath(story.slug, "cover", "")?.let { covers[story.slug] = it }
                 }
                 localCoverUrls.value = covers
+
+                // A story counts as offline-cached if its video OR its cover is present. The cover is
+                // always part of a cache run, so this matches the reader's "any local asset" badge and
+                // stays correct for partial-success caches (assets saved, video failed).
+                val cached = result.mapNotNull { story ->
+                    val hasVideo = getLocalAssetPath(story.slug, "video", "fa") != null ||
+                        getLocalAssetPath(story.slug, "video", "en") != null
+                    if (hasVideo || covers.containsKey(story.slug)) story.slug else null
+                }.toSet()
+                cachedSlugs.value = cached
             } catch (t: Throwable) {
                 error.value = t.message ?: "Failed to load stories"
             } finally {
