@@ -14,16 +14,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import app.pardis.android.R
 
+/**
+ * Bundled Rivana type families (OFL). We ship variable TTFs and request each weight via
+ * FontVariation (effective on API 26+; older devices fall back to the default instance).
+ */
+@OptIn(ExperimentalTextApi::class)
+private fun variableFont(resId: Int, weight: FontWeight) =
+    Font(resId, weight = weight, variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)))
+
+@OptIn(ExperimentalTextApi::class)
 object PardisFonts {
-    val display = FontFamily.SansSerif
-    val body = FontFamily.SansSerif
-    val persian = FontFamily.SansSerif
-    val mono = FontFamily.Monospace
+    val display = FontFamily(
+        variableFont(R.font.bricolage_grotesque, FontWeight.Medium),
+        variableFont(R.font.bricolage_grotesque, FontWeight.SemiBold),
+        variableFont(R.font.bricolage_grotesque, FontWeight.Bold),
+        variableFont(R.font.bricolage_grotesque, FontWeight.ExtraBold),
+    )
+    val body = FontFamily(
+        variableFont(R.font.plus_jakarta_sans, FontWeight.Normal),
+        variableFont(R.font.plus_jakarta_sans, FontWeight.Medium),
+        variableFont(R.font.plus_jakarta_sans, FontWeight.SemiBold),
+        variableFont(R.font.plus_jakarta_sans, FontWeight.Bold),
+    )
+    val persian = FontFamily(
+        variableFont(R.font.vazirmatn, FontWeight.Normal),
+        variableFont(R.font.vazirmatn, FontWeight.Medium),
+        variableFont(R.font.vazirmatn, FontWeight.SemiBold),
+    )
+    val mono = FontFamily(
+        variableFont(R.font.jetbrains_mono, FontWeight.Medium),
+        variableFont(R.font.jetbrains_mono, FontWeight.SemiBold),
+    )
 }
 
 private val PardisLightColorScheme = lightColorScheme(
