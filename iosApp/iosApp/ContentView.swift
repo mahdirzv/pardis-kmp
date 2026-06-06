@@ -356,8 +356,8 @@ struct ReaderScreen: View {
                 Text("Vocab").font(.headline).foregroundStyle(PardisColors.indigo)
                 Text("\(v.fa)  (\(v.translit))").font(.title3)
                 Text(v.en).font(.body)
-                if let ctx = v.context {
-                    Text("in: \(ctx)").font(.caption).foregroundStyle(PardisColors.inkMuted)
+                if !v.context.isEmpty {
+                    Text("in: \(v.context)").font(.caption).foregroundStyle(PardisColors.inkMuted)
                 }
                 if let audio = v.audioUrl {
                     Button("▶ Play pronunciation") {
