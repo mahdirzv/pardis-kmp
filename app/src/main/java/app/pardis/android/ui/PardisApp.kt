@@ -164,6 +164,14 @@ fun LibraryScreen(
         Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
             Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")
         }
+        if (state.totalCachedLabel.isNotEmpty()) {
+            Spacer(Modifier.height(PardisSpacing.xs))
+            Text(
+                "Cached offline: ${state.totalCachedLabel}",
+                style = MaterialTheme.typography.labelSmall,
+                color = PardisColors.inkSoft
+            )
+        }
         Spacer(Modifier.height(PardisSpacing.md))
 
         if (state.isLoading && state.stories.isEmpty()) {
@@ -187,8 +195,13 @@ fun LibraryScreen(
                     minutes = story.minutes,
                     vocabCount = story.vocabCount,
                     coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
-                    isCachedOffline = state.cachedStorySlugs.contains(story.slug),
-                    onClick = { onOpenStory(story.slug) }
+                    downloadProgress = state.downloadProgress[story.slug],
+                    downloadedSizeLabel = state.downloadedSizeLabels[story.slug],
+                    isFailed = state.failedDownloads.contains(story.slug),
+                    onClick = { onOpenStory(story.slug) },
+                    onDownload = { onAction(LibraryAction.DownloadStory(story.slug)) },
+                    onCancel = { onAction(LibraryAction.CancelDownload(story.slug)) },
+                    onRemove = { onAction(LibraryAction.RemoveDownload(story.slug)) },
                 )
             }
         }
@@ -212,8 +225,13 @@ private fun StoryCard(
     minutes: Int,
     vocabCount: Int,
     coverUrl: String?,
-    isCachedOffline: Boolean = false,
-    onClick: () -> Unit
+    downloadProgress: String?,
+    downloadedSizeLabel: String?,
+    isFailed: Boolean,
+    onClick: () -> Unit,
+    onDownload: () -> Unit,
+    onCancel: () -> Unit,
+    onRemove: () -> Unit,
 ) {
     PardisCard(
         modifier = Modifier
@@ -221,37 +239,58 @@ private fun StoryCard(
             .clickable(onClick = onClick),
         onClick = onClick
     ) {
-        Row(Modifier.padding(PardisSpacing.md)) {
-            if (coverUrl != null) {
-                AsyncImage(
-                    model = coverUrl,
-                    contentDescription = "Cover image for story: $titleEn in $ageBand age band",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .padding(end = PardisSpacing.sm)
-                )
+        Column(Modifier.padding(PardisSpacing.md)) {
+            Row {
+                if (coverUrl != null) {
+                    AsyncImage(
+                        model = coverUrl,
+                        contentDescription = "Cover image for story: $titleEn in $ageBand age band",
+                        modifier = Modifier
+                            .size(60.dp)
+                            .padding(end = PardisSpacing.sm)
+                    )
+                }
+                Column {
+                    Text(
+                        titleEn,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PardisColors.ink,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(titleFa, style = MaterialTheme.typography.bodyLarge, color = PardisColors.indigo)
+                    Spacer(Modifier.height(PardisSpacing.xs))
+                    Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm), verticalAlignment = Alignment.CenterVertically) {
+                        Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
+                        Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+                    }
+                }
             }
-            Column {
-                Text(
-                    titleEn,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = PardisColors.ink,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    titleFa,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = PardisColors.indigo
-                )
-                Spacer(Modifier.height(PardisSpacing.xs))
-                Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm), verticalAlignment = Alignment.CenterVertically) {
-                    Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
-                    Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
-                    if (isCachedOffline) {
-                        Spacer(Modifier.width(PardisSpacing.xs))
-                        Text("✓ Offline", style = MaterialTheme.typography.labelSmall, color = PardisColors.mint)
+            Spacer(Modifier.height(PardisSpacing.sm))
+            // Offline download control: reflects OfflineDownloadManager state for this story.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                when {
+                    downloadProgress != null -> {
+                        Text(downloadProgress, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
+                        Spacer(Modifier.weight(1f))
+                        OutlinedButton(onClick = onCancel) { Text("Cancel", style = MaterialTheme.typography.labelSmall) }
+                    }
+                    downloadedSizeLabel != null -> {
+                        Text("✓ Offline ($downloadedSizeLabel)", style = MaterialTheme.typography.labelSmall, color = PardisColors.mint)
+                        Spacer(Modifier.weight(1f))
+                        OutlinedButton(onClick = onRemove) { Text("Remove", style = MaterialTheme.typography.labelSmall) }
+                    }
+                    isFailed -> {
+                        Text("Download failed", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.weight(1f))
+                        Button(onClick = onDownload) { Text("Retry", style = MaterialTheme.typography.labelSmall) }
+                    }
+                    else -> {
+                        Spacer(Modifier.weight(1f))
+                        Button(onClick = onDownload, colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)) {
+                            Text("Download offline", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
