@@ -38,6 +38,8 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
     implementation(project(":core:network"))
+    implementation(project(":core:database"))
+    implementation(project(":core:data"))   // for AndroidVideoCache (real impl of VideoCache for offline video)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.koin.android)
@@ -45,6 +47,13 @@ dependencies {
 
     // Coil for images with prefetch support
     implementation(libs.coil.compose)
+
+    // Proper navigation
+    implementation(libs.androidx.navigation.compose)
+
+    // Media3 for MP4 video player
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 
     // Compose (use BOM or direct; for simplicity direct from versions)
     implementation("androidx.compose.ui:ui:1.7.6")

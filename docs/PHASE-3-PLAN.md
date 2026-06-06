@@ -1,6 +1,7 @@
 # Phase 3 Plan: Polish, Auth, Polish
 
-**Progress note (as of latest continuation)**: Phase 3 initial + continuation done: tokens, Supabase auth prep, RTL, analytics, components (PardisCard + VocabChip), image loading/prefetch (Coil+AsyncImage), CI basic. Builds verified. See ROADMAP for checkboxes. Remaining polish can be incremental.
+**Progress note (as of latest continuation)**: Phase 1 video+audio+progress+offline-assets on feature/phase1-offline-page-assets (generalized OfflineAssetCache for video/illustration/narration, DownloadStoryAssetsUseCase for full page assets when caching video, local path resolution in VM/UiState for images + audio, library cached badges, polished "Cache video + assets" UX + indicators in shells). Builds on prior video UX + pages cache. ROADMAP updated. Fix for "Cache video + assets" triggering download fail + MediaCodec detach logs: rich cache select in getStories, try/catch+nonfatal feedback in VM, stable ExoPlayer+LaunchedEffect source switch (no recreate on local). Recent hardening: explicit OkHttp + long timeouts + detailed error logging in Android cache.  
+**Comprehensive hands-off report** (what's done, what's left, current goal, how to verify/continue, risks, key files): `docs/PHASE1-OFFLINE-ASSETS-HANDOFF.md`. Next: diagnose remaining download failures via the new logs, streaming video download, full bundle (Phase 2).
 
 **Goal**: Take the current working KMP reader (library list + basic pager with real Supabase data) and deliver production-ready polish, auth foundations, and supporting infrastructure while strictly following `docs/kmpSkill.md`, the Pardis KMP delivery skill, and using Beforely **only** as an internal reference for clean architecture (never copy code/names).
 
@@ -163,8 +164,8 @@ Current: Basic `PardisColors`, `PardisSpacing`, `PardisRadius`, `PardisMotion` (
 ## Sequencing & Milestones
 - Milestone 3.1: Auth-capable client + design tokens expansion (2-3 PRs).
 - Milestone 3.2: Components + a11y/RTL + performance basics.
-- Milestone 3.3: Analytics + CI.
-- Milestone 3.4: Icons + launch + metadata.
+- Milestone 3.3: Analytics + CI. (done, with iOS placeholder)
+- Milestone 3.4: Icons + launch + metadata. (in progress on branch; icons polished, metadata stubs, launch theme)
 - After each: update ROADMAP checkboxes, run full verification builds, test on device/sim (RTL + FA text critical).
 - Cross-check with parent Pardis AGENTS.md for any web alignment (e.g. event names).
 

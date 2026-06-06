@@ -27,6 +27,7 @@ kotlin {
             implementation(project(":core:domain"))
             implementation(project(":core:data"))
             implementation(project(":core:network"))
+            implementation(project(":core:database"))
             implementation(libs.koin.core)
         }
     }

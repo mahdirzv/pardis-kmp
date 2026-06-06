@@ -23,3 +23,10 @@ jobs:
   # iOS job would require macos-latest + xcode setup for full framework + build
   # For now, Android validates shared logic + native shell.
   # TODO Phase 3+: add iOS job with setup-xcode etc.
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: setup Xcode, build shared framework, xcodebuild
+      - name: iOS build placeholder (requires Xcode + KMP framework gen)
+        run: echo "Run: xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination 'generic/platform=iOS Simulator' build" || true

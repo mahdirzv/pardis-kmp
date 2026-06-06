@@ -9,5 +9,8 @@ import app.pardis.core.model.StoryPage
  */
 interface StoryRepository {
     suspend fun getStories(): List<Story>
+    suspend fun getStory(slug: String): Story?
     suspend fun getStoryPages(slug: String): List<StoryPage>
+    suspend fun saveProgress(slug: String, page: Int)
+    suspend fun getProgress(slug: String): Int?
 }

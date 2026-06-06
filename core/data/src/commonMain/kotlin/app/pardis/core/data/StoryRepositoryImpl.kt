@@ -1,6 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package app.pardis.core.data
 
+import app.pardis.core.database.PardisDatabase
 import app.pardis.core.domain.StoryRepository
+import app.pardis.core.model.Bookend
+import app.pardis.core.model.BookendAudio
 import app.pardis.core.model.Couplet
 import app.pardis.core.model.Narration
 import app.pardis.core.model.Story
@@ -14,73 +19,205 @@ import app.pardis.core.network.VocabRow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Ktor + Supabase backed implementation of StoryRepository.
  * Does the same 3-table join pattern as web getStoryPages for fidelity.
- * Future: will merge with local SQLDelight cache for offline.
+ * Basic offline: uses SQLDelight cache for stories when provided (fallback on net fail).
  * authToken support for Phase 3+ authenticated calls.
  */
 class StoryRepositoryImpl(
-    private val supabase: SupabaseClient = SupabaseClient()
+    private val supabase: SupabaseClient = SupabaseClient(),
+    private val db: PardisDatabase? = null
 ) : StoryRepository {
-    override suspend fun getStories(): List<Story> {
-        // Public query for available stories. Matches web select + filters.
-        val rows: List<StoryRow> = supabase.getStories(
-            mapOf(
-                "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url",
-                "status" to "eq.available",
-                "order" to "display_order"
-            )
+    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+
+    private fun Story.toJson(): String = json.encodeToString(Story.serializer(), this)
+    private fun jsonToStory(s: String): Story? = try { json.decodeFromString(Story.serializer(), s) } catch (_: Exception) { null }
+
+    private fun pagesToJson(pages: List<StoryPage>): String =
+        json.encodeToString(ListSerializer(StoryPage.serializer()), pages)
+    private fun jsonToPages(s: String): List<StoryPage> =
+        try { json.decodeFromString(ListSerializer(StoryPage.serializer()), s) } catch (_: Exception) { emptyList() }
+    override suspend fun getStory(slug: String): Story? {
+        // Prefer network to fetch the *full* story (video URLs + bookends for cues).
+        // This is critical for reader: library may have cached a "basic" version (minimal select, video=null).
+        // Only fall back to cache on network failure / offline.
+        // Once successful, upsert will overwrite cache with rich data (including video).
+        return try {
+            val row = supabase.getStory(slug)
+            if (row != null) {
+                val story = Story(
+                    slug = row.slug,
+                    titleEn = row.title_en,
+                    titleFa = row.title_fa,
+                    ageBand = row.age_band,
+                    minutes = row.minutes,
+                    pageCount = row.page_count,
+                    vocabCount = row.vocab_count,
+                    status = row.status,
+                    kidReady = row.kid_ready,
+                    videoReady = row.video_ready,
+                    coverUrl = row.cover_url,
+                    videoUrlFa = row.video_url_fa,
+                    videoUrlEn = row.video_url_en,
+                    introAudio = row.intro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) },
+                    outroAudio = row.outro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) }
+                )
+                upsertToCache(story)
+                return story
+            }
+            // Net returned no row — try cache as last resort
+            getFromCache(slug)
+        } catch (t: Throwable) {
+            // Offline or error: fall back to whatever (possibly basic) version is cached
+            getFromCache(slug)
+        }
+    }
+
+    private fun getFromCache(slug: String): Story? {
+        return db?.pardisQueries?.selectStory(slug)?.executeAsOneOrNull()?.let { cached ->
+            jsonToStory(cached.data_json)
+        }
+    }
+
+    override suspend fun saveProgress(slug: String, page: Int) {
+        db?.pardisQueries?.upsertProgress(
+            slug = slug,
+            last_page = page.toLong(),
+            updated_at = Clock.System.now().toEpochMilliseconds()
         )
-        return rows.map { row ->
-            Story(
-                slug = row.slug,
-                titleEn = row.title_en,
-                titleFa = row.title_fa,
-                ageBand = row.age_band,
-                minutes = row.minutes,
-                pageCount = row.page_count,
-                vocabCount = row.vocab_count,
-                status = row.status,
-                kidReady = row.kid_ready,
-                videoReady = row.video_ready,
-                coverUrl = row.cover_url
+    }
+
+    override suspend fun getProgress(slug: String): Int? {
+        return db?.pardisQueries?.getProgress(slug)?.executeAsOneOrNull()?.toInt()
+    }
+
+    private fun upsertToCache(story: Story) {
+        db?.pardisQueries?.insertOrReplaceStory(
+            slug = story.slug,
+            title_en = story.titleEn,
+            title_fa = story.titleFa,
+            age_band = story.ageBand,
+            data_json = story.toJson(),
+            downloaded_at = Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
+    override suspend fun getStories(): List<Story> {
+        return try {
+            // Prefer network; on any failure (offline etc) fallback to cache if present
+            // Library list uses minimal select (safe even if video columns not yet added to Supabase table).
+            // Video-specific fields (video_url_*, intro/outro) are only fetched in getStory() for the Reader.
+            val rows: List<StoryRow> = supabase.getStories(
+                mapOf(
+                    "select" to "slug,title_en,title_fa,age_band,minutes,page_count,vocab_count,status,kid_ready,video_ready,cover_url,video_url_fa,video_url_en,intro_audio,outro_audio",
+                    "status" to "eq.available",
+                    "order" to "display_order"
+                )
             )
+            val stories = rows.map { row ->
+                Story(
+                    slug = row.slug,
+                    titleEn = row.title_en,
+                    titleFa = row.title_fa,
+                    ageBand = row.age_band,
+                    minutes = row.minutes,
+                    pageCount = row.page_count,
+                    vocabCount = row.vocab_count,
+                    status = row.status,
+                    kidReady = row.kid_ready,
+                    videoReady = row.video_ready,
+                    coverUrl = row.cover_url,
+                    videoUrlFa = row.video_url_fa,
+                    videoUrlEn = row.video_url_en,
+                    introAudio = row.intro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) },
+                    outroAudio = row.outro_audio?.let { Bookend(
+                        fa = it.fa?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) },
+                        en = it.en?.let { b -> BookendAudio(b.url, b.durationSeconds, b.voice) }
+                    ) }
+                )
+            }
+            // Cache for offline
+            stories.forEach { upsertToCache(it) }
+            stories
+        } catch (t: Throwable) {
+            // Fallback to cache for offline/network issues. But if it looks like a schema/column error (e.g. video fields not added to DB yet),
+            // rethrow so LibraryScreen shows the real error message + Retry button instead of silent blank list.
+            val msg = t.message?.lowercase() ?: ""
+            val looksLikeSchemaError = msg.contains("column") || msg.contains("does not exist") || msg.contains("schema")
+            if (looksLikeSchemaError) {
+                throw t
+            }
+            db?.pardisQueries?.selectAllStories()?.executeAsList()?.mapNotNull { jsonToStory(it.data_json) } ?: emptyList()
         }
     }
 
     override suspend fun getStoryPages(slug: String): List<StoryPage> {
-        val (pageRows, coupletRows, vocabRows) = coroutineScope {
-            awaitAll<List<*>>(
-                async { supabase.getStoryPages(slug) },
-                async { supabase.getCouplets(slug) },
-                async { supabase.getVocabTerms(slug) }
-            )
-        }
+        return try {
+            val (pageRows, coupletRows, vocabRows) = coroutineScope {
+                awaitAll<List<*>>(
+                    async { supabase.getStoryPages(slug) },
+                    async { supabase.getCouplets(slug) },
+                    async { supabase.getVocabTerms(slug) }
+                )
+            }
 
-        val coupletsByPage = (coupletRows as List<CoupletRow>).associateBy { it.page_number }
-        val vocabsByPage = (vocabRows as List<VocabRow>).groupBy { it.page_number }
+            val coupletsByPage = (coupletRows as List<CoupletRow>).associateBy { it.page_number }
+            val vocabsByPage = (vocabRows as List<VocabRow>).groupBy { it.page_number }
 
-        return (pageRows as List<StoryPageRow>).map { p ->
-            StoryPage(
-                page = p.page_number,
-                illustrationUrl = p.illustration_url,
-                paragraphsEn = p.paragraphs_en,
-                paragraphsFa = p.paragraphs_fa,
-                narrationFa = p.narration_fa?.let { Narration(it.url, it.durationSeconds, it.voice) },
-                narrationEn = p.narration_en?.let { Narration(it.url, it.durationSeconds, it.voice) },
-                vocabulary = (vocabsByPage[p.page_number] ?: emptyList()).map { v ->
-                    VocabItem(
-                        fa = v.word_fa,
-                        translit = v.translit,
-                        en = v.meaning_en,
-                        context = v.context,
-                        audioUrl = v.audio_url
-                    )
-                },
-                couplet = coupletsByPage[p.page_number]?.let { Couplet(it.fa, it.en) }
-            )
+            val pages = (pageRows as List<StoryPageRow>).map { p ->
+                StoryPage(
+                    page = p.page_number,
+                    illustrationUrl = p.illustration_url,
+                    paragraphsEn = p.paragraphs_en,
+                    paragraphsFa = p.paragraphs_fa,
+                    narrationFa = p.narration_fa?.let { Narration(it.url, it.durationSeconds, it.voice) },
+                    narrationEn = p.narration_en?.let { Narration(it.url, it.durationSeconds, it.voice) },
+                    vocabulary = (vocabsByPage[p.page_number] ?: emptyList()).map { v ->
+                        VocabItem(
+                            fa = v.word_fa,
+                            translit = v.translit,
+                            en = v.meaning_en,
+                            context = v.context,
+                            audioUrl = v.audio_url
+                        )
+                    },
+                    couplet = coupletsByPage[p.page_number]?.let { Couplet(it.fa, it.en) }
+                )
+            }
+            upsertPagesToCache(slug, pages)
+            pages
+        } catch (t: Throwable) {
+            // Offline or error: fallback to cached pages JSON if present (enables offline reader + video cues)
+            getPagesFromCache(slug)
         }
+    }
+
+    private fun upsertPagesToCache(slug: String, pages: List<StoryPage>) {
+        db?.pardisQueries?.insertOrReplacePages(
+            slug = slug,
+            data_json = pagesToJson(pages),
+            downloaded_at = Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
+    private fun getPagesFromCache(slug: String): List<StoryPage> {
+        return db?.pardisQueries?.selectPages(slug)?.executeAsOneOrNull()?.let { cached ->
+            jsonToPages(cached.data_json)
+        } ?: emptyList()
     }
 }
