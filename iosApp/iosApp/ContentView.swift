@@ -62,6 +62,12 @@ struct LibraryScreen: View {
                 model.toggleShowOnlyCached()
             }
 
+            if !model.totalCachedLabel.isEmpty {
+                Text("Cached offline: \(model.totalCachedLabel)")
+                    .font(.caption)
+                    .foregroundStyle(PardisColors.inkSoft)
+            }
+
             if model.isLoading && model.stories.isEmpty {
                 ProgressView().tint(PardisColors.saffron)
             }
@@ -86,10 +92,30 @@ struct LibraryScreen: View {
                         Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
                             .font(.caption)
                             .foregroundStyle(PardisColors.inkMuted)
-                        if model.cachedStorySlugs.contains(story.slug) {
-                            Text("✓ Offline")
-                                .font(.caption)
-                                .foregroundStyle(PardisColors.mint)
+                        if let progress = model.downloadProgress[story.slug] {
+                            HStack {
+                                Text(progress).font(.caption).foregroundStyle(PardisColors.inkSoft)
+                                Spacer()
+                                Button("Cancel") { model.cancelDownload(story.slug) }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        } else if let size = model.downloadedSizeLabels[story.slug] {
+                            HStack {
+                                Text("✓ Offline (\(size))").font(.caption).foregroundStyle(PardisColors.mint)
+                                Spacer()
+                                Button("Remove") { model.removeDownload(story.slug) }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        } else if model.failedDownloads.contains(story.slug) {
+                            HStack {
+                                Text("Download failed").font(.caption).foregroundStyle(.red)
+                                Spacer()
+                                Button("Retry") { model.downloadStory(story.slug) }
+                                    .buttonStyle(.borderedProminent).controlSize(.small).tint(PardisColors.saffron)
+                            }
+                        } else {
+                            Button("Download offline") { model.downloadStory(story.slug) }
+                                .buttonStyle(.borderedProminent).controlSize(.small).tint(PardisColors.saffron)
                         }
                     }
                 }

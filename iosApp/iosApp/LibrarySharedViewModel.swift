@@ -21,6 +21,10 @@ final class LibrarySharedViewModel {
     var localCoverUrls: [String: String] = [:]
     var ageBands: [String] = []
     var selectedAgeBand: String? = nil
+    var downloadProgress: [String: String] = [:]
+    var downloadedSizeLabels: [String: String] = [:]
+    var failedDownloads: Set<String> = []
+    var totalCachedLabel: String = ""
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
@@ -48,6 +52,18 @@ final class LibrarySharedViewModel {
         viewModel.onAction(action: LibraryActionSetAgeBand(band: band))
     }
 
+    func downloadStory(_ slug: String) {
+        viewModel.onAction(action: LibraryActionDownloadStory(slug: slug))
+    }
+
+    func cancelDownload(_ slug: String) {
+        viewModel.onAction(action: LibraryActionCancelDownload(slug: slug))
+    }
+
+    func removeDownload(_ slug: String) {
+        viewModel.onAction(action: LibraryActionRemoveDownload(slug: slug))
+    }
+
     private func apply(_ state: LibraryUiState) {
         self.stories = state.stories
         self.isLoading = state.isLoading
@@ -58,5 +74,9 @@ final class LibrarySharedViewModel {
         self.localCoverUrls = state.localCoverUrls
         self.ageBands = state.ageBands
         self.selectedAgeBand = state.selectedAgeBand
+        self.downloadProgress = state.downloadProgress
+        self.downloadedSizeLabels = state.downloadedSizeLabels
+        self.failedDownloads = Set(state.failedDownloads)
+        self.totalCachedLabel = state.totalCachedLabel
     }
 }
