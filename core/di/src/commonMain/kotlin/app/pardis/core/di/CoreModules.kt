@@ -61,5 +61,7 @@ val pardisCoreModules = listOf(
         single<app.pardis.core.domain.DownloadStoryAssetsUseCase> { app.pardis.core.data.DownloadStoryAssetsUseCaseImpl(get(), get(), get()) }
 
         single<app.pardis.core.domain.ClearStoryAssetsUseCase> { app.pardis.core.data.ClearStoryAssetsUseCaseImpl(get()) }
+
+        single<app.pardis.core.domain.GetCachedSizeUseCase> { app.pardis.core.data.GetCachedSizeUseCaseImpl(get()) }
     }
 )

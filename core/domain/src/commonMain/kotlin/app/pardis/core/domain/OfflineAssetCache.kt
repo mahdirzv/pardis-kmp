@@ -29,4 +29,7 @@ interface OfflineAssetCache {
 
     /** Optional: clear cached assets for a slug for testing or management. */
     suspend fun clearAssetsForStory(slug: String)
+
+    /** Total bytes currently cached for a slug (sum of all asset files); 0 if nothing cached. */
+    suspend fun getCachedSizeBytes(slug: String): Long
 }

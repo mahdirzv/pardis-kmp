@@ -13,6 +13,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileSize
+import platform.Foundation.NSNumber
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 import platform.posix.O_CREAT
@@ -90,6 +92,18 @@ class IosOfflineAssetCache : OfflineAssetCache {
             val dir = assetsDir(slug)
             NSFileManager.defaultManager.removeItemAtPath(dir, null)
         }
+    }
+
+    override suspend fun getCachedSizeBytes(slug: String): Long = withContext(Dispatchers.IO) {
+        val dir = assetsDir(slug)
+        val fm = NSFileManager.defaultManager
+        val names = fm.contentsOfDirectoryAtPath(dir, null) ?: return@withContext 0L
+        var total = 0L
+        for (name in names) {
+            val attrs = fm.attributesOfItemAtPath("$dir/$name", null)
+            total += (attrs?.get(NSFileSize) as? NSNumber)?.longLongValue ?: 0L
+        }
+        total
     }
 
     private fun writeBytesToFile(path: String, bytes: ByteArray): Boolean {

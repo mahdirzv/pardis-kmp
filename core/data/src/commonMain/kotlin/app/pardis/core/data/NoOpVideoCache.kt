@@ -11,4 +11,5 @@ class NoOpOfflineAssetCache : OfflineAssetCache {
     override suspend fun getLocalAssetPath(slug: String, kind: String, subKey: String): String? = null
     override suspend fun downloadAssetIfNeeded(slug: String, kind: String, subKey: String, remoteUrl: String): String? = null
     override suspend fun clearAssetsForStory(slug: String) { /* no-op */ }
+    override suspend fun getCachedSizeBytes(slug: String): Long = 0L
 }

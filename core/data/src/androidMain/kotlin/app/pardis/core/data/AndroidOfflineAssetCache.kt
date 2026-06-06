@@ -91,4 +91,10 @@ class AndroidOfflineAssetCache(
             assetsDir(slug).deleteRecursively()
         }
     }
+
+    override suspend fun getCachedSizeBytes(slug: String): Long = withContext(Dispatchers.IO) {
+        val dir = File(context.cacheDir, "pardis/assets/$slug")
+        if (!dir.exists()) 0L
+        else dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    }
 }
