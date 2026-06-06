@@ -74,11 +74,18 @@ struct LibraryScreen: View {
             }
 
             PardisPanel {
-                TextField("Search stories", text: $model.searchQuery)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: model.searchQuery) {
-                        model.search(query: model.searchQuery)
-                    }
+                HStack(spacing: PardisSpacing.sm) {
+                    PardisIcon(kind: .search, size: 16, color: PardisColors.inkMuted)
+                    TextField("Search stories", text: $model.searchQuery)
+                        .textFieldStyle(.plain)
+                        .onChange(of: model.searchQuery) {
+                            model.search(query: model.searchQuery)
+                        }
+                }
+                .padding(.horizontal, PardisSpacing.sm)
+                .frame(height: 44)
+                .background(PardisColors.backgroundAlt)
+                .clipShape(RoundedRectangle(cornerRadius: PardisRadius.sm, style: .continuous))
             }
 
             if !model.ageBands.isEmpty {

@@ -4,6 +4,52 @@ import Shared
 private let pardisStoryCoverSize: CGFloat = 68
 private let pardisFeaturedStoryCoverHeight: CGFloat = 156
 
+enum PardisIconKind {
+    case back
+    case book
+    case close
+    case download
+    case play
+    case refresh
+    case search
+    case trash
+
+    var systemName: String {
+        switch self {
+        case .back:
+            return "chevron.left"
+        case .book:
+            return "book.closed"
+        case .close:
+            return "xmark"
+        case .download:
+            return "arrow.down.to.line"
+        case .play:
+            return "play.fill"
+        case .refresh:
+            return "arrow.clockwise"
+        case .search:
+            return "magnifyingglass"
+        case .trash:
+            return "trash"
+        }
+    }
+}
+
+struct PardisIcon: View {
+    let kind: PardisIconKind
+    var size: CGFloat = 18
+    var color: Color = PardisColors.ink
+
+    var body: some View {
+        Image(systemName: kind.systemName)
+            .font(.system(size: size, weight: .semibold))
+            .foregroundStyle(color)
+            .frame(width: size + PardisSpacing.xs, height: size + PardisSpacing.xs)
+            .accessibilityHidden(true)
+    }
+}
+
 struct PersianReaderText: View {
     let text: String
     let font: Font
@@ -34,10 +80,10 @@ struct PardisScreenHeader<Trailing: View>: View {
         HStack(alignment: .top, spacing: PardisSpacing.md) {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                 Text(title)
-                    .font(.system(size: PardisTypography.xxl, weight: .heavy, design: .rounded))
+                    .font(PardisFonts.display(size: PardisTypography.xxl, weight: .heavy))
                     .foregroundStyle(PardisColors.indigo)
                 Text(subtitle)
-                    .font(.system(size: PardisTypography.base, weight: .medium, design: .rounded))
+                    .font(PardisFonts.body(size: PardisTypography.base, weight: .medium))
                     .foregroundStyle(PardisColors.inkSoft)
             }
             Spacer(minLength: 0)
@@ -53,7 +99,7 @@ struct PardisMetaPill: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: PardisTypography.xs, weight: .semibold, design: .rounded))
+            .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
             .foregroundStyle(foreground)
             .padding(.horizontal, PardisSpacing.sm)
             .padding(.vertical, PardisSpacing.xs)
@@ -72,19 +118,24 @@ struct PardisSectionHeader: View {
         HStack(alignment: .center, spacing: PardisSpacing.md) {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                 Text(title)
-                    .font(.system(size: PardisTypography.xl, weight: .bold, design: .rounded))
+                    .font(PardisFonts.display(size: PardisTypography.xl, weight: .bold))
                     .foregroundStyle(PardisColors.ink)
                 if let subtitle {
-                    Text(subtitle)
-                        .font(.system(size: PardisTypography.sm, weight: .medium, design: .rounded))
+                        Text(subtitle)
+                        .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
                         .foregroundStyle(PardisColors.inkSoft)
                 }
             }
             Spacer(minLength: 0)
             if let actionLabel, let action {
-                Button(actionLabel, action: action)
-                    .font(.system(size: PardisTypography.sm, weight: .semibold, design: .rounded))
+                Button(action: action) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .refresh, size: 14, color: PardisColors.indigo)
+                        Text(actionLabel)
+                            .font(PardisFonts.body(size: PardisTypography.sm, weight: .semibold))
+                    }
                     .foregroundStyle(PardisColors.indigo)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -133,11 +184,11 @@ private struct PardisMetricTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
             Text(metric.value)
-                .font(.system(size: PardisTypography.base, weight: .bold, design: .rounded))
+                .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
                 .foregroundStyle(colors.foreground)
                 .lineLimit(1)
             Text(metric.label)
-                .font(.system(size: PardisTypography.xs, weight: .semibold, design: .rounded))
+                .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                 .foregroundStyle(PardisColors.inkSoft)
                 .lineLimit(1)
         }
@@ -160,7 +211,7 @@ struct PardisFilterPill: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: PardisTypography.sm, weight: .semibold, design: .rounded))
+                .font(PardisFonts.body(size: PardisTypography.sm, weight: .semibold))
                 .foregroundStyle(selected ? PardisComponentColors.chipSelectedContent : PardisComponentColors.chipContent)
                 .padding(.horizontal, PardisSpacing.md)
                 .padding(.vertical, PardisSpacing.sm)
@@ -213,7 +264,7 @@ struct PardisAsyncImageFrame: View {
                 ZStack {
                     PardisComponentColors.mediaPlaceholderContainer
                     Text(placeholderText)
-                        .font(.system(size: PardisTypography.sm, weight: .medium, design: .rounded))
+                        .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
                         .foregroundStyle(PardisComponentColors.mediaPlaceholderContent)
                 }
             }
@@ -258,12 +309,12 @@ struct PardisStoryCard: View {
 
                 VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                     Text(titleEn)
-                        .font(.system(size: PardisTypography.base, weight: .bold, design: .rounded))
+                        .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
                         .foregroundStyle(PardisColors.ink)
                         .lineLimit(1)
                     PersianReaderText(
                         text: titleFa,
-                        font: .system(size: PardisTypography.sm, weight: .medium, design: .rounded),
+                        font: PardisFonts.persian(size: PardisTypography.sm, weight: .medium),
                         color: PardisColors.indigo
                     )
                     .lineLimit(1)
@@ -321,24 +372,24 @@ struct PardisFeaturedStoryCard: View {
             )
 
             Text(eyebrow)
-                .font(.system(size: PardisTypography.xs, weight: .semibold, design: .rounded))
+                .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                 .foregroundStyle(PardisColors.inkMuted)
 
             Text(titleEn)
-                .font(.system(size: PardisTypography.xl, weight: .bold, design: .rounded))
+                .font(PardisFonts.display(size: PardisTypography.xl, weight: .bold))
                 .foregroundStyle(PardisColors.ink)
                 .lineLimit(2)
 
             PersianReaderText(
                 text: titleFa,
-                font: .system(size: PardisTypography.lg, weight: .semibold, design: .rounded),
+                font: PardisFonts.persian(size: PardisTypography.lg, weight: .semibold),
                 color: PardisColors.indigo
             )
             .lineLimit(1)
 
             if let blurb, !blurb.isEmpty {
                 Text(blurb)
-                    .font(.system(size: PardisTypography.sm, weight: .regular, design: .rounded))
+                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
                     .foregroundStyle(PardisColors.inkSoft)
                     .lineLimit(2)
             }
@@ -348,7 +399,12 @@ struct PardisFeaturedStoryCard: View {
                 PardisMetaPill(text: "\(vocabCount) words", background: PardisColors.indigoTint, foreground: PardisColors.indigoDeep)
             }
 
-            Button(actionLabel, action: onOpen)
+            Button(action: onOpen) {
+                HStack(spacing: PardisSpacing.xs) {
+                    PardisIcon(kind: .book, color: PardisComponentColors.primaryActionContent)
+                    Text(actionLabel)
+                }
+            }
                 .buttonStyle(PardisPrimaryButtonStyle())
         }
         .padding(PardisSpacing.md)
@@ -375,27 +431,47 @@ private struct PardisStoryOfflineControls: View {
             if let progress = downloadProgress {
                 PardisMetaPill(text: progress, background: PardisColors.backgroundAlt, foreground: PardisColors.inkSoft)
                 Spacer(minLength: 0)
-                Button(cancelLabel, action: onCancel)
+                Button(action: onCancel) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .close, size: 13, color: PardisColors.inkSoft)
+                        Text(cancelLabel)
+                    }
+                }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
             } else if let size = downloadedSizeLabel {
                 PardisMetaPill(text: "Offline • \(size)", background: PardisColors.mintSoft, foreground: PardisColors.mintDeep)
                 Spacer(minLength: 0)
-                Button(removeLabel, action: onRemove)
+                Button(action: onRemove) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .trash, size: 13, color: PardisColors.inkSoft)
+                        Text(removeLabel)
+                    }
+                }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
             } else if isFailed {
                 Text(downloadFailedLabel)
-                    .font(.system(size: PardisTypography.xs, weight: .semibold, design: .rounded))
+                    .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
                     .foregroundStyle(PardisColors.error)
                 Spacer(minLength: 0)
-                Button(retryLabel, action: onDownload)
+                Button(action: onDownload) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .refresh, size: 13, color: PardisComponentColors.primaryActionContent)
+                        Text(retryLabel)
+                    }
+                }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .tint(PardisColors.saffron)
             } else {
                 Spacer(minLength: 0)
-                Button(downloadOfflineLabel, action: onDownload)
+                Button(action: onDownload) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .download, size: 13, color: PardisComponentColors.primaryActionContent)
+                        Text(downloadOfflineLabel)
+                    }
+                }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .tint(PardisColors.saffron)
@@ -414,9 +490,14 @@ struct PardisReaderHeaderBar: View {
     var body: some View {
         PardisPanel {
             HStack(spacing: PardisSpacing.sm) {
-                Button(backLabel, action: onBack)
-                    .font(.system(size: PardisTypography.sm, weight: .semibold, design: .rounded))
+                Button(action: onBack) {
+                    HStack(spacing: PardisSpacing.xs) {
+                        PardisIcon(kind: .back, size: 14, color: PardisColors.indigo)
+                        Text(backLabel)
+                    }
+                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .semibold))
                     .foregroundStyle(PardisColors.indigo)
+                }
                 Spacer()
                 PardisMetaPill(text: pageLabel, background: PardisColors.backgroundAlt, foreground: PardisColors.inkSoft)
                 if isOffline {
@@ -439,7 +520,7 @@ struct PardisControlGroup<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: PardisSpacing.xs) {
             Text(label)
-                .font(.system(size: PardisTypography.xs, weight: .semibold, design: .rounded))
+                .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                 .foregroundStyle(PardisColors.inkMuted)
             content
         }

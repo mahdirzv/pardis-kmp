@@ -144,6 +144,9 @@ fun LibraryScreen(
                 value = state.searchQuery,
                 onValueChange = { onAction(LibraryAction.Search(query = it)) },
                 label = { Text("Search stories") },
+                leadingIcon = {
+                    PardisIcon(PardisIconKind.Search, contentDescription = null, tint = PardisColors.inkMuted)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )

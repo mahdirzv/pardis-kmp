@@ -1,5 +1,23 @@
 import SwiftUI
 
+struct PardisFonts {
+    static func display(size: CGFloat, weight: Font.Weight) -> Font {
+        .system(size: size, weight: weight, design: .rounded)
+    }
+
+    static func body(size: CGFloat, weight: Font.Weight) -> Font {
+        .system(size: size, weight: weight, design: .rounded)
+    }
+
+    static func persian(size: CGFloat, weight: Font.Weight) -> Font {
+        .system(size: size, weight: weight, design: .rounded)
+    }
+
+    static func mono(size: CGFloat, weight: Font.Weight) -> Font {
+        .system(size: size, weight: weight, design: .monospaced)
+    }
+}
+
 struct PardisComponentColors {
     static let chipSelectedContainer = PardisColors.ink
     static let chipSelectedContent = PardisColors.surface
@@ -73,7 +91,7 @@ struct PardisCardSurface: ViewModifier {
 struct PardisPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: PardisTypography.base, weight: .bold, design: .rounded))
+            .font(PardisFonts.body(size: PardisTypography.base, weight: .bold))
             .foregroundStyle(PardisComponentColors.primaryActionContent)
             .padding(.horizontal, PardisSpacing.md)
             .frame(height: 50)

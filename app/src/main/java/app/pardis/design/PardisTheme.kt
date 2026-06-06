@@ -15,8 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+
+object PardisFonts {
+    val display = FontFamily.SansSerif
+    val body = FontFamily.SansSerif
+    val persian = FontFamily.SansSerif
+    val mono = FontFamily.Monospace
+}
 
 private val PardisLightColorScheme = lightColorScheme(
     primary = PardisColors.indigo,
@@ -70,66 +78,77 @@ private val PardisDarkColorScheme = darkColorScheme(
 
 private val PardisTypographyScheme = Typography(
     displayLarge = TextStyle(
+        fontFamily = PardisFonts.display,
         fontSize = PardisTypography.xxxl.sp,
         lineHeight = (PardisTypography.xxxl * 1.02f).sp,
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = (-1.2).sp,
     ),
     headlineLarge = TextStyle(
+        fontFamily = PardisFonts.display,
         fontSize = PardisTypography.xxl.sp,
         lineHeight = (PardisTypography.xxl * 1.08f).sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = (-0.9).sp,
     ),
     headlineMedium = TextStyle(
+        fontFamily = PardisFonts.display,
         fontSize = PardisTypography.xl.sp,
         lineHeight = (PardisTypography.xl * 1.08f).sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = (-0.5).sp,
     ),
     titleLarge = TextStyle(
+        fontFamily = PardisFonts.display,
         fontSize = PardisTypography.lg.sp,
         lineHeight = (PardisTypography.lg * 1.18f).sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = (-0.2).sp,
     ),
     titleMedium = TextStyle(
+        fontFamily = PardisFonts.display,
         fontSize = PardisTypography.base.sp,
         lineHeight = (PardisTypography.base * 1.2f).sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = (-0.1).sp,
     ),
     bodyLarge = TextStyle(
+        fontFamily = PardisFonts.body,
         fontSize = PardisTypography.base.sp,
         lineHeight = (PardisTypography.base * PardisTypography.lineHeightNormal).sp,
         fontWeight = FontWeight.Normal,
         letterSpacing = 0.sp,
     ),
     bodyMedium = TextStyle(
+        fontFamily = PardisFonts.body,
         fontSize = PardisTypography.sm.sp,
         lineHeight = (PardisTypography.sm * 1.6f).sp,
         fontWeight = FontWeight.Normal,
         letterSpacing = 0.sp,
     ),
     bodySmall = TextStyle(
+        fontFamily = PardisFonts.body,
         fontSize = PardisTypography.sm.sp,
         lineHeight = (PardisTypography.sm * 1.5f).sp,
         fontWeight = FontWeight.Medium,
         letterSpacing = 0.sp,
     ),
     labelLarge = TextStyle(
+        fontFamily = PardisFonts.body,
         fontSize = PardisTypography.sm.sp,
         lineHeight = (PardisTypography.sm * 1.25f).sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.1.sp,
     ),
     labelMedium = TextStyle(
+        fontFamily = PardisFonts.body,
         fontSize = PardisTypography.sm.sp,
         lineHeight = (PardisTypography.sm * 1.2f).sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.15.sp,
     ),
     labelSmall = TextStyle(
+        fontFamily = PardisFonts.mono,
         fontSize = PardisTypography.xs.sp,
         lineHeight = (PardisTypography.xs * PardisTypography.lineHeightTight).sp,
         fontWeight = FontWeight.SemiBold,
