@@ -26,6 +26,7 @@ class LibraryViewModel(
     private val searchQuery = MutableStateFlow("")
     private val showOnlyCached = MutableStateFlow(false)
     private val localCoverUrls = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val selectedAgeBand = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<LibraryUiState> = combine(
         stories,
@@ -35,6 +36,7 @@ class LibraryViewModel(
         searchQuery,
         showOnlyCached,
         localCoverUrls,
+        selectedAgeBand,
     ) { args ->
         val currentStories = args[0] as List<Story>
         val loading = args[1] as Boolean
@@ -43,10 +45,21 @@ class LibraryViewModel(
         val query = args[4] as String
         val showOnly = args[5] as Boolean
         val covers = args[6] as Map<String, String>
+        val ageBand = args[7] as String?
+
+        // Age bands available for filtering, derived from the data and ordered young -> old by the
+        // leading number ("4–7", "7–10", "10–14"); avoids hardcoding bands that may change server-side.
+        val ageBands = currentStories.map { it.ageBand }.distinct().sortedBy { band ->
+            band.takeWhile { it.isDigit() }.toIntOrNull() ?: Int.MAX_VALUE
+        }
+
         var filtered = if (query.isBlank()) currentStories else currentStories.filter {
             it.titleEn.contains(query, ignoreCase = true) ||
             it.titleFa.contains(query, ignoreCase = true) ||
             it.ageBand.contains(query, ignoreCase = true)
+        }
+        if (ageBand != null) {
+            filtered = filtered.filter { it.ageBand == ageBand }
         }
         if (showOnly) {
             filtered = filtered.filter { cached.contains(it.slug) }
@@ -59,6 +72,8 @@ class LibraryViewModel(
             searchQuery = query,
             showOnlyCached = showOnly,
             localCoverUrls = covers,
+            ageBands = ageBands,
+            selectedAgeBand = ageBand,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -75,6 +90,7 @@ class LibraryViewModel(
             is LibraryAction.Refresh -> refresh()
             is LibraryAction.Search -> searchQuery.value = action.query
             is LibraryAction.ToggleShowOnlyCached -> showOnlyCached.value = !showOnlyCached.value
+            is LibraryAction.SetAgeBand -> selectedAgeBand.value = action.band
             is LibraryAction.OpenStory -> {
                 // Handled by native shell callback
             }

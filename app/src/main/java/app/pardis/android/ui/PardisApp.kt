@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
@@ -134,6 +135,31 @@ fun LibraryScreen(
             singleLine = true
         )
         Spacer(Modifier.height(PardisSpacing.sm))
+        // Age-band filter chips (derived from the data). Tapping the active band again clears it.
+        if (state.ageBands.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)
+            ) {
+                FilterChip(
+                    selected = state.selectedAgeBand == null,
+                    onClick = { onAction(LibraryAction.SetAgeBand(null)) },
+                    label = { Text("All ages") }
+                )
+                state.ageBands.forEach { band ->
+                    FilterChip(
+                        selected = state.selectedAgeBand == band,
+                        onClick = {
+                            onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
+                        },
+                        label = { Text(band) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(PardisSpacing.sm))
+        }
         // Toggle for offline cached only
         Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
             Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")

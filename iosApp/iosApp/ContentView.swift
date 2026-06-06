@@ -37,6 +37,26 @@ struct LibraryScreen: View {
                     model.search(query: newValue)
                 }
 
+            // Age-band filter chips (derived from data; tap the active band again to clear).
+            if !model.ageBands.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Button(model.selectedAgeBand == nil ? "All ages ✓" : "All ages") {
+                            model.setAgeBand(nil)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(model.selectedAgeBand == nil ? PardisColors.indigo : PardisColors.inkSoft)
+                        ForEach(model.ageBands, id: \.self) { band in
+                            Button(model.selectedAgeBand == band ? "\(band) ✓" : band) {
+                                model.setAgeBand(model.selectedAgeBand == band ? nil : band)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(model.selectedAgeBand == band ? PardisColors.indigo : PardisColors.inkSoft)
+                        }
+                    }
+                }
+            }
+
             // Toggle cached only
             Button(model.showOnlyCached ? "Show all stories" : "Show only offline cached") {
                 model.toggleShowOnlyCached()

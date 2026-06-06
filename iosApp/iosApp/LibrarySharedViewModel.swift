@@ -19,6 +19,8 @@ final class LibrarySharedViewModel {
     var searchQuery: String = ""
     var showOnlyCached = false
     var localCoverUrls: [String: String] = [:]
+    var ageBands: [String] = []
+    var selectedAgeBand: String? = nil
 
     init(viewModel: LibraryViewModel = PardisViewModelProvider.shared.libraryViewModel()) {
         self.viewModel = viewModel
@@ -42,6 +44,10 @@ final class LibrarySharedViewModel {
         viewModel.onAction(action: LibraryActionToggleShowOnlyCached.shared)
     }
 
+    func setAgeBand(_ band: String?) {
+        viewModel.onAction(action: LibraryActionSetAgeBand(band: band))
+    }
+
     private func apply(_ state: LibraryUiState) {
         self.stories = state.stories
         self.isLoading = state.isLoading
@@ -50,5 +56,7 @@ final class LibrarySharedViewModel {
         self.searchQuery = state.searchQuery
         self.showOnlyCached = state.showOnlyCached
         self.localCoverUrls = state.localCoverUrls
+        self.ageBands = state.ageBands
+        self.selectedAgeBand = state.selectedAgeBand
     }
 }
