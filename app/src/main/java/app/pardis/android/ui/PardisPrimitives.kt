@@ -31,6 +31,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -479,7 +480,7 @@ fun PardisRemoteImageFrame(
  */
 @Composable
 fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
-    val variant = ((seed.hashCode() % 5) + 5) % 5
+    val variant = ((seed.hashCode() % 7) + 7) % 7
     val pattern = when (variant % 3) {
         0 -> R.drawable.pattern_paisley
         1 -> R.drawable.pattern_vine
@@ -489,37 +490,61 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
+            fun p(xf: Float, yf: Float) = Offset(xf * w, yf * h)
+            fun poly(vararg pts: Offset) = Path().apply {
+                pts.forEachIndexed { i, o -> if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y) }
+                close()
+            }
+            fun stars(vararg pts: Offset) = pts.forEach { drawCircle(Color.White, w * 0.006f, it) }
             when (variant) {
-            0 -> { // Night: lapis sky, saffron moon, dark hills
-                drawRect(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF2436A1), Color(0xFF4F2EB5))))
-                val moon = Offset(w * 0.5f, h * 0.34f)
-                drawCircle(Brush.radialGradient(listOf(Color(0x66FFE9D2), Color(0x00F08A2D)), center = moon, radius = w * 0.3f), radius = w * 0.3f, center = moon)
-                drawCircle(Color(0xFFF08A2D), radius = w * 0.11f, center = moon)
-                val hills = Path().apply {
-                    moveTo(0f, h); lineTo(0f, h * 0.72f); lineTo(w * 0.28f, h * 0.52f); lineTo(w * 0.52f, h * 0.7f)
-                    lineTo(w * 0.78f, h * 0.5f); lineTo(w, h * 0.64f); lineTo(w, h); close()
-                }
-                drawPath(hills, Color(0xFF0F1849))
+            0 -> { // night — lapis gradient, violet+saffron glow, stars, saffron moon, 2 mountain ridges
+                drawRect(Brush.verticalGradient(0f to Color(0xFF1A256E), 0.7f to Color(0xFF2436A1), 1f to Color(0xFF4F2EB5)))
+                drawRect(Brush.radialGradient(listOf(Color(0x385B47FF), Color(0x005B47FF)), center = p(0.5f, 0.65f), radius = h * 0.65f))
+                stars(p(0.12f, 0.14f), p(0.28f, 0.26f), p(0.70f, 0.16f), p(0.88f, 0.32f), p(0.50f, 0.09f), p(0.22f, 0.44f), p(0.38f, 0.18f))
+                val moon = Offset(w * 0.5f, h * 0.14f + w * 0.2f)
+                drawCircle(Brush.radialGradient(listOf(Color(0x55F08A2D), Color(0x00F08A2D)), center = moon, radius = w * 0.34f), w * 0.34f, moon)
+                drawCircle(Brush.radialGradient(listOf(Color(0xFFFFE9D2), Color(0xFFF08A2D)), center = moon, radius = w * 0.2f), w * 0.2f, moon)
+                drawPath(poly(p(0f, 1f), p(0f, 0.88f), p(0.22f, 0.79f), p(0.38f, 0.85f), p(0.54f, 0.766f), p(0.70f, 0.844f), p(0.88f, 0.784f), p(1f, 0.85f), p(1f, 1f)), Color(0x990F1849))
+                drawPath(poly(p(0f, 1f), p(0f, 0.829f), p(0.14f, 0.704f), p(0.26f, 0.802f), p(0.40f, 0.650f), p(0.56f, 0.780f), p(0.70f, 0.681f), p(0.84f, 0.787f), p(1f, 0.719f), p(1f, 1f)), Color(0xFF0A1234))
             }
-            1 -> { // Dawn: warm sky, rising sun
-                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFF4E5), Color(0xFFFFD9A8), Color(0xFFF4B53A))))
-                drawCircle(Color(0xFFF08A2D), radius = w * 0.16f, center = Offset(w * 0.5f, h * 0.36f))
+            1 -> { // dawn — sunrise gradient, sun, cypress silhouette
+                drawRect(Brush.verticalGradient(0f to Color(0xFFFFF4E5), 0.5f to Color(0xFFFFD9A8), 1f to Color(0xFFF4B53A)))
+                drawRect(Brush.radialGradient(listOf(Color(0x8CFFE9D2), Color(0x00FFE9D2)), center = p(0.5f, 0.4f), radius = h * 0.5f))
+                val sun = Offset(w * 0.5f, h * 0.16f + w * 0.2f)
+                drawCircle(Brush.radialGradient(listOf(Color(0xFFFFE9D2), Color(0xFFF08A2D)), center = sun, radius = w * 0.2f), w * 0.2f, sun)
+                drawOval(Color(0xFF0F1849), topLeft = Offset(w * 0.43f, h * 0.42f), size = Size(w * 0.14f, h * 0.6f))
             }
-            2 -> { // Sea: peach-to-teal with a white sail
-                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFE9D2), Color(0xFFDEF5E9), Color(0xFF6AD0AB))))
-                val sail = Path().apply { moveTo(w * 0.48f, h * 0.32f); lineTo(w * 0.48f, h * 0.64f); lineTo(w * 0.66f, h * 0.64f); close() }
-                drawPath(sail, Color.White)
-                drawRect(Color(0xFF14111B), topLeft = Offset(w * 0.36f, h * 0.64f), size = androidx.compose.ui.geometry.Size(w * 0.34f, h * 0.05f))
+            2 -> { // vase — lapis gradient, lilac glow, saffron Persian vase + stem
+                drawRect(Brush.verticalGradient(0f to Color(0xFF2436A1), 1f to Color(0xFF0F1849)))
+                drawRect(Brush.radialGradient(listOf(Color(0x408B6FE6), Color(0x008B6FE6)), center = p(0.5f, 0.4f), radius = h * 0.6f))
+                drawRect(Color(0xD9FFE9D2), topLeft = Offset(w * 0.497f, h * 0.24f), size = Size(w * 0.006f, h * 0.26f))
+                drawPath(
+                    poly(p(0.455f, 0.34f), p(0.545f, 0.34f), p(0.56f, 0.398f), p(0.53f, 0.456f), p(0.59f, 0.688f), p(0.62f, 0.862f), p(0.59f, 0.92f), p(0.41f, 0.92f), p(0.38f, 0.862f), p(0.41f, 0.688f), p(0.47f, 0.456f), p(0.44f, 0.398f)),
+                    Brush.verticalGradient(listOf(Color(0xFFF08A2D), Color(0xFFC46A12))),
+                )
             }
-            3 -> { // Hills: dawn pastel with rounded indigo + lilac hills
-                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFE9D2), Color(0xFFFCDEE6), Color(0xFFECE6FB))))
-                drawCircle(Color(0xFF2436A1), radius = w * 0.42f, center = Offset(w * 0.18f, h * 1.08f))
-                drawCircle(Color(0xFF8B6FE6), radius = w * 0.34f, center = Offset(w * 0.86f, h * 1.12f))
+            3 -> { // hills — dawn-pink gradient + lapis & lilac rounded hills
+                drawRect(Brush.verticalGradient(0f to Color(0xFFFFE9D2), 0.7f to Color(0xFFFCDEE6), 1f to Color(0xFFECE6FB)))
+                drawRect(Brush.radialGradient(listOf(Color(0x66FFE9D2), Color(0x00FFE9D2)), center = p(0.5f, 0.3f), radius = h * 0.55f))
+                drawOval(Color(0xFF8B6FE6), topLeft = Offset(w * 0.4f, h * 0.65f), size = Size(w * 0.7f, h * 0.7f))
+                drawOval(Color(0xFF2436A1), topLeft = Offset(-w * 0.1f, h * 0.5f), size = Size(w * 0.8f, h * 1.0f))
             }
-            else -> { // Flame: deep lapis with a warm glow rising from the base
-                drawRect(Brush.verticalGradient(listOf(Color(0xFF2436A1), Color(0xFF1A256E), Color(0xFF0F1849))))
-                val glow = Offset(w * 0.5f, h * 0.82f)
-                drawCircle(Brush.radialGradient(listOf(Color(0x88F08A2D), Color(0x00F08A2D)), center = glow, radius = w * 0.45f), radius = w * 0.45f, center = glow)
+            4 -> { // sea — sky→sea gradient, sailboat
+                drawRect(Brush.verticalGradient(0f to Color(0xFFFFE9D2), 0.45f to Color(0xFFFCDEE6), 0.65f to Color(0xFFDEF5E9), 1f to Color(0xFF6AD0AB)))
+                drawRect(Color(0xFF14111B), topLeft = Offset(w * 0.465f, h * 0.44f), size = Size(w * 0.012f, h * 0.22f))
+                drawPath(poly(p(0.36f, 0.62f), p(0.58f, 0.46f), p(0.58f, 0.62f)), Color.White)
+                drawPath(poly(p(0.332f, 0.66f), p(0.668f, 0.66f), p(0.7f, 0.74f), p(0.3f, 0.74f)), Color(0xFF14111B))
+            }
+            5 -> { // flame — lapis night, glowing saffron→rose flame
+                drawRect(Brush.verticalGradient(0f to Color(0xFF2436A1), 0.6f to Color(0xFF1A256E), 1f to Color(0xFF0F1849)))
+                drawRect(Brush.radialGradient(listOf(Color(0x66F08A2D), Color(0x00F08A2D)), center = p(0.5f, 0.8f), radius = h * 0.5f))
+                drawOval(Brush.verticalGradient(listOf(Color(0xFFFCEAB6), Color(0xFFF08A2D), Color(0xFFE1547A))), topLeft = Offset(w * 0.37f, h * 0.46f), size = Size(w * 0.26f, h * 0.4f))
+            }
+            else -> { // lullaby — soft violet→lapis, white moon, stars
+                drawRect(Brush.verticalGradient(0f to Color(0xFFBCC8E8), 0.5f to Color(0xFF8B6FE6), 1f to Color(0xFF1A256E)))
+                stars(p(0.18f, 0.16f), p(0.32f, 0.24f), p(0.70f, 0.18f), p(0.84f, 0.30f), p(0.50f, 0.10f), p(0.24f, 0.40f))
+                val moon = Offset(w * 0.5f, h * 0.2f + w * 0.14f)
+                drawCircle(Color.White, w * 0.14f, moon)
             }
             }
         }
