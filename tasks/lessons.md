@@ -6,4 +6,5 @@
 - Reader RTL should be scoped to the Persian text blocks themselves. Keeping navigation, controls, and English content LTR avoids flipping the whole screen while still rendering FA paragraphs correctly.
 - Apply the same scoped RTL treatment to inline Persian reader elements (titles, vocab words, detail sheets) so FA content stays visually consistent without making surrounding English metadata or controls RTL.
 - When a design prototype updates the palette or token scale, change the source of truth in `design-system/tokens.json` and then sync both generated snapshots and the Android runtime token mirror. Leaving any one of those behind causes native theme drift even if the build still passes.
+- For KMP native UI design rollouts, first extract a primitive layer per platform (headers, panels, pills, media frames, vocab chips, transport groups) and only then restyle the screens. Trying to restyle `Library`/`Reader` inline first creates duplication and makes the Android/iOS shells drift.
 

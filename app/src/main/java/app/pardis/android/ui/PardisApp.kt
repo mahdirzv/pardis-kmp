@@ -8,35 +8,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
-import app.pardis.design.PardisRadius
-import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
 import app.pardis.design.PardisTheme
 import app.pardis.shared.library.LibraryAction
@@ -45,8 +34,6 @@ import app.pardis.shared.library.LibraryViewModel
 import app.pardis.shared.reader.ReaderAction
 import app.pardis.shared.reader.ReaderUiState
 import app.pardis.shared.reader.ReaderViewModel
-import app.pardis.core.model.VocabItem
-import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
 import androidx.media3.common.MediaItem
@@ -117,27 +104,21 @@ fun LibraryScreen(
             .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
             .padding(PardisSpacing.md)
     ) {
-        Text(
-            "Pardis",
-            style = MaterialTheme.typography.headlineMedium,
-            color = PardisColors.indigo,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.semantics { heading() }
-        )
-        Text(
-            "Persian heritage stories",
-            style = MaterialTheme.typography.bodyMedium,
-            color = PardisColors.inkSoft
+        PardisScreenHeader(
+            title = "Pardis",
+            subtitle = "Persian heritage stories",
+            modifier = Modifier.semantics { heading() },
         )
         Spacer(Modifier.height(PardisSpacing.sm))
-        // Simple search (filters title/age)
-        OutlinedTextField(
-            value = state.searchQuery,
-            onValueChange = { onAction(LibraryAction.Search(query = it)) },
-            label = { Text("Search stories") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
+        PardisPanel {
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = { onAction(LibraryAction.Search(query = it)) },
+                label = { Text("Search stories") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+        }
         Spacer(Modifier.height(PardisSpacing.sm))
         // Age-band filter chips (derived from the data). Tapping the active band again clears it.
         if (state.ageBands.isNotEmpty()) {
@@ -147,34 +128,35 @@ fun LibraryScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)
             ) {
-                FilterChip(
+                PardisFilterPill(
+                    label = "All ages",
                     selected = state.selectedAgeBand == null,
                     onClick = { onAction(LibraryAction.SetAgeBand(null)) },
-                    label = { Text("All ages") }
                 )
                 state.ageBands.forEach { band ->
-                    FilterChip(
+                    PardisFilterPill(
+                        label = band,
                         selected = state.selectedAgeBand == band,
                         onClick = {
                             onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
                         },
-                        label = { Text(band) }
                     )
                 }
             }
             Spacer(Modifier.height(PardisSpacing.sm))
         }
         // Toggle for offline cached only
-        Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
-            Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")
-        }
-        if (state.totalCachedLabel.isNotEmpty()) {
-            Spacer(Modifier.height(PardisSpacing.xs))
-            Text(
-                "Cached offline: ${state.totalCachedLabel}",
-                style = MaterialTheme.typography.labelSmall,
-                color = PardisColors.inkSoft
-            )
+        PardisPanel(contentPadding = PaddingValues(horizontal = PardisSpacing.md, vertical = PardisSpacing.sm)) {
+            Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
+                Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")
+            }
+            if (state.totalCachedLabel.isNotEmpty()) {
+                Text(
+                    "Cached offline: ${state.totalCachedLabel}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PardisColors.inkSoft,
+                )
+            }
         }
         Spacer(Modifier.height(PardisSpacing.md))
 
@@ -244,16 +226,13 @@ private fun StoryCard(
         onClick = onClick
     ) {
         Column(Modifier.padding(PardisSpacing.md)) {
-            Row {
-                if (coverUrl != null) {
-                    AsyncImage(
-                        model = coverUrl,
-                        contentDescription = "Cover image for story: $titleEn in $ageBand age band",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .padding(end = PardisSpacing.sm)
-                    )
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                PardisRemoteImageFrame(
+                    imageUrl = coverUrl,
+                    contentDescription = "Cover image for story: $titleEn in $ageBand age band",
+                    modifier = Modifier.size(68.dp),
+                    placeholderText = "No cover",
+                )
                 Column {
                     Text(
                         titleEn,
@@ -271,9 +250,17 @@ private fun StoryCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Spacer(Modifier.height(PardisSpacing.xs))
-                    Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm), verticalAlignment = Alignment.CenterVertically) {
-                        Text("$ageBand • ${minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
-                        Text("• $vocabCount words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs), verticalAlignment = Alignment.CenterVertically) {
+                        PardisMetaPill(
+                            text = "$ageBand • ${minutes}m",
+                            containerColor = PardisColors.saffronTint,
+                            contentColor = PardisColors.saffronDeep,
+                        )
+                        PardisMetaPill(
+                            text = "$vocabCount words",
+                            containerColor = PardisColors.indigoTint,
+                            contentColor = PardisColors.indigoDeep,
+                        )
                     }
                 }
             }
@@ -282,12 +269,12 @@ private fun StoryCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
                 when {
                     downloadProgress != null -> {
-                        Text(downloadProgress, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkSoft)
+                        PardisMetaPill(downloadProgress, PardisColors.backgroundAlt, PardisColors.inkSoft)
                         Spacer(Modifier.weight(1f))
                         OutlinedButton(onClick = onCancel) { Text("Cancel", style = MaterialTheme.typography.labelSmall) }
                     }
                     downloadedSizeLabel != null -> {
-                        Text("✓ Offline ($downloadedSizeLabel)", style = MaterialTheme.typography.labelSmall, color = PardisColors.mint)
+                        PardisMetaPill("Offline • $downloadedSizeLabel", PardisColors.mintSoft, PardisColors.mintDeep)
                         Spacer(Modifier.weight(1f))
                         OutlinedButton(onClick = onRemove) { Text("Remove", style = MaterialTheme.typography.labelSmall) }
                     }
@@ -308,100 +295,6 @@ private fun StoryCard(
     }
 }
 
-/**
- * Basic PardisCard component using design tokens (colors, radius, spacing, shadows).
- * Follows kmpSkill + Phase 3 plan: tokenised, native only.
- */
-@Composable
-fun PardisCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
-) {
-    val shape = RoundedCornerShape(PardisRadius.md)
-    Surface(
-        modifier = modifier
-            .shadow(PardisShadows.md, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = shape,
-        color = PardisColors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.borderSoft)
-    ) {
-        content()
-    }
-}
-
-/**
- * Simple vocab chip component using tokens.
- */
-@Composable
-fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
-    Surface(
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = PardisSpacing.xs),
-        shape = RoundedCornerShape(PardisRadius.full),
-        color = PardisColors.mintSoft,
-        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.borderSoft),
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs / 2)
-                .semantics { contentDescription = "Vocabulary term: ${vocab.fa} transliterated as ${vocab.translit}, English ${vocab.en}" }
-        ) {
-            PersianReaderInline(
-                text = vocab.fa,
-                style = MaterialTheme.typography.bodySmall,
-                color = PardisColors.indigoDeep,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                "${vocab.translit} — ${vocab.en}",
-                style = MaterialTheme.typography.labelSmall,
-                color = PardisColors.inkSoft,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PersianReaderParagraph(
-    text: String,
-    style: TextStyle,
-    color: Color,
-) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Text(
-            text = text,
-            modifier = Modifier.fillMaxWidth(),
-            style = style,
-            color = color,
-            textAlign = TextAlign.Start,
-        )
-    }
-}
-
-@Composable
-private fun PersianReaderInline(
-    text: String,
-    style: TextStyle,
-    color: Color,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Text(
-            text = text,
-            style = style,
-            color = color,
-            textAlign = TextAlign.Start,
-            maxLines = maxLines,
-            overflow = overflow,
-        )
-    }
-}
-
 @Composable
 fun ReaderRoute(
     slug: String,
@@ -416,7 +309,7 @@ fun ReaderRoute(
     }
 
     // Basic prefetch for next illustration (performance, using Coil) - prefer local cached if available
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     LaunchedEffect(state.currentPage, state.pages, state.localIllustrationUrls) {
         val nextPage = state.pages.getOrNull(state.currentPage + 1)
         val url = nextPage?.let { state.localIllustrationUrls[it.page] ?: it.illustrationUrl }
@@ -447,18 +340,13 @@ fun ReaderScreen(
             .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
             .padding(PardisSpacing.md)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("← Library", color = PardisColors.indigo) }
-            Spacer(Modifier.weight(1f))
-            if (state.pages.isNotEmpty()) {
-                Text("${state.currentPage + 1} / ${state.pages.size}", color = PardisColors.inkSoft)
-                val hasOfflineAssets = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
-                if (hasOfflineAssets) {
-                    Spacer(Modifier.width(PardisSpacing.sm))
-                    Text("✓ Offline", color = PardisColors.mint, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
+        val hasOfflineAssets = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
+        PardisReaderHeaderBar(
+            onBack = onBack,
+            pageLabel = if (state.pages.isNotEmpty()) "${state.currentPage + 1} / ${state.pages.size}" else "Reader",
+            isOffline = hasOfflineAssets,
+        )
+        Spacer(Modifier.height(PardisSpacing.sm))
 
         when {
             state.isLoading -> {
@@ -564,10 +452,10 @@ fun ReaderScreen(
                     }
                 }
 
-                Text(
-                    "Page ${page.page}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PardisColors.inkMuted
+                PardisMetaPill(
+                    text = "Page ${page.page}",
+                    containerColor = PardisColors.backgroundAlt,
+                    contentColor = PardisColors.inkMuted,
                 )
                 Spacer(Modifier.height(PardisSpacing.sm))
 
@@ -580,21 +468,23 @@ fun ReaderScreen(
                             .fillMaxWidth()
                             .height(380.dp)  // taller for better viewing
                     ) {
-                        AndroidView(
-                            factory = {
-                                PlayerView(it).apply {
-                                    player = exoPlayer
-                                    useController = true
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        PardisCard(modifier = Modifier.fillMaxSize()) {
+                            AndroidView(
+                                factory = {
+                                    PlayerView(it).apply {
+                                        player = exoPlayer
+                                        useController = true
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(PardisSpacing.sm))
 
                     // Scrollable captions / current page text (large, readable while video plays)
-                    Column(
+                    PardisPanel(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(rememberScrollState())
@@ -604,17 +494,14 @@ fun ReaderScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = PardisColors.ink,
                         )
-                        Spacer(Modifier.height(PardisSpacing.sm))
                         Text(
                             page.paragraphsEn.joinToString("\n\n"),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = PardisColors.inkSoft
+                            color = PardisColors.inkSoft,
                         )
 
-                        Spacer(Modifier.height(PardisSpacing.lg))
-
                         if (page.vocabulary.isNotEmpty()) {
-                            Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
+                            Text("Vocab on this page", style = MaterialTheme.typography.labelMedium, color = PardisColors.inkMuted)
                             Column {
                                 page.vocabulary.take(3).forEach { v ->
                                     PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
@@ -630,47 +517,28 @@ fun ReaderScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         val illoUrl = state.localIllustrationUrls[page.page] ?: page.illustrationUrl
-                        if (illoUrl != null) {
-                            AsyncImage(
-                                model = illoUrl,
-                                contentDescription = "Illustration for page ${page.page} of story",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(220.dp)
-                            )
-                        } else {
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(220.dp),
-                                color = PardisColors.surfaceLilac
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        "No illustration",
-                                        color = PardisColors.inkSoft
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.height(PardisSpacing.md))
-
-                        PersianReaderParagraph(
-                            text = page.paragraphsFa.joinToString("\n\n"),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = PardisColors.ink,
+                        PardisRemoteImageFrame(
+                            imageUrl = illoUrl,
+                            contentDescription = "Illustration for page ${page.page} of story",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp),
                         )
-                        Spacer(Modifier.height(PardisSpacing.sm))
-                        Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
 
-                        Spacer(Modifier.height(PardisSpacing.lg))
+                        PardisPanel {
+                            PersianReaderParagraph(
+                                text = page.paragraphsFa.joinToString("\n\n"),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = PardisColors.ink,
+                            )
+                            Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
 
-                        if (page.vocabulary.isNotEmpty()) {
-                            Text("Vocab on this page:", style = MaterialTheme.typography.labelMedium)
-                            Column {
-                                page.vocabulary.take(3).forEach { v ->
-                                    PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
+                            if (page.vocabulary.isNotEmpty()) {
+                                Text("Vocab on this page", style = MaterialTheme.typography.labelMedium, color = PardisColors.inkMuted)
+                                Column {
+                                    page.vocabulary.take(3).forEach { v ->
+                                        PardisVocabChip(vocab = v, onClick = { onAction(ReaderAction.ShowVocab(v)) })
+                                    }
                                 }
                             }
                         }
@@ -680,59 +548,51 @@ fun ReaderScreen(
                 Spacer(Modifier.height(PardisSpacing.md))
 
                 // Transport (fixed at bottom) - split for better UX and accessibility
-                // Main nav row
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedButton(onClick = { onAction(ReaderAction.PrevPage) }, enabled = state.currentPage > 0) {
-                        Text("Prev")
-                    }
-                    Button(
-                        onClick = { onAction(ReaderAction.NextPage) },
-                        enabled = state.currentPage < state.pages.lastIndex,
-                        colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)
-                    ) {
-                        Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
-                    }
-                    Spacer(Modifier.weight(1f))
-                    if (state.videoUrlFa != null || state.videoUrlEn != null) {
-                        Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
-                            Text(if (state.isVideoMode) "Text mode" else "Video mode")
-                        }
-
-                        // Offline video download affordance (appears for video stories; only in video mode to not clutter text mode).
-                        // Uses the polished video UX area. "Cache video" triggers MP4 download to local cache for offline play.
-                        // Once cached, player will use the local file path (no net needed).
-                        if (state.isVideoMode) {
-                            val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null
-                            if (!hasLocal) {
-                                Button(
-                                    onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
-                                    enabled = !state.isDownloadingVideo
-                                ) {
-                                    Text(state.downloadProgress ?: if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
-                                }
-                            } else {
-                                // Simple cached indicator using existing design tokens (no new visuals/tokens added).
-                                Text("✓ Video + assets cached", color = PardisColors.mint)
-                                Button(onClick = { onAction(ReaderAction.ClearAssets) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                                    Text("Clear", style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Separate accessible row for audio controls (only in text mode) - avoids cramming, better touch targets
-                if (!state.isVideoMode) {
-                    Spacer(Modifier.height(PardisSpacing.xs))
+                PardisPanel {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        OutlinedButton(onClick = { onAction(ReaderAction.PrevPage) }, enabled = state.currentPage > 0) {
+                            Text("Prev")
+                        }
+                        Button(
+                            onClick = { onAction(ReaderAction.NextPage) },
+                            enabled = state.currentPage < state.pages.lastIndex,
+                            colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)
+                        ) {
+                            Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
+                        }
+                        Spacer(Modifier.weight(1f))
+                        if (state.videoUrlFa != null || state.videoUrlEn != null) {
+                            Button(onClick = { onAction(ReaderAction.ToggleVideo) }) {
+                                Text(if (state.isVideoMode) "Text mode" else "Video mode")
+                            }
+
+                            if (state.isVideoMode) {
+                                val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null
+                                if (!hasLocal) {
+                                    Button(
+                                        onClick = { onAction(ReaderAction.DownloadVideo("fa")) },
+                                        enabled = !state.isDownloadingVideo
+                                    ) {
+                                        Text(state.downloadProgress ?: if (state.isDownloadingVideo) "Downloading video + assets..." else "Cache video + assets")
+                                    }
+                                } else {
+                                    PardisMetaPill("Video cached", PardisColors.mintSoft, PardisColors.mintDeep)
+                                    Button(
+                                        onClick = { onAction(ReaderAction.ClearAssets) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                                    ) {
+                                        Text("Clear", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!state.isVideoMode) {
                         Button(onClick = {
                             onAction(ReaderAction.PlayNarration)
                             // Play current page narration (fa preferred), stop/release any prior clip
@@ -782,19 +642,15 @@ fun ReaderScreen(
                         }) {
                             Text("Play Audio")
                         }
-                        // Lang switch - grouped
-                        Text("Lang:", style = MaterialTheme.typography.labelSmall)
-                        Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
+                        PardisControlGroup(label = "Narration language") {
                             Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
-                                Text("FA")
+                                Text("FA", style = MaterialTheme.typography.labelSmall)
                             }
                             Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
-                                Text("EN")
+                                Text("EN", style = MaterialTheme.typography.labelSmall)
                             }
                         }
-                        // Rate controls - grouped, smaller for density but still accessible
-                        Text("Rate:", style = MaterialTheme.typography.labelSmall)
-                        Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
+                        PardisControlGroup(label = "Playback speed") {
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x", style = MaterialTheme.typography.labelSmall) }
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x", style = MaterialTheme.typography.labelSmall) }
                             Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x", style = MaterialTheme.typography.labelSmall) }
@@ -813,45 +669,27 @@ fun ReaderScreen(
                 // Basic bottom "sheet" for selected vocab (tappable chips open this)
                 state.selectedVocab?.let { v ->
                     Spacer(Modifier.height(PardisSpacing.sm))
-                    Surface(
+                    PardisVocabSheet(
+                        vocab = v,
                         modifier = Modifier.fillMaxWidth(),
-                        color = PardisColors.surface2,
-                        shape = RoundedCornerShape(PardisRadius.md),
-                        shadowElevation = 4.dp
-                    ) {
-                        Column(Modifier.padding(PardisSpacing.md)) {
-                            Text("Vocab", style = MaterialTheme.typography.labelMedium, color = PardisColors.indigo)
-                            Spacer(Modifier.height(PardisSpacing.xs))
-                            PersianReaderInline(
-                                text = v.fa,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = PardisColors.ink,
-                            )
-                            Text("(${v.translit})", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
-                            Text(v.en, style = MaterialTheme.typography.bodyLarge, color = PardisColors.inkSoft)
-                            if (v.context.isNotBlank()) {
-                                Spacer(Modifier.height(PardisSpacing.xs))
-                                Text("in: ${v.context}", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
+                        onPlayPronunciation = if (v.audioUrl != null) {
+                            {
+                                val mp = MediaPlayer()
+                                try {
+                                    mp.setDataSource(v.audioUrl)
+                                    mp.setOnPreparedListener { it.start() }
+                                    mp.setOnCompletionListener { it.release() }
+                                    mp.setOnErrorListener { p, _, _ -> p.release(); true }
+                                    mp.prepareAsync()
+                                } catch (_: Exception) {
+                                    mp.release()
+                                }
                             }
-                            if (v.audioUrl != null) {
-                                TextButton(onClick = {
-                                    // One-shot vocab pronunciation. prepareAsync (no main-thread block) and
-                                    // always release on completion/error so we don't leak a player per tap.
-                                    val mp = android.media.MediaPlayer()
-                                    try {
-                                        mp.setDataSource(v.audioUrl)
-                                        mp.setOnPreparedListener { it.start() }
-                                        mp.setOnCompletionListener { it.release() }
-                                        mp.setOnErrorListener { p, _, _ -> p.release(); true }
-                                        mp.prepareAsync()
-                                    } catch (_: Exception) { mp.release() }
-                                }) { Text("▶ Play pronunciation") }
-                            }
-                            TextButton(onClick = { onAction(ReaderAction.DismissVocab) }) {
-                                Text("Close", color = PardisColors.saffron)
-                            }
-                        }
-                    }
+                        } else {
+                            null
+                        },
+                        onClose = { onAction(ReaderAction.DismissVocab) },
+                    )
                 }
             }
         }

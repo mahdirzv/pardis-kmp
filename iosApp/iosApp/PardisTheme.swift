@@ -38,12 +38,14 @@ struct PardisScreenBackground: ViewModifier {
 }
 
 struct PardisCardSurface: ViewModifier {
+    let cornerRadius: CGFloat
+
     func body(content: Content) -> some View {
         content
             .background(PardisColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(PardisColors.borderSoft, lineWidth: 1)
             )
             .shadow(color: PardisColors.ink.opacity(0.10), radius: PardisShadows.mdRadius, x: 0, y: 8)
@@ -71,8 +73,8 @@ extension View {
         modifier(PardisScreenBackground())
     }
 
-    func pardisCardSurface() -> some View {
-        modifier(PardisCardSurface())
+    func pardisCardSurface(cornerRadius: CGFloat = PardisRadius.md) -> some View {
+        modifier(PardisCardSurface(cornerRadius: cornerRadius))
     }
 }
 

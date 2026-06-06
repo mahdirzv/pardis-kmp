@@ -3,21 +3,6 @@ import Shared
 import AVKit
 import AVFoundation
 
-private struct PersianReaderText: View {
-    let text: String
-    let font: Font
-    let color: Color
-
-    var body: some View {
-        Text(text)
-            .font(font)
-            .foregroundStyle(color)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .multilineTextAlignment(.trailing)
-            .environment(\.layoutDirection, .rightToLeft)
-    }
-}
-
 private struct ReaderRoute: Hashable {
     let slug: String
 }
@@ -46,50 +31,42 @@ struct LibraryScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Pardis")
-                .font(.system(size: PardisTypography.xxl, weight: .heavy, design: .rounded))
-                .foregroundStyle(PardisColors.indigo)
+            PardisScreenHeader(title: "Pardis", subtitle: "Persian heritage stories")
                 .accessibilityAddTraits(.isHeader)
-            Text("Persian heritage stories")
-                .font(.system(size: PardisTypography.base, weight: .medium, design: .rounded))
-                .foregroundStyle(PardisColors.inkSoft)
 
-            // Search
-            TextField("Search stories", text: $model.searchQuery)
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: model.searchQuery) {
-                    model.search(query: model.searchQuery)
-                }
+            PardisPanel {
+                TextField("Search stories", text: $model.searchQuery)
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: model.searchQuery) {
+                        model.search(query: model.searchQuery)
+                    }
+            }
 
-            // Age-band filter chips (derived from data; tap the active band again to clear).
             if !model.ageBands.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        Button(model.selectedAgeBand == nil ? "All ages ✓" : "All ages") {
+                        PardisFilterPill(title: "All ages", selected: model.selectedAgeBand == nil) {
                             model.setAgeBand(nil)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(model.selectedAgeBand == nil ? PardisColors.indigo : PardisColors.inkSoft)
                         ForEach(model.ageBands, id: \.self) { band in
-                            Button(model.selectedAgeBand == band ? "\(band) ✓" : band) {
+                            PardisFilterPill(title: band, selected: model.selectedAgeBand == band) {
                                 model.setAgeBand(model.selectedAgeBand == band ? nil : band)
                             }
-                            .buttonStyle(.bordered)
-                            .tint(model.selectedAgeBand == band ? PardisColors.indigo : PardisColors.inkSoft)
                         }
                     }
                 }
             }
 
-            // Toggle cached only
-            Button(model.showOnlyCached ? "Show all stories" : "Show only offline cached") {
-                model.toggleShowOnlyCached()
-            }
+            PardisPanel {
+                Button(model.showOnlyCached ? "Show all stories" : "Show only offline cached") {
+                    model.toggleShowOnlyCached()
+                }
 
-            if !model.totalCachedLabel.isEmpty {
-                Text("Cached offline: \(model.totalCachedLabel)")
-                    .font(.caption)
-                    .foregroundStyle(PardisColors.inkSoft)
+                if !model.totalCachedLabel.isEmpty {
+                    Text("Cached offline: \(model.totalCachedLabel)")
+                        .font(.caption)
+                        .foregroundStyle(PardisColors.inkSoft)
+                }
             }
 
             if model.isLoading && model.stories.isEmpty {
@@ -99,33 +76,36 @@ struct LibraryScreen: View {
             List(model.stories, id: \.slug) { story in
                 HStack {
                     let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                    if let cover = coverUrlStr, let url = URL(string: cover) {
-                        AsyncImage(url: url) { image in
-                            image.resizable().scaledToFill()
-                        } placeholder: {
-                            Color(PardisColors.surfaceLilac)
-                        }
-                        .frame(width: 50, height: 50)
-                        .cornerRadius(PardisRadius.sm)
-                        .padding(.trailing, PardisSpacing.sm)
-                        .accessibilityLabel("Cover image for \(story.titleEn)")
-                    }
+                    PardisAsyncImageFrame(
+                        url: coverUrlStr.flatMap(URL.init(string:)),
+                        accessibilityLabel: "Cover image for \(story.titleEn)",
+                        width: 68,
+                        height: 68,
+                        placeholderText: "No cover"
+                    )
+                    .padding(.trailing, PardisSpacing.sm)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(story.titleEn).font(.headline)
-                        PersianReaderText(text: story.titleFa, font: .subheadline, color: PardisColors.indigo)
-                        Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
-                            .font(.caption)
-                            .foregroundStyle(PardisColors.inkMuted)
+                        Text(story.titleEn)
+                            .font(.system(size: PardisTypography.base, weight: .bold, design: .rounded))
+                        PersianReaderText(
+                            text: story.titleFa,
+                            font: .system(size: PardisTypography.sm, weight: .medium, design: .rounded),
+                            color: PardisColors.indigo
+                        )
+                        HStack(spacing: 6) {
+                            PardisMetaPill(text: "\(story.ageBand) • \(story.minutes)m", background: PardisColors.saffronTint, foreground: PardisColors.saffronDeep)
+                            PardisMetaPill(text: "\(story.vocabCount) words", background: PardisColors.indigoTint, foreground: PardisColors.indigoDeep)
+                        }
                         if let progress = model.downloadProgress[story.slug] {
                             HStack {
-                                Text(progress).font(.caption).foregroundStyle(PardisColors.inkSoft)
+                                PardisMetaPill(text: progress, background: PardisColors.backgroundAlt, foreground: PardisColors.inkSoft)
                                 Spacer()
                                 Button("Cancel") { model.cancelDownload(story.slug) }
                                     .buttonStyle(.bordered).controlSize(.small)
                             }
                         } else if let size = model.downloadedSizeLabels[story.slug] {
                             HStack {
-                                Text("✓ Offline (\(size))").font(.caption).foregroundStyle(PardisColors.mint)
+                                PardisMetaPill(text: "Offline • \(size)", background: PardisColors.mintSoft, foreground: PardisColors.mintDeep)
                                 Spacer()
                                 Button("Remove") { model.removeDownload(story.slug) }
                                     .buttonStyle(.bordered).controlSize(.small)
@@ -144,13 +124,12 @@ struct LibraryScreen: View {
                     }
                 }
                 .padding(PardisSpacing.md)
-                .pardisCardSurface()
+                .pardisCardSurface(cornerRadius: PardisRadius.lg)
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(story.slug) }
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
-                // TODO: Extract to PardisCard view modifier / struct per Phase 3 design system plan
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -176,30 +155,19 @@ struct ReaderScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Button("← Back") { dismiss() }
-                    .foregroundStyle(PardisColors.indigo)
-                Spacer()
-                if !model.pages.isEmpty {
-                    Text("\(model.currentPage + 1) / \(model.pages.count)")
-                        .foregroundStyle(PardisColors.inkSoft)
-                    let hasOffline = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
-                    if hasOffline {
-                        Text("✓ Offline")
-                            .font(.caption)
-                            .foregroundStyle(PardisColors.mint)
-                    }
-                }
-            }
+            let hasOffline = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
+            PardisReaderHeaderBar(
+                onBack: { dismiss() },
+                pageLabel: !model.pages.isEmpty ? "\(model.currentPage + 1) / \(model.pages.count)" : "Reader",
+                isOffline: hasOffline
+            )
 
             if model.isLoading && model.pages.isEmpty {
                 ProgressView().tint(PardisColors.saffron)
             } else if let err = model.errorMessage {
                 Text("Error: \(err)").foregroundStyle(.red)
             } else if let page = model.pages[safe: model.currentPage] {
-                Text("Page \(page.page)")
-                    .font(.caption)
-                    .foregroundStyle(PardisColors.inkMuted)
+                PardisMetaPill(text: "Page \(page.page)", background: PardisColors.backgroundAlt, foreground: PardisColors.inkMuted)
 
                 if model.isVideoMode {
                     // Prefer local cached video file for offline playback (set by OfflineAssetCache + VM after DownloadVideo action).
@@ -217,85 +185,69 @@ struct ReaderScreen: View {
                             }
                         )
                         .frame(height: 380)
-                        .cornerRadius(PardisRadius.md)
+                        .pardisCardSurface(cornerRadius: PardisRadius.lg)
                     }
 
                     Spacer(minLength: 8)
 
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            PersianReaderText(
-                                text: page.paragraphsFa.joined(separator: "\n\n"),
-                                font: .title3,
-                                color: PardisColors.ink
-                            )
-                            Text(page.paragraphsEn.joined(separator: "\n\n"))
-                                .font(.body)
-                                .foregroundStyle(PardisColors.inkSoft)
+                    PardisPanel {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 12) {
+                                PersianReaderText(
+                                    text: page.paragraphsFa.joined(separator: "\n\n"),
+                                    font: .system(size: PardisTypography.xl, weight: .bold, design: .rounded),
+                                    color: PardisColors.ink
+                                )
+                                Text(page.paragraphsEn.joined(separator: "\n\n"))
+                                    .font(.system(size: PardisTypography.base, weight: .regular, design: .rounded))
+                                    .foregroundStyle(PardisColors.inkSoft)
 
-                            if !page.vocabulary.isEmpty {
-                                Text("Vocab").font(.headline)
-                                ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
-                                    Text("\(v.fa) (\(v.translit)) — \(v.en)")
-                                        .font(.caption)
-                                        .padding(4)
-                                        .background(PardisColors.mintSoft)
-                                        .cornerRadius(PardisRadius.sm)
-                                        .onTapGesture {
+                                if !page.vocabulary.isEmpty {
+                                    Text("Vocab on this page")
+                                        .font(.system(size: PardisTypography.sm, weight: .bold, design: .rounded))
+                                        .foregroundStyle(PardisColors.inkMuted)
+                                    ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                                        PardisVocabChipView(vocab: v) {
                                             model.showVocab(v)
                                             selectedVocab = SelectedVocab(vocab: v)
                                         }
-                                        .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
-                                        .accessibilityAddTraits(.isButton)
+                                    }
                                 }
                             }
                         }
                     }
                 } else {
-                    // Normal illustration + text mode
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
                             let illoUrlStr = model.localIllustrationUrls[Int(page.page)] ?? page.illustrationUrl
-                            if let urlStr = illoUrlStr, let url = URL(string: urlStr) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().scaledToFill()
-                                } placeholder: {
-                                    Color(PardisColors.surfaceLilac)
-                                }
-                                .frame(height: 220)
-                                .cornerRadius(PardisRadius.md)
-                                .accessibilityLabel("Illustration for page \(page.page)")
-                            } else {
-                                RoundedRectangle(cornerRadius: PardisRadius.md)
-                                    .fill(PardisColors.surfaceLilac)
-                                    .frame(height: 220)
-                                    .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
-                            }
-
-                            PersianReaderText(
-                                text: page.paragraphsFa.joined(separator: "\n\n"),
-                                font: .body,
-                                color: PardisColors.ink
+                            PardisAsyncImageFrame(
+                                url: illoUrlStr.flatMap(URL.init(string:)),
+                                accessibilityLabel: "Illustration for page \(page.page)",
+                                width: nil,
+                                height: 220
                             )
 
-                            Text(page.paragraphsEn.joined(separator: "\n\n"))
-                                .font(.callout)
-                                .foregroundStyle(PardisColors.inkSoft)
+                            PardisPanel {
+                                PersianReaderText(
+                                    text: page.paragraphsFa.joined(separator: "\n\n"),
+                                    font: .system(size: PardisTypography.base, weight: .medium, design: .rounded),
+                                    color: PardisColors.ink
+                                )
 
-                            if !page.vocabulary.isEmpty {
-                                Text("Vocab").font(.headline)
-                                ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
-                                    Text("\(v.fa) (\(v.translit)) — \(v.en)")
-                                        .font(.caption)
-                                        .padding(4)
-                                        .background(PardisColors.mintSoft)
-                                        .cornerRadius(PardisRadius.sm)
-                                        .onTapGesture {
+                                Text(page.paragraphsEn.joined(separator: "\n\n"))
+                                    .font(.system(size: PardisTypography.sm, weight: .regular, design: .rounded))
+                                    .foregroundStyle(PardisColors.inkSoft)
+
+                                if !page.vocabulary.isEmpty {
+                                    Text("Vocab on this page")
+                                        .font(.system(size: PardisTypography.sm, weight: .bold, design: .rounded))
+                                        .foregroundStyle(PardisColors.inkMuted)
+                                    ForEach(page.vocabulary.prefix(3), id: \.fa) { v in
+                                        PardisVocabChipView(vocab: v) {
                                             model.showVocab(v)
                                             selectedVocab = SelectedVocab(vocab: v)
                                         }
-                                        .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
-                                        .accessibilityAddTraits(.isButton)
+                                    }
                                 }
                             }
                         }
@@ -305,8 +257,7 @@ struct ReaderScreen: View {
                 Text("Loading story \(slug)...")
             }
 
-            // Transport split into rows for better UX/accessibility (avoid long cramped row)
-            VStack(alignment: .leading, spacing: 4) {
+            PardisPanel {
                 HStack {
                     Button("Prev") { model.prevPage() }.disabled(model.currentPage == 0)
                     Button("Next") { model.nextPage() }
@@ -316,9 +267,6 @@ struct ReaderScreen: View {
                     if model.videoUrlFa != nil || model.videoUrlEn != nil {
                         Button(model.isVideoMode ? "Text" : "Video") { model.toggleVideo() }
 
-                        // Mirror Android: download/cache button for offline video (the main remaining Phase1 item).
-                        // Only show in video mode; "Cache for offline" calls the new DownloadVideo action.
-                        // Once done, player uses local file path (AVPlayer supports file: URLs).
                         if model.isVideoMode {
                             let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil
                             if !hasLocal {
@@ -329,8 +277,7 @@ struct ReaderScreen: View {
                                 }
                                 .disabled(model.isDownloadingVideo)
                             } else {
-                                Text("✓ Video + assets cached")
-                                    .foregroundStyle(PardisColors.mint)
+                                PardisMetaPill(text: "Video cached", background: PardisColors.mintSoft, foreground: PardisColors.mintDeep)
                                 Button("Clear") {
                                     model.clearAssets()
                                 }
@@ -341,46 +288,42 @@ struct ReaderScreen: View {
                 }
 
                 if !model.isVideoMode {
-                    HStack(spacing: 8) {
-                        Button("Play Audio") {
-                            if let p = model.pages[safe: model.currentPage] {
-                                let pageNum = p.page
-                                let faKey = "fa-\(pageNum)"
-                                let enKey = "en-\(pageNum)"
-                                let localNar = if model.preferredNarrationLang == "fa" {
-                                    model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
-                                } else {
-                                    model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
-                                }
-                                let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
-                                if let u = urlStr {
-                                    // Retained player in the VM: plays reliably, applies rate, auto-advances on end.
-                                    model.playAudio(urlString: u, rate: model.playbackRate, autoAdvance: true)
-                                }
+                    Button("Play Audio") {
+                        if let p = model.pages[safe: model.currentPage] {
+                            let pageNum = p.page
+                            let faKey = "fa-\(pageNum)"
+                            let enKey = "en-\(pageNum)"
+                            let localNar = if model.preferredNarrationLang == "fa" {
+                                model.localNarrationUrls[faKey] ?? model.localNarrationUrls[enKey]
+                            } else {
+                                model.localNarrationUrls[enKey] ?? model.localNarrationUrls[faKey]
+                            }
+                            let urlStr = localNar ?? (model.preferredNarrationLang == "fa" ? (p.narrationFa?.url ?? p.narrationEn?.url) : (p.narrationEn?.url ?? p.narrationFa?.url))
+                            if let u = urlStr {
+                                model.playAudio(urlString: u, rate: model.playbackRate, autoAdvance: true)
                             }
                         }
-                        // Lang group
-                        Text("Lang:").font(.caption)
+                    }
+                    PardisControlGroup(label: "Narration language") {
                         HStack(spacing: 4) {
                             Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang(lang: "fa") }
                             Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang(lang: "en") }
                         }
-                        // Rate group - compact
-                        Text("Rate:").font(.caption)
+                    }
+                    PardisControlGroup(label: "Playback speed") {
                         HStack(spacing: 4) {
                             Button("0.5x") { model.setPlaybackRate(rate:0.5) }
                             Button("1x") { model.setPlaybackRate(rate:1.0) }
                             Button("1.5x") { model.setPlaybackRate(rate:1.5) }
                             Button("2x") { model.setPlaybackRate(rate:2.0) }
                         }
-                        // Clear if cached
-                        let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
-                        if hasLocal {
-                            Button("Clear offline") {
-                                model.clearAssets()
-                            }
-                            .foregroundStyle(.red)
+                    }
+                    let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
+                    if hasLocal {
+                        Button("Clear offline") {
+                            model.clearAssets()
                         }
+                        .foregroundStyle(.red)
                     }
                 }
             }
@@ -389,27 +332,16 @@ struct ReaderScreen: View {
         .pardisScreenBackground()
         .sheet(item: $selectedVocab, onDismiss: { model.dismissVocab() }) { selection in
             let v = selection.vocab
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Vocab").font(.headline).foregroundStyle(PardisColors.indigo)
-                PersianReaderText(text: v.fa, font: .title3, color: PardisColors.ink)
-                Text("(\(v.translit))").font(.body).foregroundStyle(PardisColors.inkSoft)
-                Text(v.en).font(.body)
-                if !v.context.isEmpty {
-                    Text("in: \(v.context)").font(.caption).foregroundStyle(PardisColors.inkMuted)
-                }
-                if let audio = v.audioUrl {
-                    Button("▶ Play pronunciation") {
-                        // Retained player in the VM so it isn't deallocated before it plays.
-                        model.playAudio(urlString: audio, rate: 1.0, autoAdvance: false)
-                    }.padding(.top, 4)
-                }
-                Button("Close") {
+            PardisVocabSheetContent(
+                vocab: v,
+                onPlayPronunciation: v.audioUrl != nil ? {
+                    model.playAudio(urlString: v.audioUrl!, rate: 1.0, autoAdvance: false)
+                } : nil,
+                onClose: {
                     selectedVocab = nil
                     model.dismissVocab()
                 }
-                    .padding(.top)
-                    .tint(PardisColors.saffron)
-            }
+            )
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .presentationDetents([.medium, .large])
