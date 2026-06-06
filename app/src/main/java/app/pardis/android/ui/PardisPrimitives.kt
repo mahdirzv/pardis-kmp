@@ -2,6 +2,7 @@ package app.pardis.android.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,6 +57,7 @@ import coil.compose.AsyncImage
 private val PardisIconSize = 20.dp
 private val PardisStoryCoverSize = 68.dp
 private val PardisFeaturedStoryCoverHeight = 156.dp
+private val PardisFeaturedStoryHeroHeight = 248.dp
 
 enum class PardisIconKind {
     Back,
@@ -92,8 +94,8 @@ fun PardisIcon(
         val h = size.height
         when (icon) {
             PardisIconKind.Back -> {
-                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.68f, h * 0.18f), end = androidx.compose.ui.geometry.Offset(w * 0.28f, h * 0.50f), strokeWidth = stroke.width, cap = StrokeCap.Round)
-                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.28f, h * 0.50f), end = androidx.compose.ui.geometry.Offset(w * 0.68f, h * 0.82f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = Offset(w * 0.68f, h * 0.18f), end = androidx.compose.ui.geometry.Offset(w * 0.28f, h * 0.50f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = Offset(w * 0.28f, h * 0.50f), end = androidx.compose.ui.geometry.Offset(w * 0.68f, h * 0.82f), strokeWidth = stroke.width, cap = StrokeCap.Round)
             }
             PardisIconKind.Book -> {
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.14f, h * 0.20f), end = androidx.compose.ui.geometry.Offset(w * 0.14f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
@@ -615,76 +617,84 @@ fun PardisFeaturedStoryCard(
     actionLabel: String = "Start reading",
     noCoverLabel: String = "No cover",
 ) {
-    PardisCard(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(PardisSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+    PardisCard(modifier = modifier.fillMaxWidth(), onClick = onOpen) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(PardisFeaturedStoryHeroHeight),
         ) {
+            // Scene / cover fills the whole hero.
             PardisRemoteImageFrame(
                 imageUrl = coverUrl,
                 contentDescription = "Cover image for featured story: $titleEn",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(PardisFeaturedStoryCoverHeight),
+                modifier = Modifier.fillMaxSize(),
                 placeholderText = noCoverLabel,
             )
-            Text(
-                text = eyebrow,
-                style = MaterialTheme.typography.labelSmall,
-                color = PardisColors.inkMuted,
+            // Legibility scrim so white text reads over any scene (light or dark).
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0x00000000), Color(0x40000000), Color(0xCC0F0C14)),
+                        ),
+                    ),
             )
-            Text(
-                text = titleEn,
-                style = MaterialTheme.typography.headlineSmall,
-                color = PardisColors.ink,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            PersianReaderInline(
-                text = titleFa,
-                style = MaterialTheme.typography.titleMedium,
-                color = PardisColors.indigo,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (!blurb.isNullOrBlank()) {
+            // Play affordance, top-right.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(PardisSpacing.md)
+                    .size(48.dp)
+                    .background(PardisColors.saffron, RoundedCornerShape(PardisRadius.full)),
+                contentAlignment = Alignment.Center,
+            ) {
+                PardisIcon(PardisIconKind.Play, contentDescription = actionLabel, tint = Color.White)
+            }
+            // Overlaid text block, bottom.
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .padding(PardisSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs),
+            ) {
                 Text(
-                    text = blurb,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PardisColors.inkSoft,
+                    text = eyebrow.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xCCFFFFFF),
+                )
+                Text(
+                    text = titleEn,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PardisMetaPill(
-                    text = "$ageBand • ${minutes}m",
-                    containerColor = PardisColors.saffronTint,
-                    contentColor = PardisColors.saffronDeep,
+                PersianReaderInline(
+                    text = titleFa,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xE6FFFFFF),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                PardisMetaPill(
-                    text = "$vocabCount words",
-                    containerColor = PardisColors.indigoTint,
-                    contentColor = PardisColors.indigoDeep,
-                )
+                Spacer(Modifier.height(PardisSpacing.xs))
+                Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
+                    PardisMetaPill(
+                        text = "$ageBand • ${minutes}m",
+                        containerColor = Color(0x33FFFFFF),
+                        contentColor = Color.White,
+                    )
+                    PardisMetaPill(
+                        text = "$vocabCount words",
+                        containerColor = Color(0x33FFFFFF),
+                        contentColor = Color.White,
+                    )
+                }
             }
-            Button(
-            onClick = onOpen,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PardisComponentColors.primaryActionContainer,
-                contentColor = PardisComponentColors.primaryActionContent,
-            ),
-        ) {
-            PardisIcon(PardisIconKind.Book, contentDescription = null, tint = PardisComponentColors.primaryActionContent)
-            Spacer(Modifier.size(PardisSpacing.xs))
-            Text(actionLabel, style = MaterialTheme.typography.labelLarge)
         }
     }
-}
 }
 
 @Composable

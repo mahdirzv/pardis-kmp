@@ -361,43 +361,32 @@ fun LibraryScreen(
             )
         }
         Spacer(Modifier.height(PardisSpacing.sm))
-        // Age-band filter chips (derived from the data). Tapping the active band again clears it.
-        if (state.ageBands.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)
-            ) {
+        // Filter chips: age bands + an offline-cached toggle. Tapping the active band again clears it.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)
+        ) {
+            PardisFilterPill(
+                label = "All ages",
+                selected = state.selectedAgeBand == null && !state.showOnlyCached,
+                onClick = { onAction(LibraryAction.SetAgeBand(null)) },
+            )
+            state.ageBands.forEach { band ->
                 PardisFilterPill(
-                    label = "All ages",
-                    selected = state.selectedAgeBand == null,
-                    onClick = { onAction(LibraryAction.SetAgeBand(null)) },
-                )
-                state.ageBands.forEach { band ->
-                    PardisFilterPill(
-                        label = band,
-                        selected = state.selectedAgeBand == band,
-                        onClick = {
-                            onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
-                        },
-                    )
-                }
-            }
-            Spacer(Modifier.height(PardisSpacing.sm))
-        }
-        // Toggle for offline cached only
-        PardisPanel(contentPadding = PaddingValues(horizontal = PardisSpacing.md, vertical = PardisSpacing.sm)) {
-            Button(onClick = { onAction(LibraryAction.ToggleShowOnlyCached) }) {
-                Text(if (state.showOnlyCached) "Show all stories" else "Show only offline cached")
-            }
-            if (state.totalCachedLabel.isNotEmpty()) {
-                Text(
-                    "Cached offline: ${state.totalCachedLabel}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PardisColors.inkSoft,
+                    label = band,
+                    selected = state.selectedAgeBand == band,
+                    onClick = {
+                        onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
+                    },
                 )
             }
+            PardisFilterPill(
+                label = if (state.totalCachedLabel.isNotEmpty()) "Offline · ${state.totalCachedLabel}" else "Offline",
+                selected = state.showOnlyCached,
+                onClick = { onAction(LibraryAction.ToggleShowOnlyCached) },
+            )
         }
         Spacer(Modifier.height(PardisSpacing.md))
         PardisSectionHeader(
