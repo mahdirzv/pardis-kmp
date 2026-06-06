@@ -28,7 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
@@ -440,7 +443,7 @@ fun PardisRemoteImageFrame(
     imageUrl: String?,
     contentDescription: String,
     modifier: Modifier = Modifier,
-    placeholderText: String = "No illustration",
+    @Suppress("UNUSED_PARAMETER") placeholderText: String = "No illustration",
 ) {
     Surface(
         modifier = modifier,
@@ -455,12 +458,56 @@ fun PardisRemoteImageFrame(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = placeholderText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PardisComponentColors.mediaPlaceholderContent,
-                )
+            // No real cover/illustration: render a generated Persian "scene" backdrop
+            // (mirrors the Rivana prototype's CSS scenes) chosen deterministically per story.
+            PardisSceneArt(seed = contentDescription, modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+/**
+ * Generated gradient "scene" art used wherever a real cover/illustration is missing. Mirrors the
+ * Rivana prototype's CSS scenes (night / dawn / sea / hills / flame). The variant is picked
+ * deterministically from [seed] so a given story always shows the same scene. Colors are art
+ * constants (like PardisBrushes), intentionally not tokenized.
+ */
+@Composable
+fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
+    val variant = ((seed.hashCode() % 5) + 5) % 5
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        when (variant) {
+            0 -> { // Night: lapis sky, saffron moon, dark hills
+                drawRect(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF2436A1), Color(0xFF4F2EB5))))
+                val moon = Offset(w * 0.5f, h * 0.34f)
+                drawCircle(Brush.radialGradient(listOf(Color(0x66FFE9D2), Color(0x00F08A2D)), center = moon, radius = w * 0.3f), radius = w * 0.3f, center = moon)
+                drawCircle(Color(0xFFF08A2D), radius = w * 0.11f, center = moon)
+                val hills = Path().apply {
+                    moveTo(0f, h); lineTo(0f, h * 0.72f); lineTo(w * 0.28f, h * 0.52f); lineTo(w * 0.52f, h * 0.7f)
+                    lineTo(w * 0.78f, h * 0.5f); lineTo(w, h * 0.64f); lineTo(w, h); close()
+                }
+                drawPath(hills, Color(0xFF0F1849))
+            }
+            1 -> { // Dawn: warm sky, rising sun
+                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFF4E5), Color(0xFFFFD9A8), Color(0xFFF4B53A))))
+                drawCircle(Color(0xFFF08A2D), radius = w * 0.16f, center = Offset(w * 0.5f, h * 0.36f))
+            }
+            2 -> { // Sea: peach-to-teal with a white sail
+                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFE9D2), Color(0xFFDEF5E9), Color(0xFF6AD0AB))))
+                val sail = Path().apply { moveTo(w * 0.48f, h * 0.32f); lineTo(w * 0.48f, h * 0.64f); lineTo(w * 0.66f, h * 0.64f); close() }
+                drawPath(sail, Color.White)
+                drawRect(Color(0xFF14111B), topLeft = Offset(w * 0.36f, h * 0.64f), size = androidx.compose.ui.geometry.Size(w * 0.34f, h * 0.05f))
+            }
+            3 -> { // Hills: dawn pastel with rounded indigo + lilac hills
+                drawRect(Brush.verticalGradient(listOf(Color(0xFFFFE9D2), Color(0xFFFCDEE6), Color(0xFFECE6FB))))
+                drawCircle(Color(0xFF2436A1), radius = w * 0.42f, center = Offset(w * 0.18f, h * 1.08f))
+                drawCircle(Color(0xFF8B6FE6), radius = w * 0.34f, center = Offset(w * 0.86f, h * 1.12f))
+            }
+            else -> { // Flame: deep lapis with a warm glow rising from the base
+                drawRect(Brush.verticalGradient(listOf(Color(0xFF2436A1), Color(0xFF1A256E), Color(0xFF0F1849))))
+                val glow = Offset(w * 0.5f, h * 0.82f)
+                drawCircle(Brush.radialGradient(listOf(Color(0x88F08A2D), Color(0x00F08A2D)), center = glow, radius = w * 0.45f), radius = w * 0.45f, center = glow)
             }
         }
     }
