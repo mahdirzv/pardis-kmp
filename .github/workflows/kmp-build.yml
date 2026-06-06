@@ -58,10 +58,13 @@ jobs:
         run: xcodegen generate
       - name: Build iOS app (simulator, no signing)
         run: |
+          # Build a single concrete simulator arch: a generic destination yields ARCHS="arm64 x86_64"
+          # + CURRENT_ARCH=undefined_arch, which embedAndSignAppleFrameworkForXcode can't resolve.
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphonesimulator \
+            -arch arm64 \
             CODE_SIGNING_ALLOWED=NO \
             build

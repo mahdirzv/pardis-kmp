@@ -195,7 +195,6 @@ struct ReaderScreen: View {
                         .frame(height: 380)
                         .cornerRadius(12)
                     }
-                }
 
                     Spacer(minLength: 8)
 
