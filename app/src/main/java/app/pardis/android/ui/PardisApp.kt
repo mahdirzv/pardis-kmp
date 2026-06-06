@@ -44,6 +44,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
 
+private enum class PardisRootTab(
+    val title: String,
+    val subtitle: String,
+    val icon: PardisIconKind,
+) {
+    Today("Today", "Daily reading rhythm", PardisIconKind.Home),
+    Library("Library", "Persian heritage stories", PardisIconKind.Book),
+    Bedtime("Bedtime", "Calmer stories for later", PardisIconKind.Moon),
+    Rewards("Rewards", "Reading progress and badges", PardisIconKind.Star),
+    You("You", "Family profile and preferences", PardisIconKind.User),
+}
+
 @Composable
 fun PardisApp() {
     PardisTheme {
@@ -54,7 +66,7 @@ fun PardisApp() {
             val navController = rememberNavController()
             NavHost(navController = navController, startDestination = "library") {
                 composable("library") {
-                    LibraryRoute(
+                    RootShellRoute(
                         onOpenStory = { slug ->
                             navController.navigate("reader/$slug")
                         }
@@ -76,8 +88,73 @@ fun PardisApp() {
 }
 
 @Composable
+private fun RootShellRoute(
+    onOpenStory: (String) -> Unit,
+) {
+    var selectedTab by remember { mutableStateOf(PardisRootTab.Library) }
+    val tabs = remember { PardisRootTab.entries.toList() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pardisScreenBackground(),
+    ) {
+        when (selectedTab) {
+            PardisRootTab.Library -> LibraryRoute(
+                onOpenStory = onOpenStory,
+                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
+            )
+            else -> PardisPlaceholderTabScreen(
+                title = selectedTab.title,
+                subtitle = selectedTab.subtitle,
+                icon = selectedTab.icon,
+            )
+        }
+        PardisBottomTabBar(
+            items = tabs.map { PardisTabItem(label = it.title, icon = it.icon) },
+            selectedIndex = tabs.indexOf(selectedTab),
+            onSelect = { selectedTab = tabs[it] },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(PardisSpacing.md),
+        )
+    }
+}
+
+@Composable
+private fun PardisPlaceholderTabScreen(
+    title: String,
+    subtitle: String,
+    icon: PardisIconKind,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(PardisSpacing.md)
+            .padding(bottom = PardisSpacing.xxl + PardisSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+    ) {
+        PardisScreenHeader(title = title, subtitle = subtitle)
+        PardisPanel {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PardisIcon(icon, contentDescription = null, tint = PardisColors.indigo)
+                Text(
+                    text = "$title is ready for its shared state contract.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = PardisColors.inkSoft,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun LibraryRoute(
     onOpenStory: (String) -> Unit,
+    bottomContentPadding: androidx.compose.ui.unit.Dp = PardisSpacing.none,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,6 +162,7 @@ fun LibraryRoute(
         state = state,
         onAction = viewModel::onAction,
         onOpenStory = onOpenStory,
+        bottomContentPadding = bottomContentPadding,
     )
 }
 
@@ -93,6 +171,7 @@ fun LibraryScreen(
     state: LibraryUiState,
     onAction: (LibraryAction) -> Unit,
     onOpenStory: (String) -> Unit,
+    bottomContentPadding: androidx.compose.ui.unit.Dp = PardisSpacing.none,
 ) {
     Column(
         modifier = Modifier
@@ -210,6 +289,7 @@ fun LibraryScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = bottomContentPadding),
             verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)
         ) {
             items(state.stories, key = { it.slug }) { story ->

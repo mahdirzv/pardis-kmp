@@ -59,10 +59,14 @@ enum class PardisIconKind {
     Book,
     Close,
     Download,
+    Home,
+    Moon,
     Play,
     Refresh,
     Search,
+    Star,
     Trash,
+    User,
 }
 
 @Composable
@@ -105,6 +109,17 @@ fun PardisIcon(
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.72f, h * 0.44f), end = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.66f), strokeWidth = stroke.width, cap = StrokeCap.Round)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.22f, h * 0.84f), end = androidx.compose.ui.geometry.Offset(w * 0.78f, h * 0.84f), strokeWidth = stroke.width, cap = StrokeCap.Round)
             }
+            PardisIconKind.Home -> {
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.18f, h * 0.48f), end = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.20f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.20f), end = androidx.compose.ui.geometry.Offset(w * 0.82f, h * 0.48f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.30f, h * 0.46f), end = androidx.compose.ui.geometry.Offset(w * 0.30f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.70f, h * 0.46f), end = androidx.compose.ui.geometry.Offset(w * 0.70f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.30f, h * 0.82f), end = androidx.compose.ui.geometry.Offset(w * 0.70f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
+            }
+            PardisIconKind.Moon -> {
+                drawArc(tint, startAngle = 92f, sweepAngle = 245f, useCenter = false, topLeft = androidx.compose.ui.geometry.Offset(w * 0.24f, h * 0.16f), size = androidx.compose.ui.geometry.Size(w * 0.58f, h * 0.70f), style = stroke)
+                drawArc(tint, startAngle = 95f, sweepAngle = 190f, useCenter = false, topLeft = androidx.compose.ui.geometry.Offset(w * 0.42f, h * 0.20f), size = androidx.compose.ui.geometry.Size(w * 0.42f, h * 0.58f), style = thinStroke)
+            }
             PardisIconKind.Play -> {
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.32f, h * 0.22f), end = androidx.compose.ui.geometry.Offset(w * 0.32f, h * 0.78f), strokeWidth = stroke.width, cap = StrokeCap.Round)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.34f, h * 0.22f), end = androidx.compose.ui.geometry.Offset(w * 0.78f, h * 0.50f), strokeWidth = stroke.width, cap = StrokeCap.Round)
@@ -119,11 +134,27 @@ fun PardisIcon(
                 drawCircle(tint, radius = w * 0.24f, center = androidx.compose.ui.geometry.Offset(w * 0.43f, h * 0.42f), style = stroke)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.62f, h * 0.62f), end = androidx.compose.ui.geometry.Offset(w * 0.82f, h * 0.82f), strokeWidth = stroke.width, cap = StrokeCap.Round)
             }
+            PardisIconKind.Star -> {
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.16f), end = androidx.compose.ui.geometry.Offset(w * 0.60f, h * 0.42f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.60f, h * 0.42f), end = androidx.compose.ui.geometry.Offset(w * 0.86f, h * 0.42f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.86f, h * 0.42f), end = androidx.compose.ui.geometry.Offset(w * 0.66f, h * 0.58f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.66f, h * 0.58f), end = androidx.compose.ui.geometry.Offset(w * 0.74f, h * 0.84f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.74f, h * 0.84f), end = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.68f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.68f), end = androidx.compose.ui.geometry.Offset(w * 0.26f, h * 0.84f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.26f, h * 0.84f), end = androidx.compose.ui.geometry.Offset(w * 0.34f, h * 0.58f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.34f, h * 0.58f), end = androidx.compose.ui.geometry.Offset(w * 0.14f, h * 0.42f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.14f, h * 0.42f), end = androidx.compose.ui.geometry.Offset(w * 0.40f, h * 0.42f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+                drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.40f, h * 0.42f), end = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.16f), strokeWidth = stroke.width, cap = StrokeCap.Round)
+            }
             PardisIconKind.Trash -> {
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.28f, h * 0.36f), end = androidx.compose.ui.geometry.Offset(w * 0.72f, h * 0.36f), strokeWidth = stroke.width, cap = StrokeCap.Round)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.36f, h * 0.36f), end = androidx.compose.ui.geometry.Offset(w * 0.40f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.64f, h * 0.36f), end = androidx.compose.ui.geometry.Offset(w * 0.60f, h * 0.82f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
                 drawLine(tint, start = androidx.compose.ui.geometry.Offset(w * 0.40f, h * 0.22f), end = androidx.compose.ui.geometry.Offset(w * 0.60f, h * 0.22f), strokeWidth = thinStroke.width, cap = StrokeCap.Round)
+            }
+            PardisIconKind.User -> {
+                drawCircle(tint, radius = w * 0.17f, center = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.32f), style = stroke)
+                drawArc(tint, startAngle = 205f, sweepAngle = 130f, useCenter = false, topLeft = androidx.compose.ui.geometry.Offset(w * 0.24f, h * 0.48f), size = androidx.compose.ui.geometry.Size(w * 0.52f, h * 0.42f), style = stroke)
             }
         }
     }
@@ -263,6 +294,60 @@ fun PardisMetricStrip(
                 metric = metric,
                 modifier = Modifier.weight(1f),
             )
+        }
+    }
+}
+
+data class PardisTabItem(
+    val label: String,
+    val icon: PardisIconKind,
+)
+
+@Composable
+fun PardisBottomTabBar(
+    items: List<PardisTabItem>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PardisThemedSurface(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items.forEachIndexed { index, item ->
+                val selected = index == selectedIndex
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelect(index) }
+                        .padding(vertical = PardisSpacing.xs),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs),
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(PardisRadius.full),
+                        color = if (selected) PardisColors.saffronTint else Color.Transparent,
+                    ) {
+                        PardisIcon(
+                            icon = item.icon,
+                            contentDescription = null,
+                            tint = if (selected) PardisColors.saffronDeep else PardisColors.inkMuted,
+                            modifier = Modifier.padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xxs),
+                        )
+                    }
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (selected) PardisColors.saffronDeep else PardisColors.inkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }

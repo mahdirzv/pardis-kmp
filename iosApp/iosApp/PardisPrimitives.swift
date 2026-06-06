@@ -9,10 +9,14 @@ enum PardisIconKind {
     case book
     case close
     case download
+    case home
+    case moon
     case play
     case refresh
     case search
+    case star
     case trash
+    case user
 
     var systemName: String {
         switch self {
@@ -24,14 +28,22 @@ enum PardisIconKind {
             return "xmark"
         case .download:
             return "arrow.down.to.line"
+        case .home:
+            return "house"
+        case .moon:
+            return "moon"
         case .play:
             return "play.fill"
         case .refresh:
             return "arrow.clockwise"
         case .search:
             return "magnifyingglass"
+        case .star:
+            return "star"
         case .trash:
             return "trash"
+        case .user:
+            return "person"
         }
     }
 }
@@ -147,6 +159,52 @@ struct PardisMetric: Identifiable {
     let value: String
     let label: String
     let tone: PardisMetricTone
+}
+
+struct PardisTabItem: Identifiable {
+    let id = UUID()
+    let label: String
+    let icon: PardisIconKind
+}
+
+struct PardisBottomTabBar: View {
+    let items: [PardisTabItem]
+    let selectedIndex: Int
+    let onSelect: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: PardisSpacing.xs) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                let selected = index == selectedIndex
+                Button {
+                    onSelect(index)
+                } label: {
+                    VStack(spacing: PardisSpacing.xxs) {
+                        PardisIcon(
+                            kind: item.icon,
+                            size: 18,
+                            color: selected ? PardisColors.saffronDeep : PardisColors.inkMuted
+                        )
+                        .padding(.horizontal, PardisSpacing.sm)
+                        .padding(.vertical, PardisSpacing.xxs)
+                        .background(selected ? PardisColors.saffronTint : Color.clear)
+                        .clipShape(Capsule(style: .continuous))
+
+                        Text(item.label)
+                            .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                            .foregroundStyle(selected ? PardisColors.saffronDeep : PardisColors.inkMuted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, PardisSpacing.sm)
+        .padding(.vertical, PardisSpacing.xs)
+        .pardisCardSurface(cornerRadius: PardisRadius.lg)
+    }
 }
 
 enum PardisMetricTone {

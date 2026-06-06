@@ -12,12 +12,54 @@ private struct SelectedVocab: Identifiable {
     var id: String { "\(vocab.fa)-\(vocab.translit)-\(vocab.en)" }
 }
 
+private enum PardisRootTab: CaseIterable {
+    case today
+    case library
+    case bedtime
+    case rewards
+    case you
+
+    var title: String {
+        switch self {
+        case .today: return "Today"
+        case .library: return "Library"
+        case .bedtime: return "Bedtime"
+        case .rewards: return "Rewards"
+        case .you: return "You"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .today: return "Daily reading rhythm"
+        case .library: return "Persian heritage stories"
+        case .bedtime: return "Calmer stories for later"
+        case .rewards: return "Reading progress and badges"
+        case .you: return "Family profile and preferences"
+        }
+    }
+
+    var icon: PardisIconKind {
+        switch self {
+        case .today: return .home
+        case .library: return .book
+        case .bedtime: return .moon
+        case .rewards: return .star
+        case .you: return .user
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var selectedRoute: ReaderRoute? = nil
+    @State private var selectedTab: PardisRootTab = .library
 
     var body: some View {
         NavigationStack {
-            LibraryScreen(onSelect: { slug in selectedRoute = ReaderRoute(slug: slug) })
+            RootShellView(
+                selectedTab: $selectedTab,
+                onSelectStory: { slug in selectedRoute = ReaderRoute(slug: slug) }
+            )
                 .navigationDestination(item: $selectedRoute) { route in
                     ReaderScreen(slug: route.slug)
                 }
@@ -25,9 +67,57 @@ struct ContentView: View {
     }
 }
 
+private struct RootShellView: View {
+    @Binding var selectedTab: PardisRootTab
+    let onSelectStory: (String) -> Void
+
+    private let tabs = PardisRootTab.allCases
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            switch selectedTab {
+            case .library:
+                LibraryScreen(onSelect: onSelectStory, bottomContentPadding: 116)
+            case .today, .bedtime, .rewards, .you:
+                PardisPlaceholderTabScreen(tab: selectedTab)
+                    .padding(.bottom, 116)
+            }
+
+            PardisBottomTabBar(
+                items: tabs.map { PardisTabItem(label: $0.title, icon: $0.icon) },
+                selectedIndex: tabs.firstIndex(of: selectedTab) ?? 0,
+                onSelect: { selectedTab = tabs[$0] }
+            )
+            .padding(PardisSpacing.md)
+        }
+        .pardisScreenBackground()
+    }
+}
+
+private struct PardisPlaceholderTabScreen: View {
+    let tab: PardisRootTab
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: PardisSpacing.md) {
+            PardisScreenHeader(title: tab.title, subtitle: tab.subtitle)
+            PardisPanel {
+                HStack(spacing: PardisSpacing.sm) {
+                    PardisIcon(kind: tab.icon, color: PardisColors.indigo)
+                    Text("\(tab.title) is ready for its shared state contract.")
+                        .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
+                        .foregroundStyle(PardisColors.inkSoft)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding()
+    }
+}
+
 struct LibraryScreen: View {
     @State private var model = LibrarySharedViewModel()
     var onSelect: (String) -> Void
+    var bottomContentPadding: CGFloat = 0
 
     private var storySectionSubtitle: String {
         if let band = model.selectedAgeBand {
@@ -149,9 +239,9 @@ struct LibraryScreen: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .safeAreaPadding(.bottom, bottomContentPadding)
         }
         .padding()
-        .pardisScreenBackground()
         .task {
             await model.activate()
         }
