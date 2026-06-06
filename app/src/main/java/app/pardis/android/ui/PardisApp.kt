@@ -166,6 +166,13 @@ private fun TodayScreen(
 ) {
     val gutter = PardisSpacing.lg
     val featured = state.stories.firstOrNull()
+    Box(Modifier.fillMaxSize()) {
+    PardisPatternOverlay(
+        motif = PardisMotif.Paisley,
+        color = PardisColors.saffronDeep,
+        alpha = 0.05f,
+        modifier = Modifier.fillMaxWidth().height(220.dp).align(Alignment.TopCenter),
+    )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
@@ -263,6 +270,7 @@ private fun TodayScreen(
             )
         }
     }
+    }
 }
 
 @Composable
@@ -316,13 +324,16 @@ private fun StreakTile(modifier: Modifier, icon: PardisIconKind, value: String, 
 @Composable
 private fun TonightBedtimeCard(modifier: Modifier = Modifier, onOpen: () -> Unit) {
     val onNight = Color(0x99FFFFFF)
-    Row(
+    Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(PardisRadius.lg))
             .background(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF2436A1), Color(0xFF4F2EB5))))
-            .clickable(onClick = onOpen)
-            .padding(16.dp),
+            .clickable(onClick = onOpen),
+    ) {
+        PardisPatternOverlay(PardisMotif.Rosette, Color.White, alpha = 0.10f, modifier = Modifier.matchParentSize())
+    Row(
+        Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -338,6 +349,7 @@ private fun TonightBedtimeCard(modifier: Modifier = Modifier, onOpen: () -> Unit
         ) {
             PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White)
         }
+    }
     }
 }
 
@@ -357,9 +369,9 @@ private fun TodayShelfCover(titleEn: String, titleFa: String, coverUrl: String?,
 
 @Composable
 private fun WordOfDayCard(modifier: Modifier = Modifier) {
-    Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.lilacSoft).padding(18.dp),
-    ) {
+    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.lilacSoft)) {
+    PardisPatternOverlay(PardisMotif.Vine, PardisColors.lilacDeep, alpha = 0.10f, modifier = Modifier.matchParentSize())
+    Column(Modifier.fillMaxWidth().padding(18.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("WORD OF THE DAY", style = MaterialTheme.typography.labelSmall, color = PardisColors.lilacDeep)
             PardisIcon(PardisIconKind.Volume, contentDescription = null, tint = PardisColors.lilacDeep)
@@ -373,6 +385,7 @@ private fun WordOfDayCard(modifier: Modifier = Modifier) {
             color = PardisColors.inkSoft,
             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
         )
+    }
     }
 }
 
@@ -615,10 +628,13 @@ private fun RewardsScreen(storyCount: Int, bottomContentPadding: androidx.compos
 
 @Composable
 private fun RewardLevelHero(modifier: Modifier) {
-    Row(
+    Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
-            .background(Brush.linearGradient(listOf(Color(0xFF2436A1), Color(0xFF4F2EB5), Color(0xFF1A256E))))
-            .padding(20.dp),
+            .background(Brush.linearGradient(listOf(Color(0xFF2436A1), Color(0xFF4F2EB5), Color(0xFF1A256E)))),
+    ) {
+    PardisPatternOverlay(PardisMotif.Rosette, Color.White, alpha = 0.12f, modifier = Modifier.matchParentSize())
+    Row(
+        Modifier.fillMaxWidth().padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(18.dp),
     ) {
@@ -639,6 +655,7 @@ private fun RewardLevelHero(modifier: Modifier) {
             Spacer(Modifier.height(5.dp))
             PardisProgressBar(value = 320f / 500f, height = 6, color = Color(0xFFF4B53A))
         }
+    }
     }
 }
 
@@ -668,11 +685,12 @@ private fun RewardStat(modifier: Modifier, icon: PardisIconKind, value: String, 
 @Composable
 private fun StreakCalendar(modifier: Modifier) {
     val days = listOf("M", "T", "W", "T", "F", "S", "S")
-    Column(
+    Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg))
-            .background(Brush.linearGradient(listOf(Color(0xFFF08A2D), Color(0xFFF4B53A), Color(0xFFFFD08A))))
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .background(Brush.linearGradient(listOf(Color(0xFFF08A2D), Color(0xFFF4B53A), Color(0xFFFFD08A)))),
     ) {
+    PardisPatternOverlay(PardisMotif.Paisley, Color.White, alpha = 0.14f, modifier = Modifier.matchParentSize())
+    Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = Color.White)
@@ -694,6 +712,7 @@ private fun StreakCalendar(modifier: Modifier) {
                 }
             }
         }
+    }
     }
 }
 
@@ -811,8 +830,15 @@ private data class SettingsItem(val icon: PardisIconKind, val tone: String, val 
 @Composable
 private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
     val gutter = PardisSpacing.lg
+    Box(Modifier.fillMaxSize().background(PardisColors.background)) {
+    PardisPatternOverlay(
+        motif = PardisMotif.Rosette,
+        color = PardisColors.indigo,
+        alpha = 0.05f,
+        modifier = Modifier.fillMaxWidth().height(180.dp).align(Alignment.TopCenter),
+    )
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(PardisColors.background),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
     ) {
@@ -870,14 +896,19 @@ private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose
             }
         }
     }
+    }
 }
 
 @Composable
 private fun YouProfileCard(modifier: Modifier) {
-    Row(
+    Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
             .background(Brush.linearGradient(listOf(Color(0xFFFFE9D2), Color(0xFFECE6FB), Color(0xFFE8EBFB))))
-            .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl)).padding(20.dp),
+            .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl)),
+    ) {
+    PardisPatternOverlay(PardisMotif.Paisley, PardisColors.indigo, alpha = 0.07f, modifier = Modifier.matchParentSize())
+    Row(
+        Modifier.fillMaxWidth().padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -901,6 +932,7 @@ private fun YouProfileCard(modifier: Modifier) {
                 Text("Switch reader", style = MaterialTheme.typography.labelLarge, color = PardisColors.ink)
             }
         }
+    }
     }
 }
 
