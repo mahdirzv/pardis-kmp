@@ -125,6 +125,9 @@ private fun RootShellRoute(
                 onOpenStory = onOpenStory,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
+            PardisRootTab.Bedtime -> BedtimeScreen(
+                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
+            )
             else -> PardisPlaceholderTabScreen(
                 title = selectedTab.title,
                 subtitle = selectedTab.subtitle,
@@ -280,8 +283,8 @@ private fun TodayGreeting(modifier: Modifier = Modifier) {
 @Composable
 private fun TodayStreakStrip(words: Int, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-        StreakTile(Modifier.weight(1f), PardisIconKind.Star, "7 nights", "reading streak", PardisColors.saffronTint, PardisColors.saffronDeep)
-        StreakTile(Modifier.weight(1f), PardisIconKind.Book, "$words words", "collected", PardisColors.indigoTint, PardisColors.indigoDeep)
+        StreakTile(Modifier.weight(1f), PardisIconKind.Flame, "7 nights", "reading streak", PardisColors.saffronTint, PardisColors.saffronDeep)
+        StreakTile(Modifier.weight(1f), PardisIconKind.Feather, "$words words", "collected", PardisColors.indigoTint, PardisColors.indigoDeep)
     }
 }
 
@@ -349,7 +352,7 @@ private fun WordOfDayCard(modifier: Modifier = Modifier) {
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("WORD OF THE DAY", style = MaterialTheme.typography.labelSmall, color = PardisColors.lilacDeep)
-            PardisIcon(PardisIconKind.Star, contentDescription = null, tint = PardisColors.lilacDeep)
+            PardisIcon(PardisIconKind.Volume, contentDescription = null, tint = PardisColors.lilacDeep)
         }
         PersianReaderInline("دلیر", style = MaterialTheme.typography.displayLarge, color = PardisColors.lilacDeep)
         Text("delir — \"brave\"", style = MaterialTheme.typography.bodyMedium, color = PardisColors.lilacDeep)
@@ -373,6 +376,145 @@ private fun CollectionCard(name: String, fa: String, sceneVariant: Int, onClick:
         Column(Modifier.align(Alignment.BottomStart).padding(13.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             PersianReaderInline(fa, style = MaterialTheme.typography.bodySmall, color = Color(0xCCFFFFFF), maxLines = 1)
+        }
+    }
+}
+
+private data class Lullaby(
+    val title: String,
+    val titleFa: String,
+    val minutes: Int,
+    val origin: String,
+    val sceneVariant: Int,
+    val plays: String,
+)
+
+private val rivanaLullabies = listOf(
+    Lullaby("Moon Over Damavand", "ماه بر فرازِ دماوند", 18, "Traditional · Mazandaran", 6, "2.1k"),
+    Lullaby("Laay Laay, Little Star", "لای‌لای، ستاره‌ی کوچک", 12, "Folk lullaby", 0, "4.8k"),
+    Lullaby("The Sleepy River", "رودِ خواب‌آلود", 22, "Original · Rivana", 6, "1.3k"),
+    Lullaby("Garden of Dreams", "باغِ رؤیاها", 15, "Traditional · Shiraz", 0, "3.6k"),
+)
+
+@Composable
+private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
+    val gutter = PardisSpacing.lg
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF0F1330), Color(0xFF0A0E22)))),
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+        ) {
+            item {
+                Column(Modifier.padding(horizontal = gutter)) {
+                    Text("SWEET DREAMS", style = MaterialTheme.typography.labelSmall, color = Color(0xBFFFE9D2))
+                    Text("Bedtime", style = MaterialTheme.typography.displayLarge, color = Color.White, fontWeight = FontWeight.ExtraBold)
+                    PersianReaderInline("وقتِ خواب · لای‌لای", style = MaterialTheme.typography.bodyMedium, color = Color(0x80FFFFFF))
+                }
+            }
+            item { BedtimeFeatured(rivanaLullabies[0], Modifier.padding(horizontal = gutter)) }
+            item { WindDownCard(Modifier.padding(horizontal = gutter)) }
+            item {
+                Text(
+                    "Lullaby shelf",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = gutter, vertical = PardisSpacing.xs),
+                )
+            }
+            items(rivanaLullabies.drop(1)) { l -> LullabyRow(l, Modifier.padding(horizontal = gutter)) }
+            item {
+                Text(
+                    "شب بخیر · خواب‌های خوش",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0x4DFFFFFF),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = PardisSpacing.md),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BedtimeFeatured(l: Lullaby, modifier: Modifier) {
+    Box(modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(PardisRadius.xl))) {
+        PardisSceneArt(seed = l.title, forcedVariant = l.sceneVariant, modifier = Modifier.fillMaxSize())
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB30F0C1E)))))
+        Column(Modifier.align(Alignment.BottomStart).padding(18.dp)) {
+            Row(
+                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x2EFFFFFF)).padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Text("Lullaby of the night", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            }
+            Spacer(Modifier.height(9.dp))
+            Text(l.title, style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
+            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.titleMedium, color = Color(0xA6FFFFFF))
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PardisIcon(PardisIconKind.Play, contentDescription = "Play ${l.title}", tint = PardisColors.indigoDeep)
+                }
+                Text("${l.minutes} min · ${l.origin}", style = MaterialTheme.typography.bodySmall, color = Color(0xCCFFFFFF))
+            }
+        }
+    }
+}
+
+@Composable
+private fun WindDownCard(modifier: Modifier) {
+    Row(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(Color(0x0FFFFFFF)).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        Box(
+            Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.base)).background(Color(0x2EF4B53A)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PardisIcon(PardisIconKind.Clock, contentDescription = null, tint = Color(0xFFF4B53A))
+        }
+        Column(Modifier.weight(1f)) {
+            Text("Wind-down routine", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
+            Text("One short story, then a lullaby. ~25 min.", style = MaterialTheme.typography.bodySmall, color = Color(0x8CFFFFFF))
+        }
+        Box(
+            Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x24FFFFFF)).padding(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Text("Start", style = MaterialTheme.typography.labelLarge, color = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun LullabyRow(l: Lullaby, modifier: Modifier) {
+    Row(
+        modifier.fillMaxWidth().padding(vertical = PardisSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        PardisSceneArt(seed = l.title, forcedVariant = l.sceneVariant, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)))
+        Column(Modifier.weight(1f)) {
+            Text(l.title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.bodySmall, color = Color(0x80FFFFFF), maxLines = 1)
+            Text("${l.minutes} min · ${l.plays} plays", style = MaterialTheme.typography.labelSmall, color = Color(0x66FFFFFF))
+        }
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x1FFFFFFF)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PardisIcon(PardisIconKind.Play, contentDescription = "Play ${l.title}", tint = Color.White)
         }
     }
 }
