@@ -479,8 +479,8 @@ fun PardisRemoteImageFrame(
  * constants (like PardisBrushes), intentionally not tokenized.
  */
 @Composable
-fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
-    val variant = ((seed.hashCode() % 7) + 7) % 7
+fun PardisSceneArt(seed: String, modifier: Modifier = Modifier, forcedVariant: Int? = null) {
+    val variant = forcedVariant?.let { ((it % 7) + 7) % 7 } ?: (((seed.hashCode() % 7) + 7) % 7)
     val pattern = when (variant % 3) {
         0 -> R.drawable.pattern_paisley
         1 -> R.drawable.pattern_vine
@@ -491,21 +491,21 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
             val w = size.width
             val h = size.height
             fun p(xf: Float, yf: Float) = Offset(xf * w, yf * h)
-            fun poly(vararg pts: Offset) = Path().apply {
+            fun poly(pts: List<Offset>) = Path().apply {
                 pts.forEachIndexed { i, o -> if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y) }
                 close()
             }
-            fun stars(vararg pts: Offset) = pts.forEach { drawCircle(Color.White, w * 0.006f, it) }
+            fun stars(pts: List<Offset>) = pts.forEach { drawCircle(Color.White, w * 0.006f, it) }
             when (variant) {
             0 -> { // night — lapis gradient, violet+saffron glow, stars, saffron moon, 2 mountain ridges
                 drawRect(Brush.verticalGradient(0f to Color(0xFF1A256E), 0.7f to Color(0xFF2436A1), 1f to Color(0xFF4F2EB5)))
                 drawRect(Brush.radialGradient(listOf(Color(0x385B47FF), Color(0x005B47FF)), center = p(0.5f, 0.65f), radius = h * 0.65f))
-                stars(p(0.12f, 0.14f), p(0.28f, 0.26f), p(0.70f, 0.16f), p(0.88f, 0.32f), p(0.50f, 0.09f), p(0.22f, 0.44f), p(0.38f, 0.18f))
+                stars(listOf(p(0.12f, 0.14f), p(0.28f, 0.26f), p(0.70f, 0.16f), p(0.88f, 0.32f), p(0.50f, 0.09f), p(0.22f, 0.44f), p(0.38f, 0.18f)))
                 val moon = Offset(w * 0.5f, h * 0.14f + w * 0.2f)
                 drawCircle(Brush.radialGradient(listOf(Color(0x55F08A2D), Color(0x00F08A2D)), center = moon, radius = w * 0.34f), w * 0.34f, moon)
                 drawCircle(Brush.radialGradient(listOf(Color(0xFFFFE9D2), Color(0xFFF08A2D)), center = moon, radius = w * 0.2f), w * 0.2f, moon)
-                drawPath(poly(p(0f, 1f), p(0f, 0.88f), p(0.22f, 0.79f), p(0.38f, 0.85f), p(0.54f, 0.766f), p(0.70f, 0.844f), p(0.88f, 0.784f), p(1f, 0.85f), p(1f, 1f)), Color(0x990F1849))
-                drawPath(poly(p(0f, 1f), p(0f, 0.829f), p(0.14f, 0.704f), p(0.26f, 0.802f), p(0.40f, 0.650f), p(0.56f, 0.780f), p(0.70f, 0.681f), p(0.84f, 0.787f), p(1f, 0.719f), p(1f, 1f)), Color(0xFF0A1234))
+                drawPath(poly(listOf(p(0f, 1f), p(0f, 0.88f), p(0.22f, 0.79f), p(0.38f, 0.85f), p(0.54f, 0.766f), p(0.70f, 0.844f), p(0.88f, 0.784f), p(1f, 0.85f), p(1f, 1f))), Color(0x990F1849))
+                drawPath(poly(listOf(p(0f, 1f), p(0f, 0.829f), p(0.14f, 0.704f), p(0.26f, 0.802f), p(0.40f, 0.650f), p(0.56f, 0.780f), p(0.70f, 0.681f), p(0.84f, 0.787f), p(1f, 0.719f), p(1f, 1f))), Color(0xFF0A1234))
             }
             1 -> { // dawn — sunrise gradient, sun, cypress silhouette
                 drawRect(Brush.verticalGradient(0f to Color(0xFFFFF4E5), 0.5f to Color(0xFFFFD9A8), 1f to Color(0xFFF4B53A)))
@@ -519,7 +519,7 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
                 drawRect(Brush.radialGradient(listOf(Color(0x408B6FE6), Color(0x008B6FE6)), center = p(0.5f, 0.4f), radius = h * 0.6f))
                 drawRect(Color(0xD9FFE9D2), topLeft = Offset(w * 0.497f, h * 0.24f), size = Size(w * 0.006f, h * 0.26f))
                 drawPath(
-                    poly(p(0.455f, 0.34f), p(0.545f, 0.34f), p(0.56f, 0.398f), p(0.53f, 0.456f), p(0.59f, 0.688f), p(0.62f, 0.862f), p(0.59f, 0.92f), p(0.41f, 0.92f), p(0.38f, 0.862f), p(0.41f, 0.688f), p(0.47f, 0.456f), p(0.44f, 0.398f)),
+                    poly(listOf(p(0.455f, 0.34f), p(0.545f, 0.34f), p(0.56f, 0.398f), p(0.53f, 0.456f), p(0.59f, 0.688f), p(0.62f, 0.862f), p(0.59f, 0.92f), p(0.41f, 0.92f), p(0.38f, 0.862f), p(0.41f, 0.688f), p(0.47f, 0.456f), p(0.44f, 0.398f))),
                     Brush.verticalGradient(listOf(Color(0xFFF08A2D), Color(0xFFC46A12))),
                 )
             }
@@ -532,8 +532,8 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
             4 -> { // sea — sky→sea gradient, sailboat
                 drawRect(Brush.verticalGradient(0f to Color(0xFFFFE9D2), 0.45f to Color(0xFFFCDEE6), 0.65f to Color(0xFFDEF5E9), 1f to Color(0xFF6AD0AB)))
                 drawRect(Color(0xFF14111B), topLeft = Offset(w * 0.465f, h * 0.44f), size = Size(w * 0.012f, h * 0.22f))
-                drawPath(poly(p(0.36f, 0.62f), p(0.58f, 0.46f), p(0.58f, 0.62f)), Color.White)
-                drawPath(poly(p(0.332f, 0.66f), p(0.668f, 0.66f), p(0.7f, 0.74f), p(0.3f, 0.74f)), Color(0xFF14111B))
+                drawPath(poly(listOf(p(0.36f, 0.62f), p(0.58f, 0.46f), p(0.58f, 0.62f))), Color.White)
+                drawPath(poly(listOf(p(0.332f, 0.66f), p(0.668f, 0.66f), p(0.7f, 0.74f), p(0.3f, 0.74f))), Color(0xFF14111B))
             }
             5 -> { // flame — lapis night, glowing saffron→rose flame
                 drawRect(Brush.verticalGradient(0f to Color(0xFF2436A1), 0.6f to Color(0xFF1A256E), 1f to Color(0xFF0F1849)))
@@ -542,7 +542,7 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
             }
             else -> { // lullaby — soft violet→lapis, white moon, stars
                 drawRect(Brush.verticalGradient(0f to Color(0xFFBCC8E8), 0.5f to Color(0xFF8B6FE6), 1f to Color(0xFF1A256E)))
-                stars(p(0.18f, 0.16f), p(0.32f, 0.24f), p(0.70f, 0.18f), p(0.84f, 0.30f), p(0.50f, 0.10f), p(0.24f, 0.40f))
+                stars(listOf(p(0.18f, 0.16f), p(0.32f, 0.24f), p(0.70f, 0.18f), p(0.84f, 0.30f), p(0.50f, 0.10f), p(0.24f, 0.40f)))
                 val moon = Offset(w * 0.5f, h * 0.2f + w * 0.14f)
                 drawCircle(Color.White, w * 0.14f, moon)
             }
