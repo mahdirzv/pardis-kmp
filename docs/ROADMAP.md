@@ -35,7 +35,7 @@
 
 ## Phase 2: Child Experience & Offline
 - Child profiles + active child + PIN gate (secure local + Supabase Auth/RLS for family data).
-- Full offline: download story bundle (pages JSON + images + audio + optional MP4), manifest, play from cache. (foundational asset caching + pages JSON + video download done in Phase 1; bundle UI/manifest next)
+- Full offline: download story bundle (pages JSON + images + audio + optional MP4), manifest, play from cache. (foundational asset caching + pages JSON + video download done in Phase 1; **library "Download offline" per story via shared OfflineDownloadManager — progress/cancel/remove + per-story & total size, all stories — done (lean cut)**; background/resumable downloads + manifest + manage-downloads screen still next)
 - Games stubs (match words, cloze, sequence) — native implementations, shared data.
 - Progress, streaks, vocab recap in native UI.
 
