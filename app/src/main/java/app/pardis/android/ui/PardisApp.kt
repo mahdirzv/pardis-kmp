@@ -90,9 +90,11 @@ fun PardisApp() {
 @Composable
 private fun RootShellRoute(
     onOpenStory: (String) -> Unit,
+    viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by remember { mutableStateOf(PardisRootTab.Library) }
     val tabs = remember { PardisRootTab.entries.toList() }
+    val libraryState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -100,7 +102,16 @@ private fun RootShellRoute(
             .pardisScreenBackground(),
     ) {
         when (selectedTab) {
-            PardisRootTab.Library -> LibraryRoute(
+            PardisRootTab.Today -> TodayScreen(
+                state = libraryState,
+                onAction = viewModel::onAction,
+                onOpenStory = onOpenStory,
+                onOpenLibrary = { selectedTab = PardisRootTab.Library },
+                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
+            )
+            PardisRootTab.Library -> LibraryScreen(
+                state = libraryState,
+                onAction = viewModel::onAction,
                 onOpenStory = onOpenStory,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
@@ -118,6 +129,125 @@ private fun RootShellRoute(
                 .align(Alignment.BottomCenter)
                 .padding(PardisSpacing.md),
         )
+    }
+}
+
+@Composable
+private fun TodayScreen(
+    state: LibraryUiState,
+    onAction: (LibraryAction) -> Unit,
+    onOpenStory: (String) -> Unit,
+    onOpenLibrary: () -> Unit,
+    bottomContentPadding: androidx.compose.ui.unit.Dp,
+) {
+    val featured = state.stories.firstOrNull()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(PardisSpacing.md),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
+        verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+    ) {
+        item {
+            PardisScreenHeader(
+                title = "Today",
+                subtitle = "A calm reading rhythm for the family",
+                modifier = Modifier.semantics { heading() },
+            )
+        }
+        item {
+            PardisMetricStrip(
+                metrics = listOf(
+                    PardisMetric(
+                        value = if (state.stories.isEmpty() && state.isLoading) "..." else state.stories.size.toString(),
+                        label = "Stories",
+                        tone = PardisMetricTone.Saffron,
+                    ),
+                    PardisMetric(
+                        value = state.cachedStorySlugs.size.toString(),
+                        label = if (state.totalCachedLabel.isNotEmpty()) state.totalCachedLabel else "Offline",
+                        tone = PardisMetricTone.Mint,
+                    ),
+                    PardisMetric(
+                        value = state.ageBands.size.toString(),
+                        label = "Age bands",
+                        tone = PardisMetricTone.Indigo,
+                    ),
+                ),
+            )
+        }
+        item {
+            if (featured != null) {
+                PardisFeaturedStoryCard(
+                    titleEn = featured.titleEn,
+                    titleFa = featured.titleFa,
+                    ageBand = featured.ageBand,
+                    minutes = featured.minutes,
+                    vocabCount = featured.vocabCount,
+                    coverUrl = state.localCoverUrls[featured.slug] ?: featured.coverUrl,
+                    blurb = featured.blurbEn,
+                    eyebrow = "Continue reading",
+                    actionLabel = "Open story",
+                    onOpen = { onOpenStory(featured.slug) },
+                )
+            } else {
+                PardisPanel {
+                    Text(
+                        text = if (state.isLoading) "Loading today's stories..." else "Refresh Library to load today's reading list.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = PardisColors.inkSoft,
+                    )
+                }
+            }
+        }
+        item {
+            PardisSectionHeader(
+                title = "For later",
+                subtitle = "Short stories that work well before bedtime",
+                actionLabel = "Library",
+                onAction = onOpenLibrary,
+            )
+        }
+        items(state.stories.drop(1).take(3), key = { it.slug }) { story ->
+            PardisStoryCard(
+                titleEn = story.titleEn,
+                titleFa = story.titleFa,
+                ageBand = story.ageBand,
+                minutes = story.minutes,
+                vocabCount = story.vocabCount,
+                coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
+                downloadProgress = state.downloadProgress[story.slug],
+                downloadedSizeLabel = state.downloadedSizeLabels[story.slug],
+                isFailed = state.failedDownloads.contains(story.slug),
+                onClick = { onOpenStory(story.slug) },
+                onDownload = { onAction(LibraryAction.DownloadStory(story.slug)) },
+                onCancel = { onAction(LibraryAction.CancelDownload(story.slug)) },
+                onRemove = { onAction(LibraryAction.RemoveDownload(story.slug)) },
+            )
+        }
+        item {
+            PardisPanel {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PardisIcon(PardisIconKind.Star, contentDescription = null, tint = PardisColors.saffronDeep)
+                    Column(verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs)) {
+                        Text(
+                            text = "Vocabulary focus",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = PardisColors.ink,
+                        )
+                        Text(
+                            text = featured?.let { "${it.vocabCount} words are ready inside ${it.titleEn}." }
+                                ?: "Open a story to start collecting new Persian words.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = PardisColors.inkSoft,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

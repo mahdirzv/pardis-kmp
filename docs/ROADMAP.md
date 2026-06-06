@@ -37,7 +37,7 @@
 - Child profiles + active child + PIN gate (secure local + Supabase Auth/RLS for family data).
 - Full offline: download story bundle (pages JSON + images + audio + optional MP4), manifest, play from cache. (foundational asset caching + pages JSON + video download done in Phase 1; **library "Download offline" per story via shared OfflineDownloadManager — progress/cancel/remove + per-story & total size, all stories — done (lean cut)**; background/resumable downloads + manifest + manage-downloads screen still next)
 - Games stubs (match words, cloze, sequence) — native implementations, shared data.
-- Progress, streaks, vocab recap in native UI.
+- Progress, streaks, vocab recap in native UI. (native root tabs + first Today composite using existing library/offline state done; real child profile/streak contracts still next)
 
 ## Phase 3: Polish, Auth, Polish (complete)
 - [x] Proper Supabase client or enhanced Ktor (auth for user features, realtime if useful). (client enhanced with injectable + authToken support; DI/platform ready)

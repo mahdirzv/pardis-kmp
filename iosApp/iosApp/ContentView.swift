@@ -69,6 +69,7 @@ struct ContentView: View {
 
 private struct RootShellView: View {
     @Binding var selectedTab: PardisRootTab
+    @State private var libraryModel = LibrarySharedViewModel()
     let onSelectStory: (String) -> Void
 
     private let tabs = PardisRootTab.allCases
@@ -76,9 +77,16 @@ private struct RootShellView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             switch selectedTab {
+            case .today:
+                TodayScreen(
+                    model: libraryModel,
+                    onSelect: onSelectStory,
+                    onOpenLibrary: { selectedTab = .library },
+                    bottomContentPadding: 116
+                )
             case .library:
-                LibraryScreen(onSelect: onSelectStory, bottomContentPadding: 116)
-            case .today, .bedtime, .rewards, .you:
+                LibraryScreen(model: libraryModel, onSelect: onSelectStory, bottomContentPadding: 116)
+            case .bedtime, .rewards, .you:
                 PardisPlaceholderTabScreen(tab: selectedTab)
                     .padding(.bottom, 116)
             }
@@ -91,6 +99,111 @@ private struct RootShellView: View {
             .padding(PardisSpacing.md)
         }
         .pardisScreenBackground()
+        .task {
+            await libraryModel.activate()
+        }
+    }
+}
+
+private struct TodayScreen: View {
+    let model: LibrarySharedViewModel
+    let onSelect: (String) -> Void
+    let onOpenLibrary: () -> Void
+    var bottomContentPadding: CGFloat
+
+    private var featuredStory: Story? {
+        model.stories.first
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: PardisSpacing.md) {
+                PardisScreenHeader(title: "Today", subtitle: "A calm reading rhythm for the family")
+                    .accessibilityAddTraits(.isHeader)
+
+                PardisMetricStrip(metrics: [
+                    PardisMetric(
+                        value: model.stories.isEmpty && model.isLoading ? "..." : "\(model.stories.count)",
+                        label: "Stories",
+                        tone: .saffron
+                    ),
+                    PardisMetric(
+                        value: "\(model.cachedStorySlugs.count)",
+                        label: model.totalCachedLabel.isEmpty ? "Offline" : model.totalCachedLabel,
+                        tone: .mint
+                    ),
+                    PardisMetric(
+                        value: "\(model.ageBands.count)",
+                        label: "Age bands",
+                        tone: .indigo
+                    )
+                ])
+
+                if let story = featuredStory {
+                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
+                    PardisFeaturedStoryCard(
+                        titleEn: story.titleEn,
+                        titleFa: story.titleFa,
+                        ageBand: story.ageBand,
+                        minutes: story.minutes,
+                        vocabCount: story.vocabCount,
+                        coverUrl: coverUrlStr.flatMap(URL.init(string:)),
+                        onOpen: { onSelect(story.slug) },
+                        eyebrow: "Continue reading",
+                        blurb: story.blurbEn,
+                        actionLabel: "Open story"
+                    )
+                } else {
+                    PardisPanel {
+                        Text(model.isLoading ? "Loading today's stories..." : "Refresh Library to load today's reading list.")
+                            .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
+                            .foregroundStyle(PardisColors.inkSoft)
+                    }
+                }
+
+                PardisSectionHeader(
+                    title: "For later",
+                    subtitle: "Short stories that work well before bedtime",
+                    actionLabel: "Library",
+                    action: onOpenLibrary
+                )
+
+                ForEach(Array(model.stories.dropFirst().prefix(3)), id: \.slug) { story in
+                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
+                    PardisStoryCard(
+                        titleEn: story.titleEn,
+                        titleFa: story.titleFa,
+                        ageBand: story.ageBand,
+                        minutes: story.minutes,
+                        vocabCount: story.vocabCount,
+                        coverUrl: coverUrlStr.flatMap(URL.init(string:)),
+                        downloadProgress: model.downloadProgress[story.slug],
+                        downloadedSizeLabel: model.downloadedSizeLabels[story.slug],
+                        isFailed: model.failedDownloads.contains(story.slug),
+                        onSelect: { onSelect(story.slug) },
+                        onDownload: { model.downloadStory(story.slug) },
+                        onCancel: { model.cancelDownload(story.slug) },
+                        onRemove: { model.removeDownload(story.slug) }
+                    )
+                }
+
+                PardisPanel {
+                    HStack(spacing: PardisSpacing.sm) {
+                        PardisIcon(kind: .star, color: PardisColors.saffronDeep)
+                        VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
+                            Text("Vocabulary focus")
+                                .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
+                                .foregroundStyle(PardisColors.ink)
+                            Text(featuredStory.map { "\($0.vocabCount) words are ready inside \($0.titleEn)." } ?? "Open a story to start collecting new Persian words.")
+                                .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
+                                .foregroundStyle(PardisColors.inkSoft)
+                        }
+                    }
+                }
+            }
+            .padding()
+            .safeAreaPadding(.bottom, bottomContentPadding)
+        }
     }
 }
 
@@ -115,7 +228,7 @@ private struct PardisPlaceholderTabScreen: View {
 }
 
 struct LibraryScreen: View {
-    @State private var model = LibrarySharedViewModel()
+    let model: LibrarySharedViewModel
     var onSelect: (String) -> Void
     var bottomContentPadding: CGFloat = 0
 
@@ -166,11 +279,17 @@ struct LibraryScreen: View {
             PardisPanel {
                 HStack(spacing: PardisSpacing.sm) {
                     PardisIcon(kind: .search, size: 16, color: PardisColors.inkMuted)
-                    TextField("Search stories", text: $model.searchQuery)
+                    TextField(
+                        "Search stories",
+                        text: Binding(
+                            get: { model.searchQuery },
+                            set: { query in
+                                model.searchQuery = query
+                                model.search(query: query)
+                            }
+                        )
+                    )
                         .textFieldStyle(.plain)
-                        .onChange(of: model.searchQuery) {
-                            model.search(query: model.searchQuery)
-                        }
                 }
                 .padding(.horizontal, PardisSpacing.sm)
                 .frame(height: 44)
@@ -242,9 +361,6 @@ struct LibraryScreen: View {
             .safeAreaPadding(.bottom, bottomContentPadding)
         }
         .padding()
-        .task {
-            await model.activate()
-        }
     }
 }
 
