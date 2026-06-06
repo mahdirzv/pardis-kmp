@@ -332,10 +332,10 @@ struct ReaderScreen: View {
                         // Rate group - compact
                         Text("Rate:").font(.caption)
                         HStack(spacing: 4) {
-                            Button("0.5x") { model.setPlaybackRate(0.5) }
-                            Button("1x") { model.setPlaybackRate(1.0) }
-                            Button("1.5x") { model.setPlaybackRate(1.5) }
-                            Button("2x") { model.setPlaybackRate(2.0) }
+                            Button("0.5x") { model.setPlaybackRate(rate:0.5) }
+                            Button("1x") { model.setPlaybackRate(rate:1.0) }
+                            Button("1.5x") { model.setPlaybackRate(rate:1.5) }
+                            Button("2x") { model.setPlaybackRate(rate:2.0) }
                         }
                         // Clear if cached
                         let hasLocal = model.localVideoUrlFa != nil || model.localVideoUrlEn != nil || !model.localIllustrationUrls.isEmpty || !model.localNarrationUrls.isEmpty
