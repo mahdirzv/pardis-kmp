@@ -28,12 +28,14 @@ kotlin {
             // (e.g. ReaderUiState/LibraryUiState) so Swift can name them. api() alone compiles but
             // does not put them in the framework's Swift API.
             export(project(":core:model"))
+            export(project(":core:data"))
             binaryOption("bundleId", sharedFrameworkBundleId)
         }
         iosTarget.binaries.framework(buildTypes = setOf(NativeBuildType.RELEASE)) {
             baseName = "Shared"
             isStatic = true
             export(project(":core:model"))
+            export(project(":core:data"))
             binaryOption("bundleId", sharedFrameworkBundleId)
         }
     }
@@ -42,6 +44,9 @@ kotlin {
         commonMain.dependencies {
             api(project(":core:model"))
             api(project(":core:di"))
+            // api (not implementation) so the framework can export it: the iOS app references
+            // IosPlatformModuleKt.iosOfflineAssetCacheModule (core:data iosMain) to wire the real cache.
+            api(project(":core:data"))
             implementation(project(":core:domain"))
             implementation(project(":core:network"))
             api(libs.androidx.lifecycle.viewmodel)
