@@ -95,8 +95,9 @@ class IosOfflineAssetCache : OfflineAssetCache {
     }
 
     override suspend fun getCachedSizeBytes(slug: String): Long = withContext(Dispatchers.IO) {
-        val dir = assetsDir(slug)
+        val dir = "${baseAssetsDir()}/$slug"
         val fm = NSFileManager.defaultManager
+        if (!fm.fileExistsAtPath(dir)) return@withContext 0L
         val names = fm.contentsOfDirectoryAtPath(dir, null) ?: return@withContext 0L
         var total = 0L
         for (name in names) {
