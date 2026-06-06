@@ -772,9 +772,12 @@ private fun PardisStoryOfflineControls(
                 Spacer(Modifier.weight(1f))
                 Button(
                     onClick = onDownload,
-                    colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PardisColors.saffronSoft,
+                        contentColor = PardisColors.saffronDeep,
+                    ),
                 ) {
-                    PardisIcon(PardisIconKind.Download, contentDescription = null, tint = PardisComponentColors.primaryActionContent)
+                    PardisIcon(PardisIconKind.Download, contentDescription = null, tint = PardisColors.saffronDeep)
                     Spacer(Modifier.size(PardisSpacing.xs))
                     Text(downloadOfflineLabel, style = MaterialTheme.typography.labelSmall)
                 }

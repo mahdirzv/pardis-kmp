@@ -629,12 +629,12 @@ fun ReaderScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         PersianReaderParagraph(
-                            text = page.paragraphsFa.joinToString("\n\n"),
+                            text = page.paragraphsFa.joinToString("\n\n").replace(Regex("\\s*\\[[^\\]]*]"), ""),
                             style = MaterialTheme.typography.titleMedium,
                             color = PardisColors.ink,
                         )
                         Text(
-                            page.paragraphsEn.joinToString("\n\n"),
+                            page.paragraphsEn.joinToString("\n\n").replace(Regex("\\s*\\[[^\\]]*]"), ""),
                             style = MaterialTheme.typography.bodyLarge,
                             color = PardisColors.inkSoft,
                         )
@@ -666,11 +666,11 @@ fun ReaderScreen(
 
                         PardisPanel {
                             PersianReaderParagraph(
-                                text = page.paragraphsFa.joinToString("\n\n"),
+                                text = page.paragraphsFa.joinToString("\n\n").replace(Regex("\\s*\\[[^\\]]*]"), ""),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = PardisColors.ink,
                             )
-                            Text(page.paragraphsEn.joinToString("\n\n"), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
+                            Text(page.paragraphsEn.joinToString("\n\n").replace(Regex("\\s*\\[[^\\]]*]"), ""), style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkSoft)
 
                             if (page.vocabulary.isNotEmpty()) {
                                 Text("Vocab on this page", style = MaterialTheme.typography.labelMedium, color = PardisColors.inkMuted)
@@ -778,22 +778,23 @@ fun ReaderScreen(
                                 narrationPlayer.value?.release()
                                 narrationPlayer.value = null
                             }
-                        }) {
-                            Text("Play Audio")
+                        }, colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron, contentColor = PardisColors.inkOnDark), modifier = Modifier.fillMaxWidth()) {
+                            PardisIcon(PardisIconKind.Play, contentDescription = null, tint = PardisColors.inkOnDark)
+                            Spacer(Modifier.size(PardisSpacing.xs))
+                            Text("Play narration")
                         }
                         PardisControlGroup(label = "Narration language") {
-                            Button(onClick = { onAction(ReaderAction.SetNarrationLang("fa")) }, enabled = state.preferredNarrationLang != "fa") {
-                                Text("FA", style = MaterialTheme.typography.labelSmall)
-                            }
-                            Button(onClick = { onAction(ReaderAction.SetNarrationLang("en")) }, enabled = state.preferredNarrationLang != "en") {
-                                Text("EN", style = MaterialTheme.typography.labelSmall)
-                            }
+                            PardisFilterPill(label = "FA", selected = state.preferredNarrationLang == "fa", onClick = { onAction(ReaderAction.SetNarrationLang("fa")) })
+                            PardisFilterPill(label = "EN", selected = state.preferredNarrationLang == "en", onClick = { onAction(ReaderAction.SetNarrationLang("en")) })
                         }
                         PardisControlGroup(label = "Playback speed") {
-                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(0.5f)) }) { Text("0.5x", style = MaterialTheme.typography.labelSmall) }
-                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.0f)) }) { Text("1x", style = MaterialTheme.typography.labelSmall) }
-                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(1.5f)) }) { Text("1.5x", style = MaterialTheme.typography.labelSmall) }
-                            Button(onClick = { onAction(ReaderAction.SetPlaybackRate(2.0f)) }) { Text("2x", style = MaterialTheme.typography.labelSmall) }
+                            listOf(0.5f, 1.0f, 1.5f, 2.0f).forEach { r ->
+                                PardisFilterPill(
+                                    label = when (r) { 1.0f -> "1x"; 2.0f -> "2x"; else -> "${r}x" },
+                                    selected = state.playbackRate == r,
+                                    onClick = { onAction(ReaderAction.SetPlaybackRate(r)) },
+                                )
+                            }
                         }
                         // Clear cached assets if any
                         val hasLocal = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
