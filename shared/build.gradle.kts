@@ -10,7 +10,7 @@ plugins {
 val sharedFrameworkBundleId = "app.pardis.shared"
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "app.pardis.shared"
         compileSdk = 37
         minSdk = 24

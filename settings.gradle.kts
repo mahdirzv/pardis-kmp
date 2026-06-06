@@ -37,6 +37,7 @@ dependencyResolutionManagement {
 
 include(
     ":PardisAndroidApp",
+    ":PardisiOSApp",
     ":core:model",
     ":core:domain",
     ":core:data",
@@ -47,3 +48,4 @@ include(
 )
 
 project(":PardisAndroidApp").projectDir = file("app")
+project(":PardisiOSApp").projectDir = file("iosApp")
