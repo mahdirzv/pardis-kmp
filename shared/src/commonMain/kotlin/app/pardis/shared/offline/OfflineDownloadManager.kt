@@ -13,12 +13,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Single source of truth for per-story offline download state, shared across screens.
- * Owns its own scope on the main dispatcher (state/job-map mutations stay single-threaded;
- * the heavy IO happens inside the cache impls via withContext(IO)). The scope outliving any
- * ViewModel is the seam for future background downloads.
+ *
+ * Concurrency: all state and job-map mutations run on the main dispatcher (the scope's dispatcher,
+ * and the withContext in refreshState); the heavy IO happens inside the cache impls via
+ * withContext(IO). Keeping the jobs map single-threaded avoids races without locks. Call
+ * download/cancel/remove from the main (UI) thread.
+ *
+ * Each running download captures its own Job and only mutates state while it is still the tracked
+ * job for its slug (identity check), so a cancel()/remove() (which drops the slug from the map)
+ * cannot be overwritten by a late result from the job it replaced.
+ *
+ * The scope is intentionally never cancelled: this is a Koin single that lives for the whole
+ * process, which is also the seam for future background downloads.
  */
 class OfflineDownloadManager(
     private val downloadStoryAssets: DownloadStoryAssetsUseCase,
@@ -38,24 +48,30 @@ class OfflineDownloadManager(
     fun download(slug: String) {
         if (jobs[slug]?.isActive == true) return
         setState(slug, StoryDownloadState.Downloading("Starting download..."))
-        jobs[slug] = scope.launch {
+        var job: Job? = null
+        job = scope.launch {
             try {
                 val result = downloadStoryAssets(slug) { progress ->
-                    setState(slug, StoryDownloadState.Downloading(progress))
+                    if (jobs[slug] === job) setState(slug, StoryDownloadState.Downloading(progress))
                 }
-                if (result.anyCached) {
-                    setState(slug, StoryDownloadState.Downloaded(getCachedSize(slug)))
-                } else {
-                    setState(slug, StoryDownloadState.Failed("Download failed (check connection)"))
+                if (jobs[slug] === job) {
+                    // anyCached (not isUsable): the library caches for offline READING, so a story
+                    // whose images/narration cached but video failed is still "downloaded".
+                    if (result.anyCached) {
+                        setState(slug, StoryDownloadState.Downloaded(getCachedSize(slug)))
+                    } else {
+                        setState(slug, StoryDownloadState.Failed("Download failed (check connection)"))
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e // never swallow cancellation
             } catch (e: Exception) {
-                setState(slug, StoryDownloadState.Failed(e.message ?: "Download failed"))
+                if (jobs[slug] === job) setState(slug, StoryDownloadState.Failed(e.message ?: "Download failed"))
             } finally {
-                jobs.remove(slug)
+                if (jobs[slug] === job) jobs.remove(slug)
             }
         }
+        jobs[slug] = job
     }
 
     fun cancel(slug: String) {
@@ -74,7 +90,7 @@ class OfflineDownloadManager(
     }
 
     /** Reflect on-disk reality (incl. reader-initiated caches). Skips in-flight downloads. */
-    suspend fun refreshState(slugs: List<String>) {
+    suspend fun refreshState(slugs: List<String>) = withContext(Dispatchers.Main) {
         for (slug in slugs) {
             if (jobs[slug]?.isActive == true) continue
             val size = getCachedSize(slug)
