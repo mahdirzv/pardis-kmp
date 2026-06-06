@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -85,6 +87,46 @@ enum class PardisIconKind {
     Volume,
     Sparkle,
     Bookmark,
+    Lock,
+    Crown,
+    Compass,
+    Mic,
+    Sprout,
+    Check,
+}
+
+/** Thin rounded linear progress bar. value in 0f..1f. */
+@Composable
+fun PardisProgressBar(value: Float, modifier: Modifier = Modifier, height: Int = 6, color: Color = PardisColors.saffron) {
+    Box(
+        modifier = modifier.fillMaxWidth().height(height.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x1F14111B)),
+    ) {
+        Box(
+            Modifier.fillMaxWidth(value.coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(PardisRadius.full)).background(color),
+        )
+    }
+}
+
+/** Circular progress ring (track + accent arc from 12 o'clock). Centered [content] overlays it. */
+@Composable
+fun PardisRing(
+    progress: Float,
+    ringColor: Color,
+    modifier: Modifier = Modifier,
+    trackColor: Color = Color(0x1F14111B),
+    strokeWidthDp: Float = 5f,
+    content: @Composable () -> Unit = {},
+) {
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val sw = strokeWidthDp.dp.toPx()
+            val tl = Offset(sw / 2f, sw / 2f)
+            val arc = Size(size.width - sw, size.height - sw)
+            drawArc(trackColor, 0f, 360f, false, topLeft = tl, size = arc, style = Stroke(sw, cap = StrokeCap.Round))
+            drawArc(ringColor, -90f, progress.coerceIn(0f, 1f) * 360f, false, topLeft = tl, size = arc, style = Stroke(sw, cap = StrokeCap.Round))
+        }
+        content()
+    }
 }
 
 /** Flat Lucide vector icons (converted to vector drawables), tinted at draw time. */
@@ -116,6 +158,12 @@ fun PardisIcon(
         PardisIconKind.Volume -> R.drawable.ic_volume
         PardisIconKind.Sparkle -> R.drawable.ic_sparkle
         PardisIconKind.Bookmark -> R.drawable.ic_bookmark
+        PardisIconKind.Lock -> R.drawable.ic_lock
+        PardisIconKind.Crown -> R.drawable.ic_crown
+        PardisIconKind.Compass -> R.drawable.ic_compass
+        PardisIconKind.Mic -> R.drawable.ic_mic
+        PardisIconKind.Sprout -> R.drawable.ic_sprout
+        PardisIconKind.Check -> R.drawable.ic_check
     }
     Image(
         painter = painterResource(res),
