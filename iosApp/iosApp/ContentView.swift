@@ -225,7 +225,7 @@ struct ReaderScreen: View {
                     // Normal illustration + text mode
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
-                            let illoUrlStr = model.localIllustrationUrls[page.page] ?? page.illustrationUrl
+                            let illoUrlStr = model.localIllustrationUrls[Int(page.page)] ?? page.illustrationUrl
                             if let urlStr = illoUrlStr, let url = URL(string: urlStr) {
                                 AsyncImage(url: url) { image in
                                     image.resizable().scaledToFill()

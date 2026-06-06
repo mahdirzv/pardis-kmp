@@ -145,7 +145,10 @@ final class ReaderSharedViewModel {
         self.localVideoUrlEn = state.localVideoUrlEn
         self.isDownloadingVideo = state.isDownloadingVideo
         self.downloadProgress = state.downloadProgress
-        self.localIllustrationUrls = state.localIllustrationUrls
+        // Kotlin Map<Int,String> bridges to [KotlinInt:String]; convert keys to Swift Int.
+        self.localIllustrationUrls = Dictionary(
+            uniqueKeysWithValues: state.localIllustrationUrls.map { (Int(truncating: $0.key), $0.value) }
+        )
         self.localNarrationUrls = state.localNarrationUrls
         self.preferredNarrationLang = state.preferredNarrationLang
         self.playbackRate = state.playbackRate
