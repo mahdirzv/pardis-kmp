@@ -20,6 +20,8 @@ targets:
       - path: iosApp
         excludes:
           - "Info.plist"
+      # Generated design-system tokens (PardisColors/PardisSpacing/PardisRadius) live outside iosApp/.
+      - path: ../design-system/generated/ios/PardisTokens.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.pardis.reader
