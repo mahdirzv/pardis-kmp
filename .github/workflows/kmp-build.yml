@@ -36,8 +36,32 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Link shared iOS framework (simulator)
-        # Real iOS-side check: links the Kotlin/Native Shared.framework, catching iosMain build
-        # breaks. Building the SwiftUI app itself (xcodebuild) is NOT done here because the Xcode
-        # project (iosApp/iosApp.xcodeproj) is gitignored and not committed to the repo. To build
-        # the app in CI we'd need a committed/generated project (e.g. XcodeGen project.yml).
+        # Fast iOS-side check: links the Kotlin/Native Shared.framework, catching iosMain build breaks.
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --no-daemon
+
+  ios-app:
+    # Full SwiftUI app build. The .xcodeproj is gitignored, so we generate it from iosApp/project.yml
+    # (XcodeGen) and xcodebuild it for the simulator with no code signing. The KMP framework is built
+    # by the project's embedAndSignAppleFrameworkForXcode pre-build script.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: iosApp
+        run: xcodegen generate
+      - name: Build iOS app (simulator, no signing)
+        run: |
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
