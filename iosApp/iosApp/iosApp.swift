@@ -9,7 +9,7 @@ struct PardisiOSApp: App {
         // The Supabase public config is provided via iosMain actuals (no literals in common).
         // For offline assets + pages cache on iOS: pass [IosPlatformModuleKt.iosOfflineAssetCacheModule] (and wire driver).
         // Example for auth: provide SupabaseClient(SupabaseConfig(anonKey: ..., userToken: jwt))
-        SharedInit().init(platformModules: [IosPlatformModuleKt.iosOfflineAssetCacheModule])
+        SharedInit.shared.doInit(platformModules: [IosPlatformModuleKt.iosOfflineAssetCacheModule])
     }
 
     var body: some Scene {

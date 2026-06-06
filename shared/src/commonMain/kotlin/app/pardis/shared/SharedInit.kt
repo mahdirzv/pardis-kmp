@@ -17,7 +17,9 @@ val pardisSharedModules: List<Module> = listOf(
 )
 
 object SharedInit {
-    fun init(platformModules: List<Module> = emptyList()) {
+    // Named doInit (not init): `init` is a reserved initializer name in Swift, so an `init(...)`
+    // method on a Kotlin object can't be called from the iOS app.
+    fun doInit(platformModules: List<Module> = emptyList()) {
         val koinContext = KoinPlatformTools.defaultContext()
         if (koinContext.getOrNull() != null) return
 

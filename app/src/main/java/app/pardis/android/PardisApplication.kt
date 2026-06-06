@@ -14,7 +14,7 @@ import org.koin.dsl.module
 class PardisApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        SharedInit.init(
+        SharedInit.doInit(
             platformModules = listOf(
                 module {
                     single { this@PardisApplication }
