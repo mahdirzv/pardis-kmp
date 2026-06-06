@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.pardis.design.PardisRadius
@@ -461,7 +462,7 @@ private fun BedtimeFeatured(l: Lullaby, modifier: Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White, size = 14.dp)
                 Text("Lullaby of the night", style = MaterialTheme.typography.labelSmall, color = Color.White)
             }
             Spacer(Modifier.height(9.dp))
@@ -586,7 +587,7 @@ private fun RewardsScreen(storyCount: Int, bottomContentPadding: androidx.compos
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    PardisIcon(PardisIconKind.Star, contentDescription = null, tint = PardisColors.saffronDeep, modifier = Modifier.size(16.dp))
+                    PardisIcon(PardisIconKind.Star, contentDescription = null, tint = PardisColors.saffronDeep, size = 16.dp)
                     Text("320", style = MaterialTheme.typography.titleMedium, color = PardisColors.saffronDeep, fontWeight = FontWeight.ExtraBold)
                 }
             }
@@ -687,7 +688,7 @@ private fun StreakCalendar(modifier: Modifier) {
                         Modifier.size(32.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {
-                        PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = PardisColors.saffronDeep, modifier = Modifier.size(16.dp))
+                        PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = PardisColors.saffronDeep, size = 16.dp)
                     }
                     Text(d, style = MaterialTheme.typography.labelSmall, color = Color(0xB3FFFFFF))
                 }
@@ -784,9 +785,9 @@ private fun BadgeCell(b: RBadge, modifier: Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             if (b.earned) {
-                PardisIcon(b.icon, contentDescription = b.label, tint = deep, modifier = Modifier.size(32.dp))
+                PardisIcon(b.icon, contentDescription = b.label, tint = deep, size = 32.dp)
             } else {
-                PardisIcon(PardisIconKind.Lock, contentDescription = "Locked: ${b.label}", tint = PardisColors.inkFaint, modifier = Modifier.size(24.dp))
+                PardisIcon(PardisIconKind.Lock, contentDescription = "Locked: ${b.label}", tint = PardisColors.inkFaint, size = 24.dp)
                 if (b.progress > 0f) {
                     Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 12.dp, vertical = 11.dp)) {
                         PardisProgressBar(value = b.progress, height = 4, color = toneBase(b.tone))
@@ -896,7 +897,7 @@ private fun YouProfileCard(modifier: Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                PardisIcon(PardisIconKind.User, contentDescription = null, tint = PardisColors.ink, modifier = Modifier.size(15.dp))
+                PardisIcon(PardisIconKind.User, contentDescription = null, tint = PardisColors.ink, size = 15.dp)
                 Text("Switch reader", style = MaterialTheme.typography.labelLarge, color = PardisColors.ink)
             }
         }
@@ -916,7 +917,7 @@ private fun AppearanceGroup(modifier: Modifier) {
                 Modifier.size(34.dp).clip(RoundedCornerShape(PardisRadius.sm)).background(PardisColors.lilacSoft),
                 contentAlignment = Alignment.Center,
             ) {
-                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.lilacDeep, modifier = Modifier.size(18.dp))
+                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.lilacDeep, size = 18.dp)
             }
             Text("Dark mode", style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             // Decorative off toggle (dark mode not wired yet)
@@ -957,13 +958,13 @@ private fun SettingsRow(item: SettingsItem) {
             Modifier.size(34.dp).clip(RoundedCornerShape(PardisRadius.sm)).background(soft),
             contentAlignment = Alignment.Center,
         ) {
-            PardisIcon(item.icon, contentDescription = null, tint = deep, modifier = Modifier.size(18.dp))
+            PardisIcon(item.icon, contentDescription = null, tint = deep, size = 18.dp)
         }
         Text(item.label, style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         if (item.detail != null) {
             Text(item.detail, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
         }
-        PardisIcon(PardisIconKind.ChevRight, contentDescription = null, tint = PardisColors.inkFaint, modifier = Modifier.size(17.dp))
+        PardisIcon(PardisIconKind.ChevRight, contentDescription = null, tint = PardisColors.inkFaint, size = 17.dp)
     }
 }
 
@@ -1019,132 +1020,226 @@ fun LibraryScreen(
     onOpenStory: (String) -> Unit,
     bottomContentPadding: androidx.compose.ui.unit.Dp = PardisSpacing.none,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .pardisScreenBackground()
-            .padding(PardisSpacing.md)
-    ) {
-        PardisScreenHeader(
-            title = "Pardis",
-            subtitle = "Persian heritage stories",
-            modifier = Modifier.semantics { heading() },
+    var grid by remember { mutableStateOf(true) }
+    val gutter = PardisSpacing.lg
+    Box(Modifier.fillMaxSize().pardisScreenBackground()) {
+        PardisPatternOverlay(
+            motif = PardisMotif.Vine,
+            color = PardisColors.indigo,
+            alpha = 0.05f,
+            modifier = Modifier.fillMaxWidth().height(170.dp).align(Alignment.TopCenter),
         )
-        Spacer(Modifier.height(PardisSpacing.sm))
-        PardisMetricStrip(
-            metrics = listOf(
-                PardisMetric(
-                    value = state.stories.size.toString(),
-                    label = "Stories",
-                    tone = PardisMetricTone.Saffron,
-                ),
-                PardisMetric(
-                    value = state.ageBands.size.toString(),
-                    label = "Age bands",
-                    tone = PardisMetricTone.Indigo,
-                ),
-                PardisMetric(
-                    value = state.cachedStorySlugs.size.toString(),
-                    label = if (state.totalCachedLabel.isNotEmpty()) state.totalCachedLabel else "Offline",
-                    tone = PardisMetricTone.Mint,
-                ),
-            ),
-        )
-        Spacer(Modifier.height(PardisSpacing.sm))
-        state.stories.firstOrNull()?.let { story ->
-            PardisFeaturedStoryCard(
-                titleEn = story.titleEn,
-                titleFa = story.titleFa,
-                ageBand = story.ageBand,
-                minutes = story.minutes,
-                vocabCount = story.vocabCount,
-                coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
-                blurb = story.blurbEn,
-                onOpen = { onOpenStory(story.slug) },
-            )
-            Spacer(Modifier.height(PardisSpacing.sm))
-        }
-        PardisPanel {
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { onAction(LibraryAction.Search(query = it)) },
-                label = { Text("Search stories") },
-                leadingIcon = {
-                    PardisIcon(PardisIconKind.Search, contentDescription = null, tint = PardisColors.inkMuted)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
-        }
-        Spacer(Modifier.height(PardisSpacing.sm))
-        // Filter chips: age bands + an offline-cached toggle. Tapping the active band again clears it.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)
-        ) {
-            PardisFilterPill(
-                label = "All ages",
-                selected = state.selectedAgeBand == null && !state.showOnlyCached,
-                onClick = { onAction(LibraryAction.SetAgeBand(null)) },
-            )
-            state.ageBands.forEach { band ->
-                PardisFilterPill(
-                    label = band,
-                    selected = state.selectedAgeBand == band,
-                    onClick = {
-                        onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
-                    },
-                )
-            }
-            PardisFilterPill(
-                label = if (state.totalCachedLabel.isNotEmpty()) "Offline · ${state.totalCachedLabel}" else "Offline",
-                selected = state.showOnlyCached,
-                onClick = { onAction(LibraryAction.ToggleShowOnlyCached) },
-            )
-        }
-        Spacer(Modifier.height(PardisSpacing.md))
-        PardisSectionHeader(
-            title = "Stories",
-            subtitle = if (state.selectedAgeBand == null) "All available stories" else "Filtered for ${state.selectedAgeBand}",
-            actionLabel = "Refresh",
-            onAction = { onAction(LibraryAction.Refresh) },
-        )
-        Spacer(Modifier.height(PardisSpacing.sm))
-
-        if (state.isLoading && state.stories.isEmpty()) {
-            CircularProgressIndicator(color = PardisColors.saffron)
-        }
-
-        state.errorMessage?.let { err ->
-            Text("Error: $err", color = MaterialTheme.colorScheme.error)
-            Button(onClick = { onAction(LibraryAction.Refresh) }) { Text("Retry") }
-        }
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = bottomContentPadding),
-            verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)
+            contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
         ) {
-            items(state.stories, key = { it.slug }) { story ->
-                PardisStoryCard(
-                    titleEn = story.titleEn,
-                    titleFa = story.titleFa,
-                    ageBand = story.ageBand,
-                    minutes = story.minutes,
-                    vocabCount = story.vocabCount,
-                    coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
-                    downloadProgress = state.downloadProgress[story.slug],
-                    downloadedSizeLabel = state.downloadedSizeLabels[story.slug],
-                    isFailed = state.failedDownloads.contains(story.slug),
-                    onClick = { onOpenStory(story.slug) },
-                    onDownload = { onAction(LibraryAction.DownloadStory(story.slug)) },
-                    onCancel = { onAction(LibraryAction.CancelDownload(story.slug)) },
-                    onRemove = { onAction(LibraryAction.RemoveDownload(story.slug)) },
-                )
+            item {
+                Row(
+                    Modifier.padding(horizontal = gutter).fillMaxWidth().semantics { heading() },
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text("Library", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
+                        PersianReaderInline("کتابخانه‌ی قصه‌ها", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkMuted)
+                    }
+                    GridListToggle(grid) { grid = it }
+                }
+            }
+            item { LibrarySearchPill(state.searchQuery, { onAction(LibraryAction.Search(query = it)) }, Modifier.padding(horizontal = gutter)) }
+            item {
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = gutter),
+                    horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
+                ) {
+                    PardisFilterPill("All ages", state.selectedAgeBand == null && !state.showOnlyCached, onClick = { onAction(LibraryAction.SetAgeBand(null)) })
+                    state.ageBands.forEach { band ->
+                        PardisFilterPill(band, state.selectedAgeBand == band, onClick = {
+                            onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
+                        })
+                    }
+                    PardisFilterPill(if (state.totalCachedLabel.isNotEmpty()) "Offline · ${state.totalCachedLabel}" else "Offline", state.showOnlyCached, onClick = {
+                        onAction(LibraryAction.ToggleShowOnlyCached)
+                    })
+                }
+            }
+            if (state.isLoading && state.stories.isEmpty()) {
+                item { Box(Modifier.fillMaxWidth().padding(gutter), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = PardisColors.saffron) } }
+            }
+            state.errorMessage?.let { err ->
+                item {
+                    Column(Modifier.padding(horizontal = gutter)) {
+                        Text("Error: $err", style = MaterialTheme.typography.bodyMedium, color = PardisColors.error)
+                        Spacer(Modifier.height(PardisSpacing.xs))
+                        Button(onClick = { onAction(LibraryAction.Refresh) }, colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffronSoft, contentColor = PardisColors.saffronDeep)) { Text("Retry") }
+                    }
+                }
+            }
+            if (grid) {
+                items(state.stories.chunked(2)) { row ->
+                    Row(Modifier.fillMaxWidth().padding(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        row.forEach { s -> LibraryCover(s, state, onAction, onOpenStory, Modifier.weight(1f)) }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            } else {
+                items(state.stories, key = { it.slug }) { s ->
+                    LibraryListRow(s, state, onOpenStory, Modifier.padding(horizontal = gutter))
+                }
+            }
+            if (state.ageBands.isNotEmpty()) {
+                item {
+                    Column(Modifier.padding(horizontal = gutter, vertical = PardisSpacing.sm)) {
+                        PardisSectionHeader(title = "By age", subtitle = "بر اساس سن")
+                        Spacer(Modifier.height(PardisSpacing.sm))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            val labels = listOf("Little ones", "Readers", "Explorers")
+                            val tones = listOf("mint", "saffron", "lapis")
+                            state.ageBands.take(3).forEachIndexed { i, band ->
+                                LibraryAgeTile(band, labels.getOrElse(i) { "" }, tones[i % 3], Modifier.weight(1f)) {
+                                    onAction(LibraryAction.SetAgeBand(if (state.selectedAgeBand == band) null else band))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun GridListToggle(grid: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.backgroundAlt).padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        SegmentBtn(grid, PardisIconKind.Grid) { onChange(true) }
+        SegmentBtn(!grid, PardisIconKind.ListView) { onChange(false) }
+    }
+}
+
+@Composable
+private fun SegmentBtn(active: Boolean, icon: PardisIconKind, onClick: () -> Unit) {
+    Box(
+        Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(if (active) PardisColors.surface else Color.Transparent).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        PardisIcon(icon, contentDescription = null, tint = if (active) PardisColors.ink else PardisColors.inkMuted, size = 18.dp)
+    }
+}
+
+@Composable
+private fun LibrarySearchPill(query: String, onQuery: (String) -> Unit, modifier: Modifier) {
+    var tfv by remember { mutableStateOf(TextFieldValue(query)) }
+    LaunchedEffect(query) { if (query != tfv.text) tfv = TextFieldValue(query) }
+    Row(
+        modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surface)
+            .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.full)).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        PardisIcon(PardisIconKind.Search, contentDescription = null, tint = PardisColors.inkMuted, size = 19.dp)
+        Box(Modifier.weight(1f)) {
+            if (tfv.text.isEmpty()) Text("Search heroes, words, voyages…", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkFaint)
+            androidx.compose.foundation.text.BasicTextField(
+                value = tfv,
+                onValueChange = { tfv = it; onQuery(it.text) },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = PardisColors.ink),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        PardisIcon(PardisIconKind.Mic, contentDescription = null, tint = PardisColors.saffron, size = 18.dp)
+    }
+}
+
+@Composable
+private fun LibraryCover(
+    story: app.pardis.core.model.Story,
+    state: LibraryUiState,
+    onAction: (LibraryAction) -> Unit,
+    onOpenStory: (String) -> Unit,
+    modifier: Modifier,
+) {
+    val cover = state.localCoverUrls[story.slug] ?: story.coverUrl
+    val cached = state.downloadedSizeLabels[story.slug] != null
+    val progress = state.downloadProgress[story.slug]
+    val failed = state.failedDownloads.contains(story.slug)
+    Column(modifier.clickable { onOpenStory(story.slug) }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(0.78f).clip(RoundedCornerShape(PardisRadius.md))) {
+            PardisRemoteImageFrame(imageUrl = cover, contentDescription = story.titleEn, modifier = Modifier.fillMaxSize())
+            Box(
+                Modifier.align(Alignment.TopEnd).padding(8.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x66000000)).padding(horizontal = 8.dp, vertical = 3.dp),
+            ) {
+                Text("${story.minutes}m", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            }
+            if (cached) {
+                Box(
+                    Modifier.align(Alignment.TopStart).padding(8.dp).size(24.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.mint),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PardisIcon(PardisIconKind.Check, contentDescription = "Offline", tint = Color.White, size = 14.dp)
+                }
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(story.titleEn, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.indigo, maxLines = 1)
+        Spacer(Modifier.height(6.dp))
+        when {
+            progress != null -> Text(progress, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+            cached -> Text("✓ Offline", style = MaterialTheme.typography.labelSmall, color = PardisColors.mintDeep, fontWeight = FontWeight.SemiBold)
+            else -> ClickPill(if (failed) "Retry" else "Download") { onAction(LibraryAction.DownloadStory(story.slug)) }
+        }
+    }
+}
+
+@Composable
+private fun ClickPill(label: String, onClick: () -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.saffronSoft).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        PardisIcon(PardisIconKind.Download, contentDescription = null, tint = PardisColors.saffronDeep, size = 14.dp)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun LibraryListRow(
+    story: app.pardis.core.model.Story,
+    state: LibraryUiState,
+    onOpenStory: (String) -> Unit,
+    modifier: Modifier,
+) {
+    val cover = state.localCoverUrls[story.slug] ?: story.coverUrl
+    Row(
+        modifier.fillMaxWidth().clickable { onOpenStory(story.slug) }.padding(vertical = PardisSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        PardisRemoteImageFrame(imageUrl = cover, contentDescription = story.titleEn, modifier = Modifier.size(width = 60.dp, height = 78.dp))
+        Column(Modifier.weight(1f)) {
+            Text(story.titleEn, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.indigo, maxLines = 1)
+            Spacer(Modifier.height(4.dp))
+            Text("${story.ageBand} · ${story.minutes}m · ${story.vocabCount} words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+        }
+        PardisIcon(PardisIconKind.ChevRight, contentDescription = null, tint = PardisColors.inkFaint, size = 18.dp)
+    }
+}
+
+@Composable
+private fun LibraryAgeTile(band: String, label: String, tone: String, modifier: Modifier, onClick: () -> Unit) {
+    val (soft, deep) = toneColors(tone)
+    Column(
+        modifier.clip(RoundedCornerShape(PardisRadius.base)).background(soft).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 16.dp),
+    ) {
+        Text(band, style = MaterialTheme.typography.titleLarge, color = deep, fontWeight = FontWeight.ExtraBold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = deep)
     }
 }
 

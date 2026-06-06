@@ -98,6 +98,28 @@ enum class PardisIconKind {
     Settings,
     Heart,
     Bell,
+    Grid,
+    ListView,
+}
+
+enum class PardisMotif { Paisley, Vine, Rosette }
+
+/** Faint tiled Persian motif overlay for backgrounds and gradient cards (non-interactive). */
+@Composable
+fun PardisPatternOverlay(motif: PardisMotif, color: Color, modifier: Modifier = Modifier, alpha: Float = 0.06f) {
+    val res = when (motif) {
+        PardisMotif.Paisley -> R.drawable.pattern_paisley
+        PardisMotif.Vine -> R.drawable.pattern_vine
+        PardisMotif.Rosette -> R.drawable.pattern_rosette
+    }
+    Image(
+        painter = painterResource(res),
+        contentDescription = null,
+        modifier = modifier,
+        contentScale = ContentScale.Crop,
+        colorFilter = ColorFilter.tint(color),
+        alpha = alpha,
+    )
 }
 
 /** Thin rounded linear progress bar. value in 0f..1f. */
@@ -141,6 +163,7 @@ fun PardisIcon(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     tint: Color = PardisColors.ink,
+    size: androidx.compose.ui.unit.Dp = PardisIconSize,
 ) {
     val res = when (icon) {
         PardisIconKind.Back -> R.drawable.ic_back
@@ -174,11 +197,13 @@ fun PardisIcon(
         PardisIconKind.Settings -> R.drawable.ic_settings
         PardisIconKind.Heart -> R.drawable.ic_heart
         PardisIconKind.Bell -> R.drawable.ic_bell
+        PardisIconKind.Grid -> R.drawable.ic_grid
+        PardisIconKind.ListView -> R.drawable.ic_list
     }
     Image(
         painter = painterResource(res),
         contentDescription = contentDescription,
-        modifier = Modifier.size(PardisIconSize).then(modifier),
+        modifier = modifier.size(size),
         colorFilter = ColorFilter.tint(tint),
     )
 }
