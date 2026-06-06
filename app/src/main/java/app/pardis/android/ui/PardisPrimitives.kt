@@ -2,6 +2,7 @@ package app.pardis.android.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import app.pardis.android.R
 import app.pardis.core.model.VocabItem
 import app.pardis.design.PardisComponentColors
 import app.pardis.design.PardisColors
@@ -476,10 +480,16 @@ fun PardisRemoteImageFrame(
 @Composable
 fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
     val variant = ((seed.hashCode() % 5) + 5) % 5
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        when (variant) {
+    val pattern = when (variant % 3) {
+        0 -> R.drawable.pattern_paisley
+        1 -> R.drawable.pattern_vine
+        else -> R.drawable.pattern_rosette
+    }
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            when (variant) {
             0 -> { // Night: lapis sky, saffron moon, dark hills
                 drawRect(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF2436A1), Color(0xFF4F2EB5))))
                 val moon = Offset(w * 0.5f, h * 0.34f)
@@ -511,7 +521,17 @@ fun PardisSceneArt(seed: String, modifier: Modifier = Modifier) {
                 val glow = Offset(w * 0.5f, h * 0.82f)
                 drawCircle(Brush.radialGradient(listOf(Color(0x88F08A2D), Color(0x00F08A2D)), center = glow, radius = w * 0.45f), radius = w * 0.45f, center = glow)
             }
+            }
         }
+        // Authentic Persian motif overlay (paisley / vine / rosette), tinted + faint.
+        Image(
+            painter = painterResource(pattern),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            colorFilter = ColorFilter.tint(Color.White),
+            alpha = 0.14f,
+        )
     }
 }
 
