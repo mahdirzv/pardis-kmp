@@ -84,7 +84,10 @@ class LibraryViewModel(
             stories = filtered,
             isLoading = loading,
             errorMessage = err,
-            cachedStorySlugs = cached,
+            // Union the disk-computed set with the manager's downloaded set so a story downloaded
+            // from the library while it's open immediately satisfies the "show only cached" filter
+            // (not just after the next refresh).
+            cachedStorySlugs = cached + downloadedSizeLabels.keys,
             searchQuery = query,
             showOnlyCached = showOnly,
             localCoverUrls = covers,
