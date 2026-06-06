@@ -10,7 +10,7 @@ plugins {
 val sharedFrameworkBundleId = "app.pardis.shared"
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "app.pardis.shared"
         compileSdk = 37
         minSdk = 24
@@ -40,7 +40,7 @@ kotlin {
             implementation(project(":core:domain"))
             implementation(project(":core:network"))
             api(libs.androidx.lifecycle.viewmodel)
-            // savedstate is Android/JVM only; do not put in common or it breaks iOS native metadata resolution
+            // savedstate is Android/JVM only; do not put in common, or it breaks iOS native metadata resolution
             // (pulls coroutines-android which has no native variant)
             api(libs.koin.core)
             implementation(libs.koin.core.viewmodel)
