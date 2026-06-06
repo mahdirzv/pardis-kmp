@@ -47,10 +47,11 @@ struct LibraryScreen: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Pardis")
-                .font(.largeTitle)
+                .font(.system(size: PardisTypography.xxl, weight: .heavy, design: .rounded))
                 .foregroundStyle(PardisColors.indigo)
                 .accessibilityAddTraits(.isHeader)
             Text("Persian heritage stories")
+                .font(.system(size: PardisTypography.base, weight: .medium, design: .rounded))
                 .foregroundStyle(PardisColors.inkSoft)
 
             // Search
@@ -143,25 +144,24 @@ struct LibraryScreen: View {
                     }
                 }
                 .padding(PardisSpacing.md)
-                .background(PardisColors.surface2)
-                .cornerRadius(PardisRadius.md)
-                .overlay(
-                    RoundedRectangle(cornerRadius: PardisRadius.md)
-                        .stroke(PardisColors.border, lineWidth: 1)
-                )
+                .pardisCardSurface()
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(story.slug) }
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
                 // TODO: Extract to PardisCard view modifier / struct per Phase 3 design system plan
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
 
             Button("Refresh") {
                 model.refresh()
             }
-            .buttonStyle(.borderedProminent)
-            .tint(PardisColors.saffron)
+            .buttonStyle(PardisPrimaryButtonStyle())
         }
         .padding()
-        .background(PardisColors.background.ignoresSafeArea())
+        .pardisScreenBackground()
         .task {
             await model.activate()
         }
@@ -217,7 +217,7 @@ struct ReaderScreen: View {
                             }
                         )
                         .frame(height: 380)
-                        .cornerRadius(12)
+                        .cornerRadius(PardisRadius.md)
                     }
 
                     Spacer(minLength: 8)
@@ -263,10 +263,10 @@ struct ReaderScreen: View {
                                     Color(PardisColors.surfaceLilac)
                                 }
                                 .frame(height: 220)
-                                .cornerRadius(12)
+                                .cornerRadius(PardisRadius.md)
                                 .accessibilityLabel("Illustration for page \(page.page)")
                             } else {
-                                RoundedRectangle(cornerRadius: 12)
+                                RoundedRectangle(cornerRadius: PardisRadius.md)
                                     .fill(PardisColors.surfaceLilac)
                                     .frame(height: 220)
                                     .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
@@ -386,7 +386,7 @@ struct ReaderScreen: View {
             }
         }
         .padding()
-        .background(PardisColors.background.ignoresSafeArea())
+        .pardisScreenBackground()
         .sheet(item: $selectedVocab, onDismiss: { model.dismissVocab() }) { selection in
             let v = selection.vocab
             VStack(alignment: .leading, spacing: 8) {

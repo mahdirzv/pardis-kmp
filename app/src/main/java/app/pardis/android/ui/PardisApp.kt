@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import app.pardis.design.PardisRadius
 import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
+import app.pardis.design.PardisTheme
 import app.pardis.shared.library.LibraryAction
 import app.pardis.shared.library.LibraryUiState
 import app.pardis.shared.library.LibraryViewModel
@@ -61,10 +63,10 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PardisApp() {
-    MaterialTheme {
+    PardisTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = PardisColors.background
+            color = MaterialTheme.colorScheme.background
         ) {
             val navController = rememberNavController()
             NavHost(navController = navController, startDestination = "library") {
@@ -112,7 +114,7 @@ fun LibraryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(PardisColors.background)
+            .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
             .padding(PardisSpacing.md)
     ) {
         Text(
@@ -322,8 +324,8 @@ fun PardisCard(
             .shadow(PardisShadows.md, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = shape,
-        color = PardisColors.surface2,
-        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.border)
+        color = PardisColors.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.borderSoft)
     ) {
         content()
     }
@@ -338,8 +340,9 @@ fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
         modifier = Modifier
             .clickable(onClick = onClick)
             .padding(vertical = PardisSpacing.xs),
-        shape = RoundedCornerShape(PardisRadius.sm),
-        color = PardisColors.mintSoft
+        shape = RoundedCornerShape(PardisRadius.full),
+        color = PardisColors.mintSoft,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PardisColors.borderSoft),
     ) {
         Column(
             modifier = Modifier
@@ -349,7 +352,7 @@ fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
             PersianReaderInline(
                 text = vocab.fa,
                 style = MaterialTheme.typography.bodySmall,
-                color = PardisColors.ink,
+                color = PardisColors.indigoDeep,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -441,7 +444,7 @@ fun ReaderScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(PardisColors.background)
+            .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
             .padding(PardisSpacing.md)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

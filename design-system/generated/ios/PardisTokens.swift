@@ -5,6 +5,7 @@ import SwiftUI
 struct PardisColors {
     static let background = Color(hex: "#FAF6EE")
     static let backgroundAlt = Color(hex: "#F3EEDD")
+    static let backgroundStage = Color(hex: "#EDE6D6")
     static let surface = Color.white
     static let surface2 = Color(hex: "#FDFAF0")
     static let surfaceSoft = Color(hex: "#E8EBFB")
@@ -17,23 +18,31 @@ struct PardisColors {
     static let saffronTint = Color(hex: "#FFF4E5")
     static let indigo = Color(hex: "#2436A1")
     static let indigoDeep = Color(hex: "#1A256E")
+    static let indigoDarker = Color(hex: "#0F1849")
     static let indigoSoft = Color(hex: "#E8EBFB")
-    static let indigoTint = Color(hex: "#E8EBFB")
-    static let mint = Color(hex: "#34B57F")
+    static let indigoTint = Color(hex: "#F0F2FC")
+    static let mint = Color(hex: "#2FA876")
     static let mintDeep = Color(hex: "#1F7A52")
     static let mintSoft = Color(hex: "#DEF5E9")
     static let lilac = Color(hex: "#8B6FE6")
     static let lilacDeep = Color(hex: "#5235B6")
     static let lilacSoft = Color(hex: "#ECE6FB")
+    static let rose = Color(hex: "#E1547A")
+    static let roseDeep = Color(hex: "#B83A5E")
+    static let roseSoft = Color(hex: "#FCDEE6")
+    static let sun = Color(hex: "#F4B53A")
+    static let sunDeep = Color(hex: "#9A6B12")
+    static let sunSoft = Color(hex: "#FCEAB6")
     static let ink = Color(hex: "#14111B")
     static let inkSoft = Color(hex: "#4B4760")
     static let inkMuted = Color(hex: "#8A8499")
-    static let inkFaint = Color(hex: "#B8B2C5")
+    static let inkFaint = Color(hex: "#B6B0C0")
     static let inkOnDark = Color.white
     static let border = Color(hex: "#ECE3D0")
-    static let borderStrong = Color(hex: "#D9CDB1")
+    static let borderSoft = Color(hex: "#F2ECDD")
+    static let borderStrong = Color(hex: "#DDD2BC")
     static let error = Color(hex: "#EF4444")
-    static let success = Color(hex: "#34B57F")
+    static let success = Color(hex: "#2FA876")
     static let warning = Color(hex: "#F4B53A")
 }
 
@@ -47,10 +56,12 @@ struct PardisSpacing {
 }
 
 struct PardisRadius {
-    static let sm: CGFloat = 8
-    static let md: CGFloat = 12
-    static let lg: CGFloat = 18
-    static let xl: CGFloat = 24
+    static let xs: CGFloat = 8
+    static let sm: CGFloat = 12
+    static let md: CGFloat = 16
+    static let lg: CGFloat = 20
+    static let xl: CGFloat = 26
+    static let xxl: CGFloat = 34
     static let full: CGFloat = 999
 }
 
@@ -62,28 +73,32 @@ struct PardisMotion {
 
 struct PardisTypography {
     // sizes in points (use .system(size: ...))
-    static let xs: CGFloat = 12
-    static let sm: CGFloat = 14
-    static let base: CGFloat = 16
+    static let xs: CGFloat = 11
+    static let sm: CGFloat = 13
+    static let base: CGFloat = 15
     static let lg: CGFloat = 18
-    static let xl: CGFloat = 20
-    static let xxl: CGFloat = 24
-    static let xxxl: CGFloat = 30
+    static let xl: CGFloat = 23
+    static let xxl: CGFloat = 30
+    static let xxxl: CGFloat = 34
     // weights
     static let weightNormal: Font.Weight = .regular
     static let weightMedium: Font.Weight = .medium
-    static let weightSemiBold: Font.Weight = .semibold
-    static let weightBold: Font.Weight = .bold
+    static let weightSemiBold: Font.Weight = .bold
+    static let weightBold: Font.Weight = .heavy
     // line heights (use .lineSpacing or modifier)
+    static let lineHeightDisplay: CGFloat = 0.98
+    static let lineHeightHeading: CGFloat = 1.08
+    static let lineHeightTight: CGFloat = 1.35
     static let lineHeightNormal: CGFloat = 1.55
     static let lineHeightRelaxed: CGFloat = 1.7
 }
 
 struct PardisShadows {
     // Reference values for .shadow() or custom
-    static let smRadius: CGFloat = 2
-    static let mdRadius: CGFloat = 8
-    static let lgRadius: CGFloat = 20
+    static let xsRadius: CGFloat = 1
+    static let smRadius: CGFloat = 4
+    static let mdRadius: CGFloat = 12
+    static let lgRadius: CGFloat = 24
 }
 
 extension Color {

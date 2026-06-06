@@ -5,4 +5,5 @@
 - For an English-first shell, do not force global RTL at the app root. Keep the platform default layout direction and handle Farsi/RTL presentation only where the specific screen or text block actually needs it.
 - Reader RTL should be scoped to the Persian text blocks themselves. Keeping navigation, controls, and English content LTR avoids flipping the whole screen while still rendering FA paragraphs correctly.
 - Apply the same scoped RTL treatment to inline Persian reader elements (titles, vocab words, detail sheets) so FA content stays visually consistent without making surrounding English metadata or controls RTL.
+- When a design prototype updates the palette or token scale, change the source of truth in `design-system/tokens.json` and then sync both generated snapshots and the Android runtime token mirror. Leaving any one of those behind causes native theme drift even if the build still passes.
 
