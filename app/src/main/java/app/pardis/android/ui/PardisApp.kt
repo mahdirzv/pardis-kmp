@@ -1,7 +1,5 @@
 package app.pardis.android.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,11 +10,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.semantics.heading
@@ -28,6 +23,7 @@ import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
 import app.pardis.design.PardisSpacing
 import app.pardis.design.PardisTheme
+import app.pardis.design.pardisScreenBackground
 import app.pardis.shared.library.LibraryAction
 import app.pardis.shared.library.LibraryUiState
 import app.pardis.shared.library.LibraryViewModel
@@ -101,7 +97,7 @@ fun LibraryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
+            .pardisScreenBackground()
             .padding(PardisSpacing.md)
     ) {
         PardisScreenHeader(
@@ -110,6 +106,39 @@ fun LibraryScreen(
             modifier = Modifier.semantics { heading() },
         )
         Spacer(Modifier.height(PardisSpacing.sm))
+        PardisMetricStrip(
+            metrics = listOf(
+                PardisMetric(
+                    value = state.stories.size.toString(),
+                    label = "Stories",
+                    tone = PardisMetricTone.Saffron,
+                ),
+                PardisMetric(
+                    value = state.ageBands.size.toString(),
+                    label = "Age bands",
+                    tone = PardisMetricTone.Indigo,
+                ),
+                PardisMetric(
+                    value = state.cachedStorySlugs.size.toString(),
+                    label = if (state.totalCachedLabel.isNotEmpty()) state.totalCachedLabel else "Offline",
+                    tone = PardisMetricTone.Mint,
+                ),
+            ),
+        )
+        Spacer(Modifier.height(PardisSpacing.sm))
+        state.stories.firstOrNull()?.let { story ->
+            PardisFeaturedStoryCard(
+                titleEn = story.titleEn,
+                titleFa = story.titleFa,
+                ageBand = story.ageBand,
+                minutes = story.minutes,
+                vocabCount = story.vocabCount,
+                coverUrl = state.localCoverUrls[story.slug] ?: story.coverUrl,
+                blurb = story.blurbEn,
+                onOpen = { onOpenStory(story.slug) },
+            )
+            Spacer(Modifier.height(PardisSpacing.sm))
+        }
         PardisPanel {
             OutlinedTextField(
                 value = state.searchQuery,
@@ -159,6 +188,13 @@ fun LibraryScreen(
             }
         }
         Spacer(Modifier.height(PardisSpacing.md))
+        PardisSectionHeader(
+            title = "Stories",
+            subtitle = if (state.selectedAgeBand == null) "All available stories" else "Filtered for ${state.selectedAgeBand}",
+            actionLabel = "Refresh",
+            onAction = { onAction(LibraryAction.Refresh) },
+        )
+        Spacer(Modifier.height(PardisSpacing.sm))
 
         if (state.isLoading && state.stories.isEmpty()) {
             CircularProgressIndicator(color = PardisColors.saffron)
@@ -174,7 +210,7 @@ fun LibraryScreen(
             verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)
         ) {
             items(state.stories, key = { it.slug }) { story ->
-                StoryCard(
+                PardisStoryCard(
                     titleEn = story.titleEn,
                     titleFa = story.titleFa,
                     ageBand = story.ageBand,
@@ -189,107 +225,6 @@ fun LibraryScreen(
                     onCancel = { onAction(LibraryAction.CancelDownload(story.slug)) },
                     onRemove = { onAction(LibraryAction.RemoveDownload(story.slug)) },
                 )
-            }
-        }
-
-        // Floating refresh for demo
-        Spacer(Modifier.height(PardisSpacing.md))
-        Button(
-            onClick = { onAction(LibraryAction.Refresh) },
-            colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)
-        ) {
-            Text("Refresh library")
-        }
-    }
-}
-
-@Composable
-private fun StoryCard(
-    titleEn: String,
-    titleFa: String,
-    ageBand: String,
-    minutes: Int,
-    vocabCount: Int,
-    coverUrl: String?,
-    downloadProgress: String?,
-    downloadedSizeLabel: String?,
-    isFailed: Boolean,
-    onClick: () -> Unit,
-    onDownload: () -> Unit,
-    onCancel: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    PardisCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        onClick = onClick
-    ) {
-        Column(Modifier.padding(PardisSpacing.md)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-                PardisRemoteImageFrame(
-                    imageUrl = coverUrl,
-                    contentDescription = "Cover image for story: $titleEn in $ageBand age band",
-                    modifier = Modifier.size(68.dp),
-                    placeholderText = "No cover",
-                )
-                Column {
-                    Text(
-                        titleEn,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = PardisColors.ink,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    PersianReaderInline(
-                        text = titleFa,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = PardisColors.indigo,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(PardisSpacing.xs))
-                    Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs), verticalAlignment = Alignment.CenterVertically) {
-                        PardisMetaPill(
-                            text = "$ageBand • ${minutes}m",
-                            containerColor = PardisColors.saffronTint,
-                            contentColor = PardisColors.saffronDeep,
-                        )
-                        PardisMetaPill(
-                            text = "$vocabCount words",
-                            containerColor = PardisColors.indigoTint,
-                            contentColor = PardisColors.indigoDeep,
-                        )
-                    }
-                }
-            }
-            Spacer(Modifier.height(PardisSpacing.sm))
-            // Offline download control: reflects OfflineDownloadManager state for this story.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-                when {
-                    downloadProgress != null -> {
-                        PardisMetaPill(downloadProgress, PardisColors.backgroundAlt, PardisColors.inkSoft)
-                        Spacer(Modifier.weight(1f))
-                        OutlinedButton(onClick = onCancel) { Text("Cancel", style = MaterialTheme.typography.labelSmall) }
-                    }
-                    downloadedSizeLabel != null -> {
-                        PardisMetaPill("Offline • $downloadedSizeLabel", PardisColors.mintSoft, PardisColors.mintDeep)
-                        Spacer(Modifier.weight(1f))
-                        OutlinedButton(onClick = onRemove) { Text("Remove", style = MaterialTheme.typography.labelSmall) }
-                    }
-                    isFailed -> {
-                        Text("Download failed", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                        Spacer(Modifier.weight(1f))
-                        Button(onClick = onDownload) { Text("Retry", style = MaterialTheme.typography.labelSmall) }
-                    }
-                    else -> {
-                        Spacer(Modifier.weight(1f))
-                        Button(onClick = onDownload, colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)) {
-                            Text("Download offline", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
             }
         }
     }
@@ -337,7 +272,7 @@ fun ReaderScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(PardisColors.background, PardisColors.backgroundAlt)))
+            .pardisScreenBackground()
             .padding(PardisSpacing.md)
     ) {
         val hasOfflineAssets = state.localVideoUrlFa != null || state.localVideoUrlEn != null || state.localIllustrationUrls.isNotEmpty() || state.localNarrationUrls.isNotEmpty()
@@ -345,6 +280,8 @@ fun ReaderScreen(
             onBack = onBack,
             pageLabel = if (state.pages.isNotEmpty()) "${state.currentPage + 1} / ${state.pages.size}" else "Reader",
             isOffline = hasOfflineAssets,
+            backLabel = "← Library",
+            offlineLabel = "Offline",
         )
         Spacer(Modifier.height(PardisSpacing.sm))
 

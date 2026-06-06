@@ -17,6 +17,17 @@ object PardisColors {
     val surfaceMint = Color(0xFFDEF5E9)
     val surfacePeach = Color(0xFFFFE9D2)
     val surfaceLilac = Color(0xFFECE6FB)
+    val darkBackground = Color(0xFF141019)
+    val darkBackgroundAlt = Color(0xFF1D1825)
+    val darkSurface = Color(0xFF211C2B)
+    val darkSurface2 = Color(0xFF2A2435)
+    val darkBorder = Color(0xFF322C40)
+    val darkBorderSoft = Color(0xFF28222F)
+    val darkBorderStrong = Color(0xFF443C56)
+    val darkInk = Color(0xFFF4F1FA)
+    val darkInkSoft = Color(0xFFC3BDD2)
+    val darkInkMuted = Color(0xFF8E87A0)
+    val darkInkFaint = Color(0xFF5F596F)
     val saffron = Color(0xFFF08A2D)
     val saffronDeep = Color(0xFFC46A12)
     val saffronSoft = Color(0xFFFFE9D2)
@@ -47,11 +58,17 @@ object PardisColors {
     val borderSoft = Color(0xFFF2ECDD)
     val borderStrong = Color(0xFFDDD2BC)
     val error = Color(0xFFEF4444)
+    val errorDark = Color(0xFFFF8A80)
+    val errorContainerDark = Color(0xFF6D2C2C)
+    val onErrorContainerDark = Color(0xFFFFDAD4)
     val success = Color(0xFF2FA876)
     val warning = Color(0xFFF4B53A)
 }
 
 object PardisSpacing {
+    val none = 0.dp
+    val hairline = 1.dp
+    val xxs = 2.dp
     val xs = 4.dp
     val sm = 8.dp
     val md = 16.dp
@@ -63,9 +80,10 @@ object PardisSpacing {
 object PardisRadius {
     val xs = 8.dp
     val sm = 12.dp
-    val md = 16.dp
-    val lg = 20.dp
-    val xl = 26.dp
+    val base = 16.dp
+    val md = 20.dp
+    val lg = 26.dp
+    val xl = 34.dp
     val xxl = 34.dp
     val full = 999.dp
 }

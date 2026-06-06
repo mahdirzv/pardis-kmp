@@ -29,10 +29,49 @@ struct LibraryScreen: View {
     @State private var model = LibrarySharedViewModel()
     var onSelect: (String) -> Void
 
+    private var storySectionSubtitle: String {
+        if let band = model.selectedAgeBand {
+            return "Filtered for \(band)"
+        }
+        return "All available stories"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: PardisSpacing.sm) {
             PardisScreenHeader(title: "Pardis", subtitle: "Persian heritage stories")
                 .accessibilityAddTraits(.isHeader)
+
+            PardisMetricStrip(metrics: [
+                PardisMetric(
+                    value: "\(model.stories.count)",
+                    label: "Stories",
+                    tone: .saffron
+                ),
+                PardisMetric(
+                    value: "\(model.ageBands.count)",
+                    label: "Age bands",
+                    tone: .indigo
+                ),
+                PardisMetric(
+                    value: "\(model.cachedStorySlugs.count)",
+                    label: model.totalCachedLabel.isEmpty ? "Offline" : model.totalCachedLabel,
+                    tone: .mint
+                )
+            ])
+
+            if let story = model.stories.first {
+                let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
+                PardisFeaturedStoryCard(
+                    titleEn: story.titleEn,
+                    titleFa: story.titleFa,
+                    ageBand: story.ageBand,
+                    minutes: story.minutes,
+                    vocabCount: story.vocabCount,
+                    coverUrl: coverUrlStr.flatMap(URL.init(string:)),
+                    onOpen: { onSelect(story.slug) },
+                    blurb: story.blurbEn
+                )
+            }
 
             PardisPanel {
                 TextField("Search stories", text: $model.searchQuery)
@@ -44,7 +83,7 @@ struct LibraryScreen: View {
 
             if !model.ageBands.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: PardisSpacing.sm) {
                         PardisFilterPill(title: "All ages", selected: model.selectedAgeBand == nil) {
                             model.setAgeBand(nil)
                         }
@@ -69,75 +108,40 @@ struct LibraryScreen: View {
                 }
             }
 
+            PardisSectionHeader(
+                title: "Stories",
+                subtitle: storySectionSubtitle,
+                actionLabel: "Refresh",
+                action: { model.refresh() }
+            )
+
             if model.isLoading && model.stories.isEmpty {
                 ProgressView().tint(PardisColors.saffron)
             }
 
             List(model.stories, id: \.slug) { story in
-                HStack {
-                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                    PardisAsyncImageFrame(
-                        url: coverUrlStr.flatMap(URL.init(string:)),
-                        accessibilityLabel: "Cover image for \(story.titleEn)",
-                        width: 68,
-                        height: 68,
-                        placeholderText: "No cover"
-                    )
-                    .padding(.trailing, PardisSpacing.sm)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(story.titleEn)
-                            .font(.system(size: PardisTypography.base, weight: .bold, design: .rounded))
-                        PersianReaderText(
-                            text: story.titleFa,
-                            font: .system(size: PardisTypography.sm, weight: .medium, design: .rounded),
-                            color: PardisColors.indigo
-                        )
-                        HStack(spacing: 6) {
-                            PardisMetaPill(text: "\(story.ageBand) • \(story.minutes)m", background: PardisColors.saffronTint, foreground: PardisColors.saffronDeep)
-                            PardisMetaPill(text: "\(story.vocabCount) words", background: PardisColors.indigoTint, foreground: PardisColors.indigoDeep)
-                        }
-                        if let progress = model.downloadProgress[story.slug] {
-                            HStack {
-                                PardisMetaPill(text: progress, background: PardisColors.backgroundAlt, foreground: PardisColors.inkSoft)
-                                Spacer()
-                                Button("Cancel") { model.cancelDownload(story.slug) }
-                                    .buttonStyle(.bordered).controlSize(.small)
-                            }
-                        } else if let size = model.downloadedSizeLabels[story.slug] {
-                            HStack {
-                                PardisMetaPill(text: "Offline • \(size)", background: PardisColors.mintSoft, foreground: PardisColors.mintDeep)
-                                Spacer()
-                                Button("Remove") { model.removeDownload(story.slug) }
-                                    .buttonStyle(.bordered).controlSize(.small)
-                            }
-                        } else if model.failedDownloads.contains(story.slug) {
-                            HStack {
-                                Text("Download failed").font(.caption).foregroundStyle(.red)
-                                Spacer()
-                                Button("Retry") { model.downloadStory(story.slug) }
-                                    .buttonStyle(.borderedProminent).controlSize(.small).tint(PardisColors.saffron)
-                            }
-                        } else {
-                            Button("Download offline") { model.downloadStory(story.slug) }
-                                .buttonStyle(.borderedProminent).controlSize(.small).tint(PardisColors.saffron)
-                        }
-                    }
-                }
-                .padding(PardisSpacing.md)
-                .pardisCardSurface(cornerRadius: PardisRadius.lg)
-                .contentShape(Rectangle())
-                .onTapGesture { onSelect(story.slug) }
+                let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
+                PardisStoryCard(
+                    titleEn: story.titleEn,
+                    titleFa: story.titleFa,
+                    ageBand: story.ageBand,
+                    minutes: story.minutes,
+                    vocabCount: story.vocabCount,
+                    coverUrl: coverUrlStr.flatMap(URL.init(string:)),
+                    downloadProgress: model.downloadProgress[story.slug],
+                    downloadedSizeLabel: model.downloadedSizeLabels[story.slug],
+                    isFailed: model.failedDownloads.contains(story.slug),
+                    onSelect: { onSelect(story.slug) },
+                    onDownload: { model.downloadStory(story.slug) },
+                    onCancel: { model.cancelDownload(story.slug) },
+                    onRemove: { model.removeDownload(story.slug) }
+                )
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-
-            Button("Refresh") {
-                model.refresh()
-            }
-            .buttonStyle(PardisPrimaryButtonStyle())
         }
         .padding()
         .pardisScreenBackground()
@@ -159,7 +163,9 @@ struct ReaderScreen: View {
             PardisReaderHeaderBar(
                 onBack: { dismiss() },
                 pageLabel: !model.pages.isEmpty ? "\(model.currentPage + 1) / \(model.pages.count)" : "Reader",
-                isOffline: hasOffline
+                isOffline: hasOffline,
+                backLabel: "← Library",
+                offlineLabel: "Offline"
             )
 
             if model.isLoading && model.pages.isEmpty {

@@ -9,11 +9,17 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,23 +27,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.pardis.core.model.VocabItem
+import app.pardis.design.PardisComponentColors
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisRadius
-import app.pardis.design.PardisShadows
 import app.pardis.design.PardisSpacing
+import app.pardis.design.PardisThemedSurface
 import coil.compose.AsyncImage
+
+private val PardisStoryCoverSize = 68.dp
+private val PardisFeaturedStoryCoverHeight = 156.dp
 
 @Composable
 fun PardisScreenHeader(
@@ -82,14 +92,17 @@ fun PardisFilterPill(
     Surface(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(PardisRadius.full),
-        color = if (selected) PardisColors.indigo else PardisColors.surface,
-        border = BorderStroke(1.dp, if (selected) PardisColors.indigo else PardisColors.border),
+        color = if (selected) PardisComponentColors.chipSelectedContainer else PardisComponentColors.chipContainer,
+        border = BorderStroke(
+            PardisSpacing.hairline,
+            if (selected) PardisComponentColors.chipSelectedContainer else PardisComponentColors.chipBorder,
+        ),
     ) {
         Text(
             text = label,
             modifier = Modifier.padding(horizontal = PardisSpacing.md, vertical = PardisSpacing.sm),
             style = MaterialTheme.typography.labelMedium,
-            color = if (selected) PardisColors.inkOnDark else PardisColors.inkSoft,
+            color = if (selected) PardisComponentColors.chipSelectedContent else PardisComponentColors.chipContent,
         )
     }
 }
@@ -116,19 +129,123 @@ fun PardisMetaPill(
 }
 
 @Composable
+fun PardisSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = PardisColors.ink,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PardisColors.inkSoft,
+                )
+            }
+        }
+        if (actionLabel != null && onAction != null) {
+            TextButton(onClick = onAction) {
+                Text(actionLabel, color = PardisColors.indigo, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+@Composable
+fun PardisMetricStrip(
+    metrics: List<PardisMetric>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+    ) {
+        metrics.forEach { metric ->
+            PardisMetricTile(
+                metric = metric,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+data class PardisMetric(
+    val value: String,
+    val label: String,
+    val tone: PardisMetricTone,
+)
+
+enum class PardisMetricTone {
+    Saffron,
+    Indigo,
+    Mint,
+}
+
+@Composable
+private fun PardisMetricTile(
+    metric: PardisMetric,
+    modifier: Modifier = Modifier,
+) {
+    val colors = when (metric.tone) {
+        PardisMetricTone.Saffron -> PardisColors.saffronTint to PardisColors.saffronDeep
+        PardisMetricTone.Indigo -> PardisColors.indigoTint to PardisColors.indigoDeep
+        PardisMetricTone.Mint -> PardisColors.mintSoft to PardisColors.mintDeep
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(PardisRadius.md),
+        color = colors.first,
+        border = BorderStroke(PardisSpacing.hairline, PardisComponentColors.cardBorder),
+    ) {
+        Column(
+            modifier = Modifier.padding(PardisSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Text(
+                text = metric.value,
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.second,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = metric.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = PardisColors.inkSoft,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
 fun PardisCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(PardisRadius.lg)
-    Surface(
-        modifier = modifier
-            .shadow(PardisShadows.md, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = shape,
-        color = PardisColors.surface,
-        border = BorderStroke(1.dp, PardisColors.borderSoft),
+    PardisThemedSurface(
+        modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
         content()
     }
@@ -161,7 +278,7 @@ fun PardisRemoteImageFrame(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(PardisRadius.md),
-        color = PardisColors.surfaceLilac,
+        color = PardisComponentColors.mediaPlaceholderContainer,
     ) {
         if (imageUrl != null) {
             AsyncImage(
@@ -175,8 +292,238 @@ fun PardisRemoteImageFrame(
                 Text(
                     text = placeholderText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PardisColors.inkSoft,
+                    color = PardisComponentColors.mediaPlaceholderContent,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun PardisStoryCard(
+    titleEn: String,
+    titleFa: String,
+    ageBand: String,
+    minutes: Int,
+    vocabCount: Int,
+    coverUrl: String?,
+    downloadProgress: String?,
+    downloadedSizeLabel: String?,
+    isFailed: Boolean,
+    onClick: () -> Unit,
+    onDownload: () -> Unit,
+    onCancel: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+    noCoverLabel: String = "No cover",
+    cancelLabel: String = "Cancel",
+    removeLabel: String = "Remove",
+    retryLabel: String = "Retry",
+    downloadFailedLabel: String = "Download failed",
+    downloadOfflineLabel: String = "Download offline",
+) {
+    PardisCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+    ) {
+        Column(Modifier.padding(PardisSpacing.md)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                PardisRemoteImageFrame(
+                    imageUrl = coverUrl,
+                    contentDescription = "Cover image for story: $titleEn in $ageBand age band",
+                    modifier = Modifier.size(PardisStoryCoverSize),
+                    placeholderText = noCoverLabel,
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = titleEn,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PardisColors.ink,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    PersianReaderInline(
+                        text = titleFa,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = PardisColors.indigo,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(PardisSpacing.xs))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PardisMetaPill(
+                            text = "$ageBand • ${minutes}m",
+                            containerColor = PardisColors.saffronTint,
+                            contentColor = PardisColors.saffronDeep,
+                        )
+                        PardisMetaPill(
+                            text = "$vocabCount words",
+                            containerColor = PardisColors.indigoTint,
+                            contentColor = PardisColors.indigoDeep,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(PardisSpacing.sm))
+            PardisStoryOfflineControls(
+                downloadProgress = downloadProgress,
+                downloadedSizeLabel = downloadedSizeLabel,
+                isFailed = isFailed,
+                onDownload = onDownload,
+                onCancel = onCancel,
+                onRemove = onRemove,
+                cancelLabel = cancelLabel,
+                removeLabel = removeLabel,
+                retryLabel = retryLabel,
+                downloadFailedLabel = downloadFailedLabel,
+                downloadOfflineLabel = downloadOfflineLabel,
+            )
+        }
+    }
+}
+
+@Composable
+fun PardisFeaturedStoryCard(
+    titleEn: String,
+    titleFa: String,
+    ageBand: String,
+    minutes: Int,
+    vocabCount: Int,
+    coverUrl: String?,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+    eyebrow: String = "Featured story",
+    blurb: String? = null,
+    actionLabel: String = "Start reading",
+    noCoverLabel: String = "No cover",
+) {
+    PardisCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(PardisSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+        ) {
+            PardisRemoteImageFrame(
+                imageUrl = coverUrl,
+                contentDescription = "Cover image for featured story: $titleEn",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(PardisFeaturedStoryCoverHeight),
+                placeholderText = noCoverLabel,
+            )
+            Text(
+                text = eyebrow,
+                style = MaterialTheme.typography.labelSmall,
+                color = PardisColors.inkMuted,
+            )
+            Text(
+                text = titleEn,
+                style = MaterialTheme.typography.headlineSmall,
+                color = PardisColors.ink,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            PersianReaderInline(
+                text = titleFa,
+                style = MaterialTheme.typography.titleMedium,
+                color = PardisColors.indigo,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!blurb.isNullOrBlank()) {
+                Text(
+                    text = blurb,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PardisColors.inkSoft,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PardisMetaPill(
+                    text = "$ageBand • ${minutes}m",
+                    containerColor = PardisColors.saffronTint,
+                    contentColor = PardisColors.saffronDeep,
+                )
+                PardisMetaPill(
+                    text = "$vocabCount words",
+                    containerColor = PardisColors.indigoTint,
+                    contentColor = PardisColors.indigoDeep,
+                )
+            }
+            Button(
+                onClick = onOpen,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PardisComponentColors.primaryActionContainer,
+                    contentColor = PardisComponentColors.primaryActionContent,
+                ),
+            ) {
+                Text(actionLabel, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PardisStoryOfflineControls(
+    downloadProgress: String?,
+    downloadedSizeLabel: String?,
+    isFailed: Boolean,
+    onDownload: () -> Unit,
+    onCancel: () -> Unit,
+    onRemove: () -> Unit,
+    cancelLabel: String,
+    removeLabel: String,
+    retryLabel: String,
+    downloadFailedLabel: String,
+    downloadOfflineLabel: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        when {
+            downloadProgress != null -> {
+                PardisMetaPill(downloadProgress, PardisColors.backgroundAlt, PardisColors.inkSoft)
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(onClick = onCancel) {
+                    Text(cancelLabel, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            downloadedSizeLabel != null -> {
+                PardisMetaPill("Offline • $downloadedSizeLabel", PardisColors.mintSoft, PardisColors.mintDeep)
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(onClick = onRemove) {
+                    Text(removeLabel, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            isFailed -> {
+                Text(
+                    text = downloadFailedLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Spacer(Modifier.weight(1f))
+                Button(onClick = onDownload) {
+                    Text(retryLabel, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            else -> {
+                Spacer(Modifier.weight(1f))
+                Button(
+                    onClick = onDownload,
+                    colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron),
+                ) {
+                    Text(downloadOfflineLabel, style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
     }
@@ -187,6 +534,8 @@ fun PardisReaderHeaderBar(
     onBack: () -> Unit,
     pageLabel: String,
     isOffline: Boolean,
+    backLabel: String,
+    offlineLabel: String,
     modifier: Modifier = Modifier,
 ) {
     PardisPanel(modifier = modifier, contentPadding = PaddingValues(horizontal = PardisSpacing.md, vertical = PardisSpacing.sm)) {
@@ -196,7 +545,7 @@ fun PardisReaderHeaderBar(
             horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
         ) {
             TextButton(onClick = onBack) {
-                Text("← Library", color = PardisColors.indigo, style = MaterialTheme.typography.labelLarge)
+                Text(backLabel, color = PardisColors.indigo, style = MaterialTheme.typography.labelLarge)
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 PardisMetaPill(
@@ -207,7 +556,7 @@ fun PardisReaderHeaderBar(
             }
             if (isOffline) {
                 PardisMetaPill(
-                    text = "Offline",
+                    text = offlineLabel,
                     containerColor = PardisColors.mintSoft,
                     contentColor = PardisColors.mintDeep,
                 )
@@ -244,7 +593,7 @@ fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
             .padding(vertical = PardisSpacing.xs),
         shape = RoundedCornerShape(PardisRadius.full),
         color = PardisColors.mintSoft,
-        border = BorderStroke(1.dp, PardisColors.borderSoft),
+        border = BorderStroke(PardisSpacing.hairline, PardisColors.borderSoft),
     ) {
         Column(
             modifier = Modifier
@@ -252,7 +601,7 @@ fun PardisVocabChip(vocab: VocabItem, onClick: () -> Unit = {}) {
                 .semantics {
                     contentDescription = "Vocabulary term: ${vocab.fa} transliterated as ${vocab.translit}, English ${vocab.en}"
                 },
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs),
         ) {
             PersianReaderInline(
                 text = vocab.fa,
@@ -336,5 +685,3 @@ fun PersianReaderInline(
         )
     }
 }
-
-

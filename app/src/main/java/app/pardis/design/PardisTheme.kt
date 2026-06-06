@@ -1,17 +1,22 @@
 package app.pardis.design
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 private val PardisLightColorScheme = lightColorScheme(
     primary = PardisColors.indigo,
@@ -50,17 +55,17 @@ private val PardisDarkColorScheme = darkColorScheme(
     onSecondaryContainer = PardisColors.inkOnDark,
     tertiary = PardisColors.lilac,
     onTertiary = PardisColors.indigoDarker,
-    background = PardisColors.indigoDarker,
-    onBackground = PardisColors.inkOnDark,
-    surface = Color(0xFF1B1B27),
-    onSurface = PardisColors.inkOnDark,
-    surfaceVariant = Color(0xFF272436),
-    onSurfaceVariant = Color(0xFFD3CBDD),
-    outline = Color(0xFF484256),
-    outlineVariant = Color(0xFF322C40),
-    error = Color(0xFFFF8A80),
-    errorContainer = Color(0xFF6D2C2C),
-    onErrorContainer = Color(0xFFFFDAD4),
+    background = PardisColors.darkBackground,
+    onBackground = PardisColors.darkInk,
+    surface = PardisColors.darkSurface,
+    onSurface = PardisColors.darkInk,
+    surfaceVariant = PardisColors.darkSurface2,
+    onSurfaceVariant = PardisColors.darkInkSoft,
+    outline = PardisColors.darkBorderStrong,
+    outlineVariant = PardisColors.darkBorder,
+    error = PardisColors.errorDark,
+    errorContainer = PardisColors.errorContainerDark,
+    onErrorContainer = PardisColors.onErrorContainerDark,
 )
 
 private val PardisTypographyScheme = Typography(
@@ -138,6 +143,51 @@ private val PardisShapes = Shapes(
     large = RoundedCornerShape(PardisRadius.lg),
 )
 
+object PardisComponentColors {
+    val chipSelectedContainer = PardisColors.ink
+    val chipSelectedContent = PardisColors.surface
+    val chipContainer = PardisColors.surface
+    val chipContent = PardisColors.inkSoft
+    val chipBorder = PardisColors.border
+    val cardContainer = PardisColors.surface
+    val cardBorder = PardisColors.borderSoft
+    val primaryActionContainer = PardisColors.saffron
+    val primaryActionContent = PardisColors.inkOnDark
+    val mediaPlaceholderContainer = PardisColors.surfaceLilac
+    val mediaPlaceholderContent = PardisColors.inkSoft
+}
+
+fun Modifier.pardisScreenBackground(): Modifier = background(
+    Brush.verticalGradient(
+        colors = listOf(
+            PardisColors.background,
+            PardisColors.backgroundAlt,
+        ),
+    ),
+)
+
+fun Modifier.pardisCardSurface(): Modifier {
+    val shape = RoundedCornerShape(PardisRadius.lg)
+    return shadow(PardisShadows.md, shape)
+        .background(PardisComponentColors.cardContainer, shape)
+}
+
+@Composable
+fun PardisThemedSurface(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = modifier,
+        color = PardisComponentColors.cardContainer,
+        shape = RoundedCornerShape(PardisRadius.lg),
+        border = BorderStroke(PardisSpacing.hairline, PardisComponentColors.cardBorder),
+        tonalElevation = PardisSpacing.none,
+        shadowElevation = PardisShadows.sm,
+        content = content,
+    )
+}
+
 @Composable
 fun PardisTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -150,4 +200,3 @@ fun PardisTheme(
         content = content,
     )
 }
-

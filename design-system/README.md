@@ -15,7 +15,7 @@ Use only the Pardis palette and tokens.
 - Surface: #FFFFFF
 - Saffron (accent): #F08A2D / deep #C46A12 / soft #FFE9D2
 - Indigo/Lapis (brand): #2436A1 / deep #1A256E / soft #E8EBFB
-- Mint: #34B57F / soft #DEF5E9
+- Mint: #2FA876 / soft #DEF5E9
 - Lilac: #ECE6FB
 - Ink: #14111B / soft #4B4760 / muted #8A8499
 - etc. (full in neutral.ts)

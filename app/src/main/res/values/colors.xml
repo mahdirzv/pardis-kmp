@@ -7,7 +7,7 @@
     <color name="pardis_saffron_deep">#C46A12</color>
     <color name="pardis_indigo">#2436A1</color>
     <color name="pardis_indigo_deep">#1A256E</color>
-    <color name="pardis_mint">#34B57F</color>
+    <color name="pardis_mint">#2FA876</color>
     <color name="pardis_ink">#14111B</color>
     <color name="ic_launcher_background">@color/pardis_background</color>
 </resources>

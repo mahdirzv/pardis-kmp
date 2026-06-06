@@ -12,6 +12,17 @@ struct PardisColors {
     static let surfaceMint = Color(hex: "#DEF5E9")
     static let surfacePeach = Color(hex: "#FFE9D2")
     static let surfaceLilac = Color(hex: "#ECE6FB")
+    static let darkBackground = Color(hex: "#141019")
+    static let darkBackgroundAlt = Color(hex: "#1D1825")
+    static let darkSurface = Color(hex: "#211C2B")
+    static let darkSurface2 = Color(hex: "#2A2435")
+    static let darkBorder = Color(hex: "#322C40")
+    static let darkBorderSoft = Color(hex: "#28222F")
+    static let darkBorderStrong = Color(hex: "#443C56")
+    static let darkInk = Color(hex: "#F4F1FA")
+    static let darkInkSoft = Color(hex: "#C3BDD2")
+    static let darkInkMuted = Color(hex: "#8E87A0")
+    static let darkInkFaint = Color(hex: "#5F596F")
     static let saffron = Color(hex: "#F08A2D")
     static let saffronDeep = Color(hex: "#C46A12")
     static let saffronSoft = Color(hex: "#FFE9D2")
@@ -42,11 +53,17 @@ struct PardisColors {
     static let borderSoft = Color(hex: "#F2ECDD")
     static let borderStrong = Color(hex: "#DDD2BC")
     static let error = Color(hex: "#EF4444")
+    static let errorDark = Color(hex: "#FF8A80")
+    static let errorContainerDark = Color(hex: "#6D2C2C")
+    static let onErrorContainerDark = Color(hex: "#FFDAD4")
     static let success = Color(hex: "#2FA876")
     static let warning = Color(hex: "#F4B53A")
 }
 
 struct PardisSpacing {
+    static let none: CGFloat = 0
+    static let hairline: CGFloat = 1
+    static let xxs: CGFloat = 2
     static let xs: CGFloat = 4
     static let sm: CGFloat = 8
     static let md: CGFloat = 16
@@ -58,9 +75,10 @@ struct PardisSpacing {
 struct PardisRadius {
     static let xs: CGFloat = 8
     static let sm: CGFloat = 12
-    static let md: CGFloat = 16
-    static let lg: CGFloat = 20
-    static let xl: CGFloat = 26
+    static let base: CGFloat = 16
+    static let md: CGFloat = 20
+    static let lg: CGFloat = 26
+    static let xl: CGFloat = 34
     static let xxl: CGFloat = 34
     static let full: CGFloat = 999
 }
