@@ -133,6 +133,10 @@ private fun RootShellRoute(
                 storyCount = libraryState.stories.size,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
+            PardisRootTab.You -> YouScreen(
+                downloadCount = libraryState.cachedStorySlugs.size,
+                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
+            )
             else -> PardisPlaceholderTabScreen(
                 title = selectedTab.title,
                 subtitle = selectedTab.subtitle,
@@ -798,6 +802,168 @@ private fun BadgeCell(b: RBadge, modifier: Modifier) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+private data class SettingsItem(val icon: PardisIconKind, val tone: String, val label: String, val detail: String? = null)
+
+@Composable
+private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
+    val gutter = PardisSpacing.lg
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(PardisColors.background),
+        contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
+        verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+    ) {
+        item {
+            Text("You", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = gutter))
+        }
+        item { YouProfileCard(Modifier.padding(horizontal = gutter)) }
+        item { AppearanceGroup(Modifier.padding(horizontal = gutter)) }
+        item {
+            SettingsGroup(
+                "Reading",
+                listOf(
+                    SettingsItem(PardisIconKind.Languages, "lapis", "Story language", "English & فارسی"),
+                    SettingsItem(PardisIconKind.Volume, "saffron", "Narration speed", "Normal"),
+                    SettingsItem(PardisIconKind.Download, "mint", "Downloads", "$downloadCount stories"),
+                ),
+                Modifier.padding(horizontal = gutter),
+            )
+        }
+        item {
+            SettingsGroup(
+                "Family",
+                listOf(
+                    SettingsItem(PardisIconKind.Shield, "lapis", "Parents' corner", "Locked"),
+                    SettingsItem(PardisIconKind.Bell, "saffron", "Bedtime reminder", "8:00 PM"),
+                    SettingsItem(PardisIconKind.Star, "lilac", "Rivana Plus", "Active"),
+                ),
+                Modifier.padding(horizontal = gutter),
+            )
+        }
+        item {
+            SettingsGroup(
+                "About",
+                listOf(
+                    SettingsItem(PardisIconKind.Settings, "lapis", "Settings"),
+                    SettingsItem(PardisIconKind.Heart, "rose", "Rate Rivana"),
+                ),
+                Modifier.padding(horizontal = gutter),
+            )
+        }
+        item {
+            Column(Modifier.fillMaxWidth().padding(top = PardisSpacing.md), horizontalAlignment = Alignment.CenterHorizontally) {
+                PersianReaderInline(
+                    "ریوانا · قصه‌های پارسی برای کودکان",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PardisColors.inkFaint,
+                )
+                Text(
+                    "PARDIS · v1.0",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PardisColors.inkFaint,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun YouProfileCard(modifier: Modifier) {
+    Row(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
+            .background(Brush.linearGradient(listOf(Color(0xFFFFE9D2), Color(0xFFECE6FB), Color(0xFFE8EBFB))))
+            .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl)).padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Box(
+            Modifier.size(72.dp).clip(RoundedCornerShape(PardisRadius.full))
+                .background(Brush.linearGradient(listOf(PardisColors.saffron, PardisColors.saffronDeep))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("R", style = MaterialTheme.typography.displayLarge, color = Color.White, fontWeight = FontWeight.Bold)
+        }
+        Column(Modifier.weight(1f)) {
+            Text("Roya", style = MaterialTheme.typography.headlineSmall, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
+            Text("Age 7 · 7-night streak", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkSoft)
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surface).padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                PardisIcon(PardisIconKind.User, contentDescription = null, tint = PardisColors.ink, modifier = Modifier.size(15.dp))
+                Text("Switch reader", style = MaterialTheme.typography.labelLarge, color = PardisColors.ink)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppearanceGroup(modifier: Modifier) {
+    Column(modifier) {
+        Text("APPEARANCE", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted, modifier = Modifier.padding(bottom = PardisSpacing.sm))
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surface).padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(13.dp),
+        ) {
+            Box(
+                Modifier.size(34.dp).clip(RoundedCornerShape(PardisRadius.sm)).background(PardisColors.lilacSoft),
+                contentAlignment = Alignment.Center,
+            ) {
+                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.lilacDeep, modifier = Modifier.size(18.dp))
+            }
+            Text("Dark mode", style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            // Decorative off toggle (dark mode not wired yet)
+            Box(
+                Modifier.size(width = 46.dp, height = 28.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.border),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Box(Modifier.padding(start = 3.dp).size(22.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsGroup(label: String, items: List<SettingsItem>, modifier: Modifier) {
+    Column(modifier) {
+        Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted, modifier = Modifier.padding(bottom = PardisSpacing.sm))
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surface),
+        ) {
+            items.forEachIndexed { i, item ->
+                if (i > 0) Box(Modifier.padding(start = 63.dp).fillMaxWidth().height(1.dp).background(PardisColors.border))
+                SettingsRow(item)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsRow(item: SettingsItem) {
+    val (soft, deep) = toneColors(item.tone)
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        Box(
+            Modifier.size(34.dp).clip(RoundedCornerShape(PardisRadius.sm)).background(soft),
+            contentAlignment = Alignment.Center,
+        ) {
+            PardisIcon(item.icon, contentDescription = null, tint = deep, modifier = Modifier.size(18.dp))
+        }
+        Text(item.label, style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        if (item.detail != null) {
+            Text(item.detail, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
+        }
+        PardisIcon(PardisIconKind.ChevRight, contentDescription = null, tint = PardisColors.inkFaint, modifier = Modifier.size(17.dp))
     }
 }
 

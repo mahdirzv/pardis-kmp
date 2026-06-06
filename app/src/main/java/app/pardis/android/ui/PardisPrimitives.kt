@@ -93,6 +93,11 @@ enum class PardisIconKind {
     Mic,
     Sprout,
     Check,
+    Languages,
+    Shield,
+    Settings,
+    Heart,
+    Bell,
 }
 
 /** Thin rounded linear progress bar. value in 0f..1f. */
@@ -164,6 +169,11 @@ fun PardisIcon(
         PardisIconKind.Mic -> R.drawable.ic_mic
         PardisIconKind.Sprout -> R.drawable.ic_sprout
         PardisIconKind.Check -> R.drawable.ic_check
+        PardisIconKind.Languages -> R.drawable.ic_languages
+        PardisIconKind.Shield -> R.drawable.ic_shield
+        PardisIconKind.Settings -> R.drawable.ic_settings
+        PardisIconKind.Heart -> R.drawable.ic_heart
+        PardisIconKind.Bell -> R.drawable.ic_bell
     }
     Image(
         painter = painterResource(res),
