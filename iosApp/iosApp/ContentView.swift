@@ -3,17 +3,40 @@ import Shared
 import AVKit
 import AVFoundation
 
+private struct PersianReaderText: View {
+    let text: String
+    let font: Font
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(font)
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .multilineTextAlignment(.trailing)
+            .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+private struct ReaderRoute: Hashable {
+    let slug: String
+}
+
+private struct SelectedVocab: Identifiable {
+    let vocab: VocabItem
+    var id: String { "\(vocab.fa)-\(vocab.translit)-\(vocab.en)" }
+}
+
 struct ContentView: View {
-    @State private var selectedSlug: String? = nil
+    @State private var selectedRoute: ReaderRoute? = nil
 
     var body: some View {
         NavigationStack {
-            LibraryScreen(onSelect: { slug in selectedSlug = slug })
-                .navigationDestination(item: $selectedSlug) { slug in
-                    ReaderScreen(slug: slug)
+            LibraryScreen(onSelect: { slug in selectedRoute = ReaderRoute(slug: slug) })
+                .navigationDestination(item: $selectedRoute) { route in
+                    ReaderScreen(slug: route.slug)
                 }
         }
-        .environment(\.layoutDirection, .rightToLeft) // RTL for Farsi/Persian content (bilingual handled per text)
     }
 }
 
@@ -33,8 +56,8 @@ struct LibraryScreen: View {
             // Search
             TextField("Search stories", text: $model.searchQuery)
                 .textFieldStyle(.roundedBorder)
-                .onChange(of: model.searchQuery) { newValue in
-                    model.search(query: newValue)
+                .onChange(of: model.searchQuery) {
+                    model.search(query: model.searchQuery)
                 }
 
             // Age-band filter chips (derived from data; tap the active band again to clear).
@@ -88,7 +111,7 @@ struct LibraryScreen: View {
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text(story.titleEn).font(.headline)
-                        Text(story.titleFa).font(.subheadline).foregroundStyle(PardisColors.indigo)
+                        PersianReaderText(text: story.titleFa, font: .subheadline, color: PardisColors.indigo)
                         Text("\(story.ageBand) • \(story.minutes)m • \(story.vocabCount) words")
                             .font(.caption)
                             .foregroundStyle(PardisColors.inkMuted)
@@ -148,6 +171,7 @@ struct LibraryScreen: View {
 struct ReaderScreen: View {
     let slug: String
     @State private var model = ReaderSharedViewModel()
+    @State private var selectedVocab: SelectedVocab? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -200,8 +224,11 @@ struct ReaderScreen: View {
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(page.paragraphsFa.joined(separator: "\n\n"))
-                                .font(.title3)
+                            PersianReaderText(
+                                text: page.paragraphsFa.joined(separator: "\n\n"),
+                                font: .title3,
+                                color: PardisColors.ink
+                            )
                             Text(page.paragraphsEn.joined(separator: "\n\n"))
                                 .font(.body)
                                 .foregroundStyle(PardisColors.inkSoft)
@@ -214,7 +241,10 @@ struct ReaderScreen: View {
                                         .padding(4)
                                         .background(PardisColors.mintSoft)
                                         .cornerRadius(PardisRadius.sm)
-                                        .onTapGesture { model.showVocab(v) }
+                                        .onTapGesture {
+                                            model.showVocab(v)
+                                            selectedVocab = SelectedVocab(vocab: v)
+                                        }
                                         .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
                                         .accessibilityAddTraits(.isButton)
                                 }
@@ -242,8 +272,11 @@ struct ReaderScreen: View {
                                     .overlay(Text("No illustration").foregroundStyle(PardisColors.inkSoft))
                             }
 
-                            Text(page.paragraphsFa.joined(separator: "\n\n"))
-                                .font(.body)
+                            PersianReaderText(
+                                text: page.paragraphsFa.joined(separator: "\n\n"),
+                                font: .body,
+                                color: PardisColors.ink
+                            )
 
                             Text(page.paragraphsEn.joined(separator: "\n\n"))
                                 .font(.callout)
@@ -257,7 +290,10 @@ struct ReaderScreen: View {
                                         .padding(4)
                                         .background(PardisColors.mintSoft)
                                         .cornerRadius(PardisRadius.sm)
-                                        .onTapGesture { model.showVocab(v) }
+                                        .onTapGesture {
+                                            model.showVocab(v)
+                                            selectedVocab = SelectedVocab(vocab: v)
+                                        }
                                         .accessibilityLabel("Vocabulary: \(v.fa) means \(v.en), transliteration \(v.translit)")
                                         .accessibilityAddTraits(.isButton)
                                 }
@@ -351,10 +387,12 @@ struct ReaderScreen: View {
         }
         .padding()
         .background(PardisColors.background.ignoresSafeArea())
-        .sheet(item: $model.selectedVocab) { v in
+        .sheet(item: $selectedVocab, onDismiss: { model.dismissVocab() }) { selection in
+            let v = selection.vocab
             VStack(alignment: .leading, spacing: 8) {
                 Text("Vocab").font(.headline).foregroundStyle(PardisColors.indigo)
-                Text("\(v.fa)  (\(v.translit))").font(.title3)
+                PersianReaderText(text: v.fa, font: .title3, color: PardisColors.ink)
+                Text("(\(v.translit))").font(.body).foregroundStyle(PardisColors.inkSoft)
                 Text(v.en).font(.body)
                 if !v.context.isEmpty {
                     Text("in: \(v.context)").font(.caption).foregroundStyle(PardisColors.inkMuted)
@@ -365,7 +403,10 @@ struct ReaderScreen: View {
                         model.playAudio(urlString: audio, rate: 1.0, autoAdvance: false)
                     }.padding(.top, 4)
                 }
-                Button("Close") { model.dismissVocab() }
+                Button("Close") {
+                    selectedVocab = nil
+                    model.dismissVocab()
+                }
                     .padding(.top)
                     .tint(PardisColors.saffron)
             }
@@ -390,10 +431,6 @@ extension Collection {
     }
 }
 
-// VocabItem comes from the Shared framework; .sheet(item:) needs Identifiable.
-extension VocabItem: Identifiable {
-    public var id: String { fa }
-}
 
 /// Native AVPlayer wrapper for MP4 video mode in Reader.
 /// Syncs playback time to cues to auto-advance pages (via onPageChange -> GoToPage).

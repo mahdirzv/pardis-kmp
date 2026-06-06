@@ -1,6 +1,10 @@
 package app.pardis.core.di
 
 import app.pardis.core.data.DownloadVideoUseCaseImpl
+import app.pardis.core.data.DownloadStoryAssetsUseCaseImpl
+import app.pardis.core.data.ClearStoryAssetsUseCaseImpl
+import app.pardis.core.data.GetCachedSizeUseCaseImpl
+import app.pardis.core.data.GetLocalAssetPathUseCaseImpl
 import app.pardis.core.data.GetLocalVideoPathUseCaseImpl
 import app.pardis.core.data.GetProgressUseCaseImpl
 import app.pardis.core.data.GetStoriesUseCaseImpl
@@ -14,9 +18,9 @@ import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
 import app.pardis.core.domain.GetLocalAssetPathUseCase
 import app.pardis.core.domain.GetLocalVideoPathUseCase
+import app.pardis.core.domain.GetCachedSizeUseCase
 import app.pardis.core.domain.OfflineAssetCache
 import app.cash.sqldelight.db.SqlDriver
-import app.pardis.core.database.PardisDatabase
 import app.pardis.core.database.createPardisDatabase
 import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoriesUseCase
@@ -34,11 +38,11 @@ val pardisCoreModules = listOf(
         // Network client (can be overridden in platform modules for auth tokens)
         single { SupabaseClient() }
 
-        // Database (driver provided by platformModules; optional for iOS until Swift bootstrap wired)
-        single<PardisDatabase?> { getOrNull<SqlDriver>()?.let { createPardisDatabase(it) } }
-
         // Repository layer (data) — uses DB when available for basic offline cache
-        single<StoryRepository> { StoryRepositoryImpl(get(), getOrNull<PardisDatabase>()) }
+        single<StoryRepository> {
+            val database = getOrNull<SqlDriver>()?.let(::createPardisDatabase)
+            StoryRepositoryImpl(get(), database)
+        }
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }
@@ -55,13 +59,13 @@ val pardisCoreModules = listOf(
         single<DownloadVideoUseCase> { DownloadVideoUseCaseImpl(get()) }
 
         // General local asset path (for resolving cached illustrations, narrations, video in reader)
-        single<app.pardis.core.domain.GetLocalAssetPathUseCase> { app.pardis.core.data.GetLocalAssetPathUseCaseImpl(get()) }
+        single<GetLocalAssetPathUseCase> { GetLocalAssetPathUseCaseImpl(get()) }
 
         // Full story assets (video + pages illustrations/narration) for offline
-        single<app.pardis.core.domain.DownloadStoryAssetsUseCase> { app.pardis.core.data.DownloadStoryAssetsUseCaseImpl(get(), get(), get()) }
+        single<DownloadStoryAssetsUseCase> { DownloadStoryAssetsUseCaseImpl(get(), get(), get()) }
 
-        single<app.pardis.core.domain.ClearStoryAssetsUseCase> { app.pardis.core.data.ClearStoryAssetsUseCaseImpl(get()) }
+        single<ClearStoryAssetsUseCase> { ClearStoryAssetsUseCaseImpl(get()) }
 
-        single<app.pardis.core.domain.GetCachedSizeUseCase> { app.pardis.core.data.GetCachedSizeUseCaseImpl(get()) }
+        single<GetCachedSizeUseCase> { GetCachedSizeUseCaseImpl(get()) }
     }
 )
