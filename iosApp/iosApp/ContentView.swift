@@ -326,8 +326,8 @@ struct ReaderScreen: View {
                         // Lang group
                         Text("Lang:").font(.caption)
                         HStack(spacing: 4) {
-                            Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang("fa") }
-                            Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang("en") }
+                            Button(model.preferredNarrationLang == "fa" ? "FA ✓" : "FA") { model.setNarrationLang(lang: "fa") }
+                            Button(model.preferredNarrationLang == "en" ? "EN ✓" : "EN") { model.setNarrationLang(lang: "en") }
                         }
                         // Rate group - compact
                         Text("Rate:").font(.caption)
@@ -383,9 +383,16 @@ struct ReaderScreen: View {
 }
 
 extension Collection {
-    subscript(safe index: Int) -> Element? {
+    // Use Index (not Int) so this compiles for any Collection; Array's Index is Int, so call sites
+    // like pages[safe: 3] still work.
+    subscript(safe index: Index) -> Element? {
         indices.contains(index) ? self[index] : nil
     }
+}
+
+// VocabItem comes from the Shared framework; .sheet(item:) needs Identifiable.
+extension VocabItem: Identifiable {
+    public var id: String { fa }
 }
 
 /// Native AVPlayer wrapper for MP4 video mode in Reader.
@@ -425,9 +432,10 @@ struct VideoPlayerView: UIViewRepresentable {
         context.coordinator.timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
             let pos = time.seconds
             if let matching = context.coordinator.cues.first(where: { pos >= $0.startSec && pos < $0.endSec }) {
-                if matching.pageIndex != context.coordinator.lastSyncedPage {
-                    context.coordinator.lastSyncedPage = matching.pageIndex
-                    context.coordinator.onPageChange(matching.pageIndex)
+                let page = Int(matching.pageIndex) // SubtitleCue.pageIndex is Kotlin Int -> Swift Int32
+                if page != context.coordinator.lastSyncedPage {
+                    context.coordinator.lastSyncedPage = page
+                    context.coordinator.onPageChange(page)
                 }
             }
         }
@@ -442,7 +450,7 @@ struct VideoPlayerView: UIViewRepresentable {
         }
         // Seek if currentPage changed externally (user prev/next or other sync)
         let player = context.coordinator.player
-        if let player = player, let cue = cues.first(where: { $0.pageIndex == currentPage }) {
+        if let player = player, let cue = cues.first(where: { Int($0.pageIndex) == currentPage }) {
             let target = CMTime(seconds: cue.startSec, preferredTimescale: 600)
             // Only seek if far from current pos (avoid feedback loop)
             let current = player.currentTime().seconds
