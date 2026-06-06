@@ -24,11 +24,16 @@ kotlin {
         iosTarget.binaries.framework(buildTypes = setOf(NativeBuildType.DEBUG)) {
             baseName = "Shared"
             isStatic = false
+            // Expose core:model types (Story, StoryPage, VocabItem) that appear in the public API
+            // (e.g. ReaderUiState/LibraryUiState) so Swift can name them. api() alone compiles but
+            // does not put them in the framework's Swift API.
+            export(project(":core:model"))
             binaryOption("bundleId", sharedFrameworkBundleId)
         }
         iosTarget.binaries.framework(buildTypes = setOf(NativeBuildType.RELEASE)) {
             baseName = "Shared"
             isStatic = true
+            export(project(":core:model"))
             binaryOption("bundleId", sharedFrameworkBundleId)
         }
     }
