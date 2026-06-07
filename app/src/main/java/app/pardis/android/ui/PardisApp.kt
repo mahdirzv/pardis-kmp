@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -79,9 +80,9 @@ fun PardisApp() {
             NavHost(navController = navController, startDestination = "library") {
                 composable("library") {
                     RootShellRoute(
-                        onOpenStory = { slug ->
-                            navController.navigate("detail/$slug")
-                        }
+                        onOpenStory = { slug -> navController.navigate("detail/$slug") },
+                        onOpenLullaby = { index -> navController.navigate("lullaby/$index") },
+                        onOpenCharacter = { index -> navController.navigate("character/$index") },
                     )
                 }
                 composable(
@@ -126,6 +127,22 @@ fun PardisApp() {
                         onDone = { navController.popBackStack("library", inclusive = false) },
                     )
                 }
+                composable(
+                    "lullaby/{index}",
+                    arguments = listOf(navArgument("index") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val index = backStackEntry.arguments?.getInt("index") ?: 0
+                    val lullaby = rivanaLullabies.getOrElse(index) { rivanaLullabies.first() }
+                    LullabyPlayerScreen(lullaby = lullaby, onBack = { navController.popBackStack() })
+                }
+                composable(
+                    "character/{index}",
+                    arguments = listOf(navArgument("index") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val index = backStackEntry.arguments?.getInt("index") ?: 0
+                    val character = rivanaCharacters.getOrElse(index) { rivanaCharacters.first() }
+                    CharacterScreen(character = character, onBack = { navController.popBackStack() })
+                }
             }
         }
     }
@@ -134,6 +151,8 @@ fun PardisApp() {
 @Composable
 private fun RootShellRoute(
     onOpenStory: (String) -> Unit,
+    onOpenLullaby: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by remember { mutableStateOf(PardisRootTab.Library) }
@@ -151,7 +170,7 @@ private fun RootShellRoute(
                 onAction = viewModel::onAction,
                 onOpenStory = onOpenStory,
                 onOpenLibrary = { selectedTab = PardisRootTab.Library },
-                onOpenBedtime = { selectedTab = PardisRootTab.Bedtime },
+                onOpenBedtime = { onOpenLullaby(1) },
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
             PardisRootTab.Library -> LibraryScreen(
@@ -161,10 +180,12 @@ private fun RootShellRoute(
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
             PardisRootTab.Bedtime -> BedtimeScreen(
+                onOpenLullaby = onOpenLullaby,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
             PardisRootTab.Rewards -> RewardsScreen(
                 storyCount = libraryState.stories.size,
+                onOpenCharacter = onOpenCharacter,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
             PardisRootTab.You -> YouScreen(
@@ -443,7 +464,7 @@ private fun CollectionCard(name: String, fa: String, sceneVariant: Int, onClick:
     }
 }
 
-private data class Lullaby(
+internal data class Lullaby(
     val title: String,
     val titleFa: String,
     val minutes: Int,
@@ -452,15 +473,39 @@ private data class Lullaby(
     val plays: String,
 )
 
-private val rivanaLullabies = listOf(
+internal val rivanaLullabies = listOf(
     Lullaby("Moon Over Damavand", "ماه بر فرازِ دماوند", 18, "Traditional · Mazandaran", 6, "2.1k"),
     Lullaby("Laay Laay, Little Star", "لای‌لای، ستاره‌ی کوچک", 12, "Folk lullaby", 0, "4.8k"),
     Lullaby("The Sleepy River", "رودِ خواب‌آلود", 22, "Original · Rivana", 6, "1.3k"),
     Lullaby("Garden of Dreams", "باغِ رؤیاها", 15, "Traditional · Shiraz", 0, "3.6k"),
 )
 
+/**
+ * Static cast of Shahnameh figures for the Character screen. The app has no character
+ * model yet, so this content is hardcoded from the design's roster (data.js).
+ */
+internal data class RivanaCharacter(
+    val name: String,
+    val nameFa: String,
+    val role: String,
+    val bio: String,
+    val sceneVariant: Int,
+    val tone: String,
+    val collected: Boolean,
+    val appearances: Int,
+)
+
+internal val rivanaCharacters = listOf(
+    RivanaCharacter("Rostam", "رستم", "Champion of Persia", "The mightiest of all Persian heroes — strong as a mountain, loyal to his king, and rider of the great horse Rakhsh.", 1, "saffron", true, 3),
+    RivanaCharacter("Simurgh", "سیمرغ", "The Wise Bird", "A vast, kind bird whose feathers glow like dawn. She heals the wounded and raises lost children on Mount Damavand.", 3, "lilac", true, 2),
+    RivanaCharacter("Anahita", "آناهیتا", "Keeper of Waters", "The radiant guardian of rivers, rain, and wisdom — bringer of life to every field in Persia.", 0, "lapis", true, 1),
+    RivanaCharacter("Kaveh", "کاوه", "The Blacksmith", "An ordinary blacksmith whose courage sparked a revolt and whose apron became the banner of a free Persia.", 5, "rose", true, 1),
+    RivanaCharacter("Zal", "زال", "Child of the Simurgh", "Born with snow-white hair and raised by the Simurgh, Zal grows into a wise and gentle prince.", 3, "sun", false, 1),
+    RivanaCharacter("Sindbad", "سندباد", "The Sea Traveller", "A curious voyager who sails toward every horizon and returns with tales of wonder.", 4, "mint", true, 1),
+)
+
 @Composable
-private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
+private fun BedtimeScreen(onOpenLullaby: (Int) -> Unit, bottomContentPadding: androidx.compose.ui.unit.Dp) {
     val gutter = PardisSpacing.lg
     Box(
         Modifier
@@ -479,7 +524,7 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
                     PersianReaderInline("وقتِ خواب · لای‌لای", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkOnDarkFaint)
                 }
             }
-            item { BedtimeFeatured(rivanaLullabies[0], Modifier.padding(horizontal = gutter)) }
+            item { BedtimeFeatured(rivanaLullabies[0], onClick = { onOpenLullaby(0) }, Modifier.padding(horizontal = gutter)) }
             item { WindDownCard(Modifier.padding(horizontal = gutter)) }
             item {
                 Text(
@@ -490,7 +535,7 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
                     modifier = Modifier.padding(horizontal = gutter, vertical = PardisSpacing.xs),
                 )
             }
-            items(rivanaLullabies.drop(1)) { l -> LullabyRow(l, Modifier.padding(horizontal = gutter)) }
+            itemsIndexed(rivanaLullabies.drop(1)) { i, l -> LullabyRow(l, onClick = { onOpenLullaby(i + 1) }, Modifier.padding(horizontal = gutter)) }
             item {
                 Text(
                     "شب بخیر · خواب‌های خوش",
@@ -505,8 +550,8 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
 }
 
 @Composable
-private fun BedtimeFeatured(l: Lullaby, modifier: Modifier) {
-    Box(modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(PardisRadius.xl))) {
+private fun BedtimeFeatured(l: Lullaby, onClick: () -> Unit, modifier: Modifier) {
+    Box(modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(PardisRadius.xl)).clickable(onClick = onClick)) {
         PardisSceneArt(seed = l.title, forcedVariant = l.sceneVariant, modifier = Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB30F0C1E)))))
         Column(Modifier.align(Alignment.BottomStart).padding(18.dp)) {
@@ -561,9 +606,9 @@ private fun WindDownCard(modifier: Modifier) {
 }
 
 @Composable
-private fun LullabyRow(l: Lullaby, modifier: Modifier) {
+private fun LullabyRow(l: Lullaby, onClick: () -> Unit, modifier: Modifier) {
     Row(
-        modifier.fillMaxWidth().padding(vertical = PardisSpacing.xs),
+        modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = PardisSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(13.dp),
     ) {
@@ -616,7 +661,7 @@ private fun toneBase(t: String): Color = when (t) {
 }
 
 @Composable
-private fun RewardsScreen(storyCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
+private fun RewardsScreen(storyCount: Int, onOpenCharacter: (Int) -> Unit, bottomContentPadding: androidx.compose.ui.unit.Dp) {
     val gutter = PardisSpacing.lg
     val mastered = rivanaWords.count { it.mastery >= 1f }
     val growing = rivanaWords.size - mastered
@@ -657,12 +702,49 @@ private fun RewardsScreen(storyCount: Int, bottomContentPadding: androidx.compos
         }
         item { WordGarden(mastered, growing, Modifier.padding(horizontal = gutter)) }
         item {
+            Column {
+                PardisSectionHeader(title = "Heroes met", subtitle = "پهلوانانِ آشنا", modifier = Modifier.padding(horizontal = gutter))
+                Spacer(Modifier.height(PardisSpacing.sm))
+                Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(PardisSpacing.md),
+                ) {
+                    Spacer(Modifier.width(gutter - PardisSpacing.md))
+                    rivanaCharacters.forEachIndexed { i, c ->
+                        HeroTile(c, onClick = { onOpenCharacter(i) })
+                    }
+                    Spacer(Modifier.width(gutter - PardisSpacing.md))
+                }
+            }
+        }
+        item {
             Column(Modifier.padding(horizontal = gutter)) {
                 PardisSectionHeader(title = "Badges", subtitle = "نشان‌ها")
                 Spacer(Modifier.height(PardisSpacing.sm))
                 BadgesGrid()
             }
         }
+    }
+}
+
+@Composable
+private fun HeroTile(c: RivanaCharacter, onClick: () -> Unit) {
+    Column(
+        Modifier.width(84.dp).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.size(84.dp).clip(RoundedCornerShape(22.dp))) {
+            PardisSceneArt(seed = c.name, forcedVariant = c.sceneVariant, modifier = Modifier.matchParentSize())
+            PardisPatternOverlay(PardisMotif.Rosette, PardisColors.inkOnDark, alpha = 0.14f, modifier = Modifier.matchParentSize())
+            if (!c.collected) {
+                Box(Modifier.matchParentSize().background(PardisColors.scrimSoft), contentAlignment = Alignment.Center) {
+                    PardisIcon(PardisIconKind.Lock, contentDescription = null, tint = PardisColors.inkOnDark, size = 20.dp)
+                }
+            }
+        }
+        Spacer(Modifier.height(7.dp))
+        Text(c.name, style = MaterialTheme.typography.labelLarge, color = if (c.collected) PardisColors.ink else PardisColors.inkMuted, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        PersianReaderInline(c.nameFa, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted, maxLines = 1)
     }
 }
 
