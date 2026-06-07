@@ -56,6 +56,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
+import app.pardis.core.model.ChildProfile
+import app.pardis.shared.profile.ProfileAction
+import app.pardis.shared.profile.ProfileViewModel
+import androidx.compose.runtime.getValue
 
 private enum class PardisRootTab(
     val title: String,
@@ -70,78 +74,35 @@ private enum class PardisRootTab(
 }
 
 @Composable
-fun PardisApp() {
+fun PardisApp(
+    profileViewModel: ProfileViewModel = koinViewModel(),
+) {
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+
     PardisTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "library") {
-                composable("library") {
-                    RootShellRoute(
-                        onOpenStory = { slug -> navController.navigate("detail/$slug") },
-                        onOpenLullaby = { index -> navController.navigate("lullaby/$index") },
-                        onOpenCharacter = { index -> navController.navigate("character/$index") },
+            when {
+                profileState.isLoading -> {
+                    Box(Modifier.fillMaxSize().background(PardisColors.background))
+                }
+                profileState.selectedProfile == null -> {
+                    PardisOnboardingScreen(
+                        profiles = profileState.profiles,
+                        isSwitch = false,
+                        onSelect = { profileViewModel.onAction(ProfileAction.Select(it.id)) },
+                        onBack = {},
+                        onComingSoon = {},
                     )
                 }
-                composable(
-                    "detail/{slug}",
-                    arguments = listOf(navArgument("slug") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val slug = backStackEntry.arguments?.getString("slug") ?: ""
-                    StoryDetailRoute(
-                        slug = slug,
-                        onRead = { navController.navigate("reader/$it") },
-                        onBack = { navController.popBackStack() },
+                else -> {
+                    PardisAppShell(
+                        activeProfile = profileState.selectedProfile!!,
+                        profiles = profileState.profiles,
+                        onSelectProfile = { profileViewModel.onAction(ProfileAction.Select(it.id)) },
                     )
-                }
-                composable(
-                    "reader/{slug}",
-                    arguments = listOf(navArgument("slug") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val slug = backStackEntry.arguments?.getString("slug") ?: ""
-                    ReaderRoute(
-                        slug = slug,
-                        onBack = { navController.popBackStack() },
-                        onFinish = { finishedSlug ->
-                            // Replace the reader with the celebration so back doesn't re-enter the last page.
-                            navController.navigate("finish/$finishedSlug") {
-                                popUpTo("reader/$slug") { inclusive = true }
-                            }
-                        },
-                    )
-                }
-                composable(
-                    "finish/{slug}",
-                    arguments = listOf(navArgument("slug") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val slug = backStackEntry.arguments?.getString("slug") ?: ""
-                    StoryFinishRoute(
-                        slug = slug,
-                        onNextStory = { nextSlug ->
-                            navController.navigate("detail/$nextSlug") {
-                                popUpTo("finish/$slug") { inclusive = true }
-                            }
-                        },
-                        onDone = { navController.popBackStack("library", inclusive = false) },
-                    )
-                }
-                composable(
-                    "lullaby/{index}",
-                    arguments = listOf(navArgument("index") { type = NavType.IntType })
-                ) { backStackEntry ->
-                    val index = backStackEntry.arguments?.getInt("index") ?: 0
-                    val lullaby = rivanaLullabies.getOrElse(index) { rivanaLullabies.first() }
-                    LullabyPlayerScreen(lullaby = lullaby, onBack = { navController.popBackStack() })
-                }
-                composable(
-                    "character/{index}",
-                    arguments = listOf(navArgument("index") { type = NavType.IntType })
-                ) { backStackEntry ->
-                    val index = backStackEntry.arguments?.getInt("index") ?: 0
-                    val character = rivanaCharacters.getOrElse(index) { rivanaCharacters.first() }
-                    CharacterScreen(character = character, onBack = { navController.popBackStack() })
                 }
             }
         }
@@ -149,10 +110,104 @@ fun PardisApp() {
 }
 
 @Composable
+private fun PardisAppShell(
+    activeProfile: ChildProfile,
+    profiles: List<ChildProfile>,
+    onSelectProfile: (ChildProfile) -> Unit,
+) {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "library") {
+        composable("library") {
+            RootShellRoute(
+                activeName = activeProfile.name,
+                activeProfile = activeProfile,
+                onOpenStory = { slug -> navController.navigate("detail/$slug") },
+                onOpenLullaby = { index -> navController.navigate("lullaby/$index") },
+                onOpenCharacter = { index -> navController.navigate("character/$index") },
+                onSwitchProfile = { navController.navigate("onboarding") },
+            )
+        }
+        composable("onboarding") {
+            PardisOnboardingScreen(
+                profiles = profiles,
+                isSwitch = true,
+                onSelect = {
+                    onSelectProfile(it)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+                onComingSoon = {},
+            )
+        }
+        composable(
+            "detail/{slug}",
+            arguments = listOf(navArgument("slug") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val slug = backStackEntry.arguments?.getString("slug") ?: ""
+            StoryDetailRoute(
+                slug = slug,
+                onRead = { navController.navigate("reader/$it") },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            "reader/{slug}",
+            arguments = listOf(navArgument("slug") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val slug = backStackEntry.arguments?.getString("slug") ?: ""
+            ReaderRoute(
+                slug = slug,
+                onBack = { navController.popBackStack() },
+                onFinish = { finishedSlug ->
+                    // Replace the reader with the celebration so back doesn't re-enter the last page.
+                    navController.navigate("finish/$finishedSlug") {
+                        popUpTo("reader/$slug") { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(
+            "finish/{slug}",
+            arguments = listOf(navArgument("slug") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val slug = backStackEntry.arguments?.getString("slug") ?: ""
+            StoryFinishRoute(
+                slug = slug,
+                onNextStory = { nextSlug ->
+                    navController.navigate("detail/$nextSlug") {
+                        popUpTo("finish/$slug") { inclusive = true }
+                    }
+                },
+                onDone = { navController.popBackStack("library", inclusive = false) },
+            )
+        }
+        composable(
+            "lullaby/{index}",
+            arguments = listOf(navArgument("index") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val index = backStackEntry.arguments?.getInt("index") ?: 0
+            val lullaby = rivanaLullabies.getOrElse(index) { rivanaLullabies.first() }
+            LullabyPlayerScreen(lullaby = lullaby, onBack = { navController.popBackStack() })
+        }
+        composable(
+            "character/{index}",
+            arguments = listOf(navArgument("index") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val index = backStackEntry.arguments?.getInt("index") ?: 0
+            val character = rivanaCharacters.getOrElse(index) { rivanaCharacters.first() }
+            CharacterScreen(character = character, onBack = { navController.popBackStack() })
+        }
+    }
+}
+
+@Composable
 private fun RootShellRoute(
+    activeName: String,
+    activeProfile: ChildProfile,
     onOpenStory: (String) -> Unit,
     onOpenLullaby: (Int) -> Unit,
     onOpenCharacter: (Int) -> Unit,
+    onSwitchProfile: () -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by remember { mutableStateOf(PardisRootTab.Library) }
@@ -166,6 +221,7 @@ private fun RootShellRoute(
     ) {
         when (selectedTab) {
             PardisRootTab.Today -> TodayScreen(
+                activeName = activeName,
                 state = libraryState,
                 onAction = viewModel::onAction,
                 onOpenStory = onOpenStory,
@@ -189,6 +245,8 @@ private fun RootShellRoute(
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
             PardisRootTab.You -> YouScreen(
+                activeProfile = activeProfile,
+                onSwitchProfile = onSwitchProfile,
                 downloadCount = libraryState.cachedStorySlugs.size,
                 bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
             )
@@ -211,6 +269,7 @@ private fun RootShellRoute(
 
 @Composable
 private fun TodayScreen(
+    activeName: String,
     state: LibraryUiState,
     onAction: (LibraryAction) -> Unit,
     onOpenStory: (String) -> Unit,
@@ -233,7 +292,7 @@ private fun TodayScreen(
         contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
     ) {
-        item { TodayGreeting(Modifier.padding(horizontal = gutter).semantics { heading() }) }
+        item { TodayGreeting(activeName = activeName, modifier = Modifier.padding(horizontal = gutter).semantics { heading() }) }
         item { TodayStreakStrip(words = state.stories.sumOf { it.vocabCount }, modifier = Modifier.padding(horizontal = gutter)) }
         item {
             Column(Modifier.padding(horizontal = gutter)) {
@@ -329,7 +388,7 @@ private fun TodayScreen(
 }
 
 @Composable
-private fun TodayGreeting(modifier: Modifier = Modifier) {
+private fun TodayGreeting(activeName: String, modifier: Modifier = Modifier) {
     val cal = java.util.Calendar.getInstance()
     val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
     val greeting = when {
@@ -337,10 +396,9 @@ private fun TodayGreeting(modifier: Modifier = Modifier) {
         hour < 18 -> "Good afternoon"
         else -> "Good evening"
     }
-    val weekday = java.text.SimpleDateFormat("EEEE", java.util.Locale.ENGLISH).format(cal.time)
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("$greeting · $weekday".uppercase(), style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep)
+            Text("$greeting, $activeName".uppercase(), style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep)
             Text("Salâm", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
             PersianReaderInline("سلام، روزت پر از قصه", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkMuted)
         }
@@ -950,7 +1008,7 @@ private fun BadgeCell(b: RBadge, modifier: Modifier) {
 private data class SettingsItem(val icon: PardisIconKind, val tone: String, val label: String, val detail: String? = null)
 
 @Composable
-private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
+private fun YouScreen(activeProfile: ChildProfile, onSwitchProfile: () -> Unit, downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
     val gutter = PardisSpacing.lg
     Box(Modifier.fillMaxSize().background(PardisColors.background)) {
     PardisPatternOverlay(
@@ -968,7 +1026,7 @@ private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose
         item {
             Text("You", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = gutter))
         }
-        item { YouProfileCard(Modifier.padding(horizontal = gutter)) }
+        item { YouProfileCard(activeProfile = activeProfile, onSwitchProfile = onSwitchProfile, modifier = Modifier.padding(horizontal = gutter)) }
         item { AppearanceGroup(Modifier.padding(horizontal = gutter)) }
         item {
             SettingsGroup(
@@ -1023,7 +1081,7 @@ private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose
 }
 
 @Composable
-private fun YouProfileCard(modifier: Modifier) {
+private fun YouProfileCard(activeProfile: ChildProfile, onSwitchProfile: () -> Unit, modifier: Modifier) {
     Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
             .background(PardisGradients.dawn)
@@ -1037,17 +1095,17 @@ private fun YouProfileCard(modifier: Modifier) {
     ) {
         Box(
             Modifier.size(72.dp).clip(RoundedCornerShape(PardisRadius.full))
-                .background(Brush.linearGradient(listOf(PardisColors.saffron, PardisColors.saffronDeep))),
+                .background(toneGradient(activeProfile.tone)),
             contentAlignment = Alignment.Center,
         ) {
-            Text("R", style = MaterialTheme.typography.displayLarge, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
+            Text(activeProfile.name.take(1), style = MaterialTheme.typography.displayLarge, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.weight(1f)) {
-            Text("Roya", style = MaterialTheme.typography.headlineSmall, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
-            Text("Age 7 · 7-night streak", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkSoft)
+            Text(activeProfile.name, style = MaterialTheme.typography.headlineSmall, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
+            Text("Age ${activeProfile.age} · ${activeProfile.streak}-night streak", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkSoft)
             Spacer(Modifier.height(10.dp))
             Row(
-                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surface).padding(horizontal = 14.dp, vertical = 8.dp),
+                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surface).clickable(onClick = onSwitchProfile).padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
