@@ -335,15 +335,17 @@ private fun TodayGreeting(modifier: Modifier = Modifier) {
 @Composable
 private fun TodayStreakStrip(words: Int, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-        StreakTile(Modifier.weight(1f), PardisIconKind.Flame, "7 nights", "reading streak", PardisColors.saffronTint, PardisColors.saffronDeep)
-        StreakTile(Modifier.weight(1f), PardisIconKind.Feather, "$words words", "collected", PardisColors.indigoTint, PardisColors.indigoDeep)
+        StreakTile(Modifier.weight(1f), PardisIconKind.Flame, "7 nights", "reading streak", PardisColors.saffronTint, PardisColors.saffronSoft, PardisColors.saffronDeep)
+        StreakTile(Modifier.weight(1f), PardisIconKind.Feather, "$words words", "collected", PardisColors.indigoTint, PardisColors.indigoSoft, PardisColors.indigoDeep)
     }
 }
 
 @Composable
-private fun StreakTile(modifier: Modifier, icon: PardisIconKind, value: String, label: String, bg: Color, fg: Color) {
+private fun StreakTile(modifier: Modifier, icon: PardisIconKind, value: String, label: String, bg: Color, border: Color, fg: Color) {
     Row(
-        modifier.clip(RoundedCornerShape(PardisRadius.base)).background(bg).padding(horizontal = 14.dp, vertical = 11.dp),
+        modifier.clip(RoundedCornerShape(PardisRadius.base)).background(bg)
+            .border(1.dp, border, RoundedCornerShape(PardisRadius.base))
+            .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
     ) {
@@ -403,14 +405,18 @@ private fun TodayShelfCover(titleEn: String, titleFa: String, coverUrl: String?,
 
 @Composable
 private fun WordOfDayCard(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.lilacSoft)) {
+    Box(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.lilacSoft)
+            .border(1.dp, PardisColors.lilac.copy(alpha = 0.22f), RoundedCornerShape(PardisRadius.lg)),
+    ) {
     PardisPatternOverlay(PardisMotif.Vine, PardisColors.lilacDeep, alpha = 0.10f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
-    Column(Modifier.fillMaxWidth().padding(18.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 22.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("WORD OF THE DAY", style = MaterialTheme.typography.labelSmall, color = PardisColors.lilacDeep)
             PardisIcon(PardisIconKind.Volume, contentDescription = null, tint = PardisColors.lilacDeep)
         }
-        PersianReaderInline("دلیر", style = MaterialTheme.typography.displayLarge, color = PardisColors.lilacDeep)
+        Spacer(Modifier.height(PardisSpacing.xs))
+        PersianReaderParagraph("دلیر", style = MaterialTheme.typography.displayLarge, color = PardisColors.lilacDeep)
         Text("delir — \"brave\"", style = MaterialTheme.typography.bodyMedium, color = PardisColors.lilacDeep)
         Spacer(Modifier.height(PardisSpacing.xs))
         Text(

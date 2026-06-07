@@ -2,7 +2,9 @@ package app.pardis.android.ui
 
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,15 +38,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import app.pardis.design.PardisFonts
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -232,6 +238,7 @@ private fun ReaderContent(
             if (displayLang != "fa") {
                 Text(
                     page.paragraphsEn.joinToString("\n\n").replace(cueTagRegex, ""),
+                    modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleLarge,
                     color = PardisColors.ink,
                     fontWeight = FontWeight.Medium,
@@ -283,32 +290,95 @@ private fun ReaderContent(
         )
     }
 
-    // Word sheet — modal bottom sheet with a dismiss scrim
+    // Word card — modal bottom sheet with a dismiss scrim
     state.selectedVocab?.let { v ->
-        Box(
-            Modifier.fillMaxSize().background(PardisColors.scrimSoft).clickable(onClick = { onAction(ReaderAction.DismissVocab) }),
-            contentAlignment = Alignment.BottomCenter,
+        ReaderWordCard(
+            vocab = v,
+            storyTitle = state.storyTitle,
+            onHear = v.audioUrl?.let {
+                {
+                    val mp = MediaPlayer()
+                    try {
+                        mp.setDataSource(v.audioUrl)
+                        mp.setOnPreparedListener { it.start() }
+                        mp.setOnCompletionListener { it.release() }
+                        mp.setOnErrorListener { p, _, _ -> p.release(); true }
+                        mp.prepareAsync()
+                    } catch (_: Exception) { mp.release() }
+                }
+            },
+            onClose = { onAction(ReaderAction.DismissVocab) },
+        )
+    }
+}
+
+/** Tappable-Farsi-word card: a modal bottom sheet matching the v2 WordCard design. */
+@Composable
+private fun ReaderWordCard(
+    vocab: VocabItem,
+    storyTitle: String,
+    onHear: (() -> Unit)?,
+    onClose: () -> Unit,
+) {
+    var added by remember { mutableStateOf(false) }
+    Box(
+        Modifier.fillMaxSize().background(PardisColors.scrimSoft).clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClose,
+        ),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Column(
+            Modifier.fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
+                .background(PardisColors.surface)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .statusBarsPadding()
+                .padding(horizontal = PardisSpacing.lg)
+                .padding(top = PardisSpacing.sm, bottom = PardisSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            PardisVocabSheet(
-                vocab = v,
-                modifier = Modifier.fillMaxWidth().clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null,
-                ) { /* consume taps so the sheet doesn't dismiss itself */ },
-                onPlayPronunciation = v.audioUrl?.let {
-                    {
-                        val mp = MediaPlayer()
-                        try {
-                            mp.setDataSource(v.audioUrl)
-                            mp.setOnPreparedListener { it.start() }
-                            mp.setOnCompletionListener { it.release() }
-                            mp.setOnErrorListener { p, _, _ -> p.release(); true }
-                            mp.prepareAsync()
-                        } catch (_: Exception) { mp.release() }
-                    }
-                },
-                onClose = { onAction(ReaderAction.DismissVocab) },
-            )
+            Box(Modifier.padding(vertical = PardisSpacing.sm).width(40.dp).height(4.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.border))
+            Box(
+                Modifier.fillMaxWidth()
+                    .clip(RoundedCornerShape(PardisRadius.lg))
+                    .background(PardisColors.indigoTint)
+                    .border(1.dp, PardisColors.indigoSoft, RoundedCornerShape(PardisRadius.lg)),
+            ) {
+                PardisPatternOverlay(PardisMotif.Paisley, PardisColors.indigo, alpha = 0.08f, fade = PardisPatternFade.Edges, modifier = Modifier.matchParentSize())
+                Column(
+                    Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    PersianReaderInline(vocab.fa, style = MaterialTheme.typography.displayLarge, color = PardisColors.indigoDeep)
+                    Text(vocab.translit, style = MaterialTheme.typography.bodyMedium, color = PardisColors.indigo)
+                }
+            }
+            Spacer(Modifier.height(PardisSpacing.md))
+            Text("“${vocab.en}”", style = MaterialTheme.typography.headlineSmall, color = PardisColors.ink, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            if (storyTitle.isNotEmpty()) {
+                Text("from $storyTitle", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted)
+            }
+            Spacer(Modifier.height(PardisSpacing.md))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+                Row(
+                    Modifier.weight(1f).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.saffronSoft).clickable(enabled = onHear != null) { onHear?.invoke() }.padding(vertical = 13.dp),
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PardisIcon(PardisIconKind.Volume, contentDescription = null, tint = PardisColors.saffronDeep, size = 18.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Hear it", style = MaterialTheme.typography.titleMedium, color = PardisColors.saffronDeep, fontWeight = FontWeight.Bold)
+                }
+                Row(
+                    Modifier.weight(1f).clip(RoundedCornerShape(PardisRadius.full)).background(if (added) PardisColors.mint else PardisColors.ink).clickable { added = true }.padding(vertical = 13.dp),
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PardisIcon(if (added) PardisIconKind.Check else PardisIconKind.Sprout, contentDescription = null, tint = PardisColors.inkOnDark, size = 18.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (added) "In your garden" else "Add to garden", style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
@@ -442,7 +512,7 @@ private fun ReaderSegmented(value: String, onChange: (String) -> Unit) {
         options.forEach { (key, label) ->
             val selected = value == key
             Box(
-                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(if (selected) PardisColors.surface else androidx.compose.ui.graphics.Color.Transparent).clickable { onChange(key) }.padding(horizontal = 13.dp, vertical = 7.dp),
+                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(if (selected) PardisColors.surface else Color.Transparent).clickable { onChange(key) }.padding(horizontal = 13.dp, vertical = 7.dp),
             ) {
                 Text(label, style = MaterialTheme.typography.labelLarge, color = if (selected) PardisColors.ink else PardisColors.inkMuted, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
             }
@@ -502,10 +572,15 @@ private fun FarsiGlossaryText(faText: String, vocab: List<VocabItem>, onTap: (Vo
             remaining = remaining.substring(hitIdx + v.fa.length)
         }
     }
-    androidx.compose.runtime.CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         ClickableText(
             text = annotated,
-            style = MaterialTheme.typography.titleMedium.copy(color = PardisColors.inkSoft, fontFamily = app.pardis.design.PardisFonts.persian),
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = PardisColors.inkSoft,
+                fontFamily = PardisFonts.persian,
+                textAlign = TextAlign.Start,
+            ),
             onClick = { offset ->
                 annotated.getStringAnnotations("vocab", offset, offset).firstOrNull()?.let { ann ->
                     vocab.firstOrNull { it.fa == ann.item }?.let(onTap)

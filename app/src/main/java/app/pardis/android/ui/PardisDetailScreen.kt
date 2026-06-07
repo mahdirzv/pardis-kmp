@@ -1,11 +1,13 @@
 package app.pardis.android.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -128,8 +131,8 @@ private fun DetailHero(story: Story, onBack: () -> Unit) {
             Modifier.matchParentSize().background(
                 Brush.verticalGradient(
                     0.0f to PardisColors.scrimSoft,
-                    0.28f to androidx.compose.ui.graphics.Color.Transparent,
-                    0.62f to androidx.compose.ui.graphics.Color.Transparent,
+                    0.28f to Color.Transparent,
+                    0.62f to Color.Transparent,
                     1.0f to PardisColors.background,
                 ),
             ),
@@ -160,7 +163,7 @@ private fun HeroCircleButton(icon: PardisIconKind, label: String, onClick: () ->
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailMetaChips(story: Story, modifier: Modifier) {
     FlowRow(
@@ -202,7 +205,7 @@ private fun DetailSynopsis(story: Story, modifier: Modifier) {
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailVocabPreview(words: List<VocabItem>, modifier: Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
@@ -229,21 +232,22 @@ private fun DetailVocabPreview(words: List<VocabItem>, modifier: Modifier) {
 @Composable
 private fun DetailNarratorNote(modifier: Modifier) {
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.indigoTint).padding(14.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.saffronTint)
+            .border(1.dp, PardisColors.saffronSoft, RoundedCornerShape(PardisRadius.lg)).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         Box(
-            Modifier.size(40.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.indigo),
+            Modifier.size(40.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.saffron),
             contentAlignment = Alignment.Center,
         ) {
             PardisIcon(PardisIconKind.Mic, contentDescription = null, tint = PardisColors.inkOnDark, size = 18.dp)
         }
         Column(Modifier.weight(1f)) {
-            Text("Narrated in English & Persian", style = MaterialTheme.typography.titleSmall, color = PardisColors.indigoDeep, fontWeight = FontWeight.Bold)
-            Text("Word-by-word read-along · tap any Persian word", style = MaterialTheme.typography.bodySmall, color = PardisColors.indigoDeep)
+            Text("Narrated in English & Persian", style = MaterialTheme.typography.titleSmall, color = PardisColors.saffronDeep, fontWeight = FontWeight.Bold)
+            Text("Word-by-word read-along · tap any Persian word", style = MaterialTheme.typography.bodySmall, color = PardisColors.saffronDeep)
         }
-        PardisIcon(PardisIconKind.Languages, contentDescription = null, tint = PardisColors.indigoDeep, size = 20.dp)
+        PardisIcon(PardisIconKind.Languages, contentDescription = null, tint = PardisColors.saffronDeep, size = 20.dp)
     }
 }
 
@@ -252,7 +256,7 @@ private fun DetailCtaBar(label: String, onRead: () -> Unit, modifier: Modifier) 
     Box(
         modifier.fillMaxWidth().background(
             Brush.verticalGradient(
-                0f to androidx.compose.ui.graphics.Color.Transparent,
+                0f to Color.Transparent,
                 0.3f to PardisColors.background,
             ),
         ).navigationBarsPadding().padding(horizontal = PardisSpacing.lg, vertical = PardisSpacing.md),

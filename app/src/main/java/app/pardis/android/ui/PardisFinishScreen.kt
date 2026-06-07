@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,7 +60,6 @@ import app.pardis.design.PardisSpacing
 import app.pardis.shared.finish.StoryFinishAction
 import app.pardis.shared.finish.StoryFinishViewModel
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.math.roundToInt
 
 @Composable
 fun StoryFinishRoute(
@@ -245,7 +245,7 @@ private fun FinishStat(icon: PardisIconKind, value: String, label: String, iconT
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GardenChips(words: List<VocabItem>) {
     FlowRow(
