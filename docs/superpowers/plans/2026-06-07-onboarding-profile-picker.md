@@ -17,10 +17,22 @@
 JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:compileDebugKotlin --no-daemon -q
 ```
 
-**Shared common-test run (host-runnable target on this Mac):**
+**Unit-test run (JVM, no Xcode required):**
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
+
+> **Environment note:** This Mac has only Command Line Tools (no full Xcode), so the
+> `shared` module's only test-run tasks (`:shared:iosSimulatorArm64Test`/`iosX64Test`)
+> compile but cannot link/run here. We therefore home the unit tests in the **app**
+> module (`app/src/test/`), which runs on the JVM via `:PardisAndroidApp:testDebugUnitTest`.
+> The app module depends on `:shared` and `:core:data`, so `ProfileRepositoryImpl` and
+> `ProfileViewModel` are visible. One-time setup (Task 4): add to `app/build.gradle.kts`
+> `dependencies { ... }`:
+> ```kotlin
+>     testImplementation(kotlin("test"))
+>     testImplementation(libs.kotlinx.coroutines.test)
+> ```
 
 Commit after each task. Co-author trailer on every commit:
 ```
@@ -193,14 +205,23 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 **Files:**
 - Create: `core/data/src/commonMain/kotlin/app/pardis/core/data/ProfileRepositoryImpl.kt`
-- Test: `shared/src/commonTest/kotlin/app/pardis/shared/profile/ProfileRepositoryImplTest.kt`
+- Test: `app/src/test/java/app/pardis/profile/ProfileRepositoryImplTest.kt`
+- Modify: `app/build.gradle.kts` (add the two `testImplementation` deps from the Environment note)
 
-Note: `shared` has `api(project(":core:data"))`, so the impl (public) is visible from `shared/commonTest`. We test the in-memory fallback path (db = null), which is deterministic and needs no driver.
+Tests live in the **app** module (JVM-runnable; see Environment note). The app depends on `:core:data`, so the public `ProfileRepositoryImpl` is visible. We test the in-memory fallback path (db = null), which is deterministic and needs no driver.
+
+- [ ] **Step 0: Add app test deps**
+
+In `app/build.gradle.kts`, inside the `dependencies { }` block, add:
+```kotlin
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+```
 
 - [ ] **Step 1: Write the failing test**
 
 ```kotlin
-package app.pardis.shared.profile
+package app.pardis.profile
 
 import app.pardis.core.data.ProfileRepositoryImpl
 import kotlinx.coroutines.test.runTest
@@ -235,7 +256,7 @@ class ProfileRepositoryImplTest {
 - [ ] **Step 2: Run the test to verify it fails**
 
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
 Expected: FAIL — `ProfileRepositoryImpl` is unresolved (does not exist yet).
 
@@ -302,7 +323,7 @@ class SelectProfileUseCaseImpl(
 - [ ] **Step 4: Run the test to verify it passes**
 
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
 Expected: PASS (3 tests in `ProfileRepositoryImplTest`).
 
@@ -310,7 +331,8 @@ Expected: PASS (3 tests in `ProfileRepositoryImplTest`).
 
 ```bash
 git add core/data/src/commonMain/kotlin/app/pardis/core/data/ProfileRepositoryImpl.kt \
-        shared/src/commonTest/kotlin/app/pardis/shared/profile/ProfileRepositoryImplTest.kt
+        app/src/test/java/app/pardis/profile/ProfileRepositoryImplTest.kt \
+        app/build.gradle.kts
 git commit -m "feat(data): ProfileRepositoryImpl + use-case impls with in-memory fallback
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -323,12 +345,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 **Files:**
 - Create: `shared/src/commonMain/kotlin/app/pardis/shared/profile/ProfileViewModel.kt`
 - Create: `shared/src/commonMain/kotlin/app/pardis/shared/profile/ProfileModule.kt`
-- Test: `shared/src/commonTest/kotlin/app/pardis/shared/profile/ProfileViewModelTest.kt`
+- Test: `app/src/test/java/app/pardis/profile/ProfileViewModelTest.kt` (JVM-runnable; app deps add nothing new — `kotlinx-coroutines-test` already added in Task 4)
 
 - [ ] **Step 1: Write the failing test**
 
 ```kotlin
-package app.pardis.shared.profile
+package app.pardis.profile
 
 import app.pardis.core.domain.GetProfilesUseCase
 import app.pardis.core.domain.GetSelectedProfileUseCase
@@ -393,7 +415,7 @@ class ProfileViewModelTest {
 - [ ] **Step 2: Run the test to verify it fails**
 
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
 Expected: FAIL — `ProfileViewModel` / `ProfileAction` unresolved.
 
@@ -472,7 +494,7 @@ val profileModule = module {
 - [ ] **Step 5: Run the test to verify it passes**
 
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
 Expected: PASS (both `ProfileViewModelTest` tests + Task 4's tests).
 
@@ -481,7 +503,7 @@ Expected: PASS (both `ProfileViewModelTest` tests + Task 4's tests).
 ```bash
 git add shared/src/commonMain/kotlin/app/pardis/shared/profile/ProfileViewModel.kt \
         shared/src/commonMain/kotlin/app/pardis/shared/profile/ProfileModule.kt \
-        shared/src/commonTest/kotlin/app/pardis/shared/profile/ProfileViewModelTest.kt
+        app/src/test/java/app/pardis/profile/ProfileViewModelTest.kt
 git commit -m "feat(shared): ProfileViewModel + state/action + Koin module
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -913,10 +935,10 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 ```
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 2: Run the shared tests once more (regression)**
+- [ ] **Step 2: Run the unit tests once more (regression)**
 
 ```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :PardisAndroidApp:testDebugUnitTest --no-daemon
 ```
 Expected: PASS (all `ProfileRepositoryImplTest` + `ProfileViewModelTest`).
 
