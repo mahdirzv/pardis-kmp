@@ -1,5 +1,6 @@
 package app.pardis.android.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -163,6 +164,8 @@ internal fun LullabyPlayerScreen(lullaby: Lullaby, onBack: () -> Unit) {
         }
 
         if (showTimer) {
+            // System back closes the sheet rather than popping the lullaby route.
+            BackHandler { showTimer = false }
             SleepTimerSheet(
                 selected = timerMinutes,
                 onSelect = { timerMinutes = it; showTimer = false },
