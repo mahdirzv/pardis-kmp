@@ -13,6 +13,10 @@ import app.pardis.core.data.GetStoryUseCaseImpl
 import app.pardis.core.data.NoOpOfflineAssetCache
 import app.pardis.core.data.SaveProgressUseCaseImpl
 import app.pardis.core.data.StoryRepositoryImpl
+import app.pardis.core.data.ProfileRepositoryImpl
+import app.pardis.core.data.GetProfilesUseCaseImpl
+import app.pardis.core.data.GetSelectedProfileUseCaseImpl
+import app.pardis.core.data.SelectProfileUseCaseImpl
 import app.pardis.core.domain.ClearStoryAssetsUseCase
 import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
@@ -28,6 +32,10 @@ import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
 import app.pardis.core.domain.SaveProgressUseCase
 import app.pardis.core.domain.StoryRepository
+import app.pardis.core.domain.ProfileRepository
+import app.pardis.core.domain.GetProfilesUseCase
+import app.pardis.core.domain.GetSelectedProfileUseCase
+import app.pardis.core.domain.SelectProfileUseCase
 import app.pardis.core.network.SupabaseClient
 import org.koin.dsl.module
 
@@ -43,6 +51,15 @@ val pardisCoreModules = listOf(
             val database = getOrNull<SqlDriver>()?.let(::createPardisDatabase)
             StoryRepositoryImpl(get(), database)
         }
+
+        // Profile layer — selected profile persists via the shared SQLDelight DB when available.
+        single<ProfileRepository> {
+            val database = getOrNull<SqlDriver>()?.let(::createPardisDatabase)
+            ProfileRepositoryImpl(database)
+        }
+        single<GetProfilesUseCase> { GetProfilesUseCaseImpl(get()) }
+        single<GetSelectedProfileUseCase> { GetSelectedProfileUseCaseImpl(get()) }
+        single<SelectProfileUseCase> { SelectProfileUseCaseImpl(get()) }
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }

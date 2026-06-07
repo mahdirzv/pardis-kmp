@@ -6,6 +6,7 @@ import app.pardis.shared.detail.detailModule
 import app.pardis.shared.finish.finishModule
 import app.pardis.shared.library.libraryModule
 import app.pardis.shared.offline.offlineModule
+import app.pardis.shared.profile.profileModule
 import app.pardis.shared.reader.readerModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -18,6 +19,7 @@ val pardisSharedModules: List<Module> = listOf(
     finishModule,
     analyticsModule,
     offlineModule,
+    profileModule,
 )
 
 object SharedInit {
