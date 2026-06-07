@@ -2,6 +2,7 @@
 
 package app.pardis.design
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -51,11 +52,12 @@ object PardisColors {
     val sun = Color(0xFFF4B53A)
     val sunDeep = Color(0xFF9A6B12)
     val sunSoft = Color(0xFFFCEAB6)
+    val sunPale = Color(0xFFFFD08A) // grad-saffron end stop
+    val violet = Color(0xFF4F2EB5) // grad-night / grad-lapis mid stop
     val ink = Color(0xFF14111B)
     val inkSoft = Color(0xFF4B4760)
     val inkMuted = Color(0xFF8A8499)
     val inkFaint = Color(0xFFB6B0C0)
-    val inkOnDark = Color(0xFFFFFFFF)
     val border = Color(0xFFECE3D0)
     val borderSoft = Color(0xFFF2ECDD)
     val borderStrong = Color(0xFFDDD2BC)
@@ -65,6 +67,43 @@ object PardisColors {
     val onErrorContainerDark = Color(0xFFFFDAD4)
     val success = Color(0xFF2FA876)
     val warning = Color(0xFFF4B53A)
+
+    // ── On-dark overlays (white/black with alpha) ─────────────
+    // Text & icons drawn over dark gradient cards and scene art.
+    val inkOnDark = Color(0xFFFFFFFF) // primary text on dark
+    val inkOnDarkSoft = Color(0xD9FFFFFF) // 85% — secondary text
+    val inkOnDarkMuted = Color(0xB3FFFFFF) // 70% — labels / eyebrows
+    val inkOnDarkFaint = Color(0x80FFFFFF) // 50% — faint text / tracks
+    // White surface fills layered on dark (chips, circular icon buttons).
+    val surfaceOnDark = Color(0x29FFFFFF) // 16%
+    val surfaceOnDarkSoft = Color(0x1FFFFFFF) // 12%
+    val surfaceOnDarkFaint = Color(0x14FFFFFF) // 8% — progress tracks
+    // Black scrims for legibility under text over imagery/scene art.
+    val scrim = Color(0x99000000) // 60%
+    val scrimSoft = Color(0x66000000) // 40%
+}
+
+/**
+ * Named multi-stop gradients mirroring app.css `--grad-*`. Brushes resolve to the
+ * drawn area at paint time, so a single instance adapts to any card size.
+ */
+object PardisGradients {
+    // --grad-night: 180deg indigoDeep → indigo → violet
+    val night = Brush.verticalGradient(
+        listOf(PardisColors.indigoDeep, PardisColors.indigo, PardisColors.violet),
+    )
+    // --grad-lapis: 135deg indigo → violet → indigoDeep
+    val lapis = Brush.linearGradient(
+        listOf(PardisColors.indigo, PardisColors.violet, PardisColors.indigoDeep),
+    )
+    // --grad-saffron: 135deg saffron → sun → sunPale
+    val saffron = Brush.linearGradient(
+        listOf(PardisColors.saffron, PardisColors.sun, PardisColors.sunPale),
+    )
+    // --grad-dawn: 135deg surfacePeach → surfaceLilac → indigoSoft
+    val dawn = Brush.linearGradient(
+        listOf(PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft),
+    )
 }
 
 object PardisSpacing {

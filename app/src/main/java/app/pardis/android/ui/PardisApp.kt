@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
+import app.pardis.design.PardisGradients
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
@@ -324,15 +325,15 @@ private fun StreakTile(modifier: Modifier, icon: PardisIconKind, value: String, 
 
 @Composable
 private fun TonightBedtimeCard(modifier: Modifier = Modifier, onOpen: () -> Unit) {
-    val onNight = Color(0x99FFFFFF)
+    val onNight = PardisColors.inkOnDarkMuted
     Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(PardisRadius.lg))
-            .background(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF2436A1), Color(0xFF4F2EB5))))
+            .background(PardisGradients.night)
             .clickable(onClick = onOpen),
     ) {
-        PardisPatternOverlay(PardisMotif.Rosette, Color.White, alpha = 0.10f, modifier = Modifier.matchParentSize())
+        PardisPatternOverlay(PardisMotif.Rosette, PardisColors.inkOnDark, alpha = 0.10f, modifier = Modifier.matchParentSize())
     Row(
         Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -341,14 +342,14 @@ private fun TonightBedtimeCard(modifier: Modifier = Modifier, onOpen: () -> Unit
         PardisSceneArt(seed = "tonight", forcedVariant = 6, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(PardisRadius.base)))
         Column(Modifier.weight(1f)) {
             Text("TONIGHT'S BEDTIME", style = MaterialTheme.typography.labelSmall, color = onNight)
-            Text("Laay Laay, Little Star", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Laay Laay, Little Star", style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
             Text("12 min · sleep timer ready", style = MaterialTheme.typography.bodySmall, color = onNight)
         }
         Box(
-            Modifier.size(44.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x29FFFFFF)),
+            Modifier.size(44.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surfaceOnDark),
             contentAlignment = Alignment.Center,
         ) {
-            PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White)
+            PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.inkOnDark)
         }
     }
     }
@@ -396,10 +397,10 @@ private fun CollectionCard(name: String, fa: String, sceneVariant: Int, onClick:
         Modifier.width(168.dp).height(110.dp).clip(RoundedCornerShape(PardisRadius.lg)).clickable(onClick = onClick),
     ) {
         PardisSceneArt(seed = name, forcedVariant = sceneVariant, modifier = Modifier.fillMaxSize())
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x99000000)))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, PardisColors.scrim))))
         Column(Modifier.align(Alignment.BottomStart).padding(13.dp)) {
-            Text(name, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            PersianReaderInline(fa, style = MaterialTheme.typography.bodySmall, color = Color(0xCCFFFFFF), maxLines = 1)
+            Text(name, style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            PersianReaderInline(fa, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkOnDarkSoft, maxLines = 1)
         }
     }
 }
@@ -426,7 +427,7 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF1A256E), Color(0xFF0F1330), Color(0xFF0A0E22)))),
+            .background(Brush.verticalGradient(listOf(PardisColors.indigoDeep, Color(0xFF0F1330), Color(0xFF0A0E22)))),
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -436,8 +437,8 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
             item {
                 Column(Modifier.padding(horizontal = gutter)) {
                     Text("SWEET DREAMS", style = MaterialTheme.typography.labelSmall, color = Color(0xBFFFE9D2))
-                    Text("Bedtime", style = MaterialTheme.typography.displayLarge, color = Color.White, fontWeight = FontWeight.ExtraBold)
-                    PersianReaderInline("وقتِ خواب · لای‌لای", style = MaterialTheme.typography.bodyMedium, color = Color(0x80FFFFFF))
+                    Text("Bedtime", style = MaterialTheme.typography.displayLarge, color = PardisColors.inkOnDark, fontWeight = FontWeight.ExtraBold)
+                    PersianReaderInline("وقتِ خواب · لای‌لای", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkOnDarkFaint)
                 }
             }
             item { BedtimeFeatured(rivanaLullabies[0], Modifier.padding(horizontal = gutter)) }
@@ -446,7 +447,7 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
                 Text(
                     "Lullaby shelf",
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
+                    color = PardisColors.inkOnDark,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = gutter, vertical = PardisSpacing.xs),
                 )
@@ -456,7 +457,7 @@ private fun BedtimeScreen(bottomContentPadding: androidx.compose.ui.unit.Dp) {
                 Text(
                     "شب بخیر · خواب‌های خوش",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0x4DFFFFFF),
+                    color = PardisColors.inkOnDarkFaint,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = PardisSpacing.md),
                 )
@@ -472,25 +473,25 @@ private fun BedtimeFeatured(l: Lullaby, modifier: Modifier) {
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB30F0C1E)))))
         Column(Modifier.align(Alignment.BottomStart).padding(18.dp)) {
             Row(
-                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x2EFFFFFF)).padding(horizontal = 10.dp, vertical = 4.dp),
+                Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surfaceOnDark).padding(horizontal = 10.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = Color.White, size = 14.dp)
-                Text("Lullaby of the night", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.inkOnDark, size = 14.dp)
+                Text("Lullaby of the night", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDark)
             }
             Spacer(Modifier.height(9.dp))
-            Text(l.title, style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
-            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.titleMedium, color = Color(0xA6FFFFFF))
+            Text(l.title, style = MaterialTheme.typography.headlineSmall, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
+            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDarkMuted)
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
-                    Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White),
+                    Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.inkOnDark),
                     contentAlignment = Alignment.Center,
                 ) {
                     PardisIcon(PardisIconKind.Play, contentDescription = "Play ${l.title}", tint = PardisColors.indigoDeep)
                 }
-                Text("${l.minutes} min · ${l.origin}", style = MaterialTheme.typography.bodySmall, color = Color(0xCCFFFFFF))
+                Text("${l.minutes} min · ${l.origin}", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkOnDarkSoft)
             }
         }
     }
@@ -499,7 +500,7 @@ private fun BedtimeFeatured(l: Lullaby, modifier: Modifier) {
 @Composable
 private fun WindDownCard(modifier: Modifier) {
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(Color(0x0FFFFFFF)).padding(16.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surfaceOnDarkFaint).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(11.dp),
     ) {
@@ -507,16 +508,16 @@ private fun WindDownCard(modifier: Modifier) {
             Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.base)).background(Color(0x2EF4B53A)),
             contentAlignment = Alignment.Center,
         ) {
-            PardisIcon(PardisIconKind.Clock, contentDescription = null, tint = Color(0xFFF4B53A))
+            PardisIcon(PardisIconKind.Clock, contentDescription = null, tint = PardisColors.sun)
         }
         Column(Modifier.weight(1f)) {
-            Text("Wind-down routine", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-            Text("One short story, then a lullaby. ~25 min.", style = MaterialTheme.typography.bodySmall, color = Color(0x8CFFFFFF))
+            Text("Wind-down routine", style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
+            Text("One short story, then a lullaby. ~25 min.", style = MaterialTheme.typography.bodySmall, color = PardisColors.inkOnDarkFaint)
         }
         Box(
-            Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x24FFFFFF)).padding(horizontal = 14.dp, vertical = 8.dp),
+            Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surfaceOnDarkSoft).padding(horizontal = 14.dp, vertical = 8.dp),
         ) {
-            Text("Start", style = MaterialTheme.typography.labelLarge, color = Color.White)
+            Text("Start", style = MaterialTheme.typography.labelLarge, color = PardisColors.inkOnDark)
         }
     }
 }
@@ -530,15 +531,15 @@ private fun LullabyRow(l: Lullaby, modifier: Modifier) {
     ) {
         PardisSceneArt(seed = l.title, forcedVariant = l.sceneVariant, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)))
         Column(Modifier.weight(1f)) {
-            Text(l.title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.bodySmall, color = Color(0x80FFFFFF), maxLines = 1)
-            Text("${l.minutes} min · ${l.plays} plays", style = MaterialTheme.typography.labelSmall, color = Color(0x66FFFFFF))
+            Text(l.title, style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            PersianReaderInline(l.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkOnDarkFaint, maxLines = 1)
+            Text("${l.minutes} min · ${l.plays} plays", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkFaint)
         }
         Box(
-            Modifier.size(40.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x1FFFFFFF)),
+            Modifier.size(40.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.surfaceOnDarkSoft),
             contentAlignment = Alignment.Center,
         ) {
-            PardisIcon(PardisIconKind.Play, contentDescription = "Play ${l.title}", tint = Color.White)
+            PardisIcon(PardisIconKind.Play, contentDescription = "Play ${l.title}", tint = PardisColors.inkOnDark)
         }
     }
 }
@@ -631,30 +632,30 @@ private fun RewardsScreen(storyCount: Int, bottomContentPadding: androidx.compos
 private fun RewardLevelHero(modifier: Modifier) {
     Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
-            .background(Brush.linearGradient(listOf(Color(0xFF2436A1), Color(0xFF4F2EB5), Color(0xFF1A256E)))),
+            .background(PardisGradients.lapis),
     ) {
-    PardisPatternOverlay(PardisMotif.Star8, Color.White, alpha = 0.12f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Star8, PardisColors.inkOnDark, alpha = 0.12f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Row(
         Modifier.fillMaxWidth().padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        PardisRing(progress = 320f / 500f, ringColor = Color(0xFFF4B53A), trackColor = Color(0x33FFFFFF), strokeWidthDp = 6f, modifier = Modifier.size(88.dp)) {
+        PardisRing(progress = 320f / 500f, ringColor = PardisColors.sun, trackColor = PardisColors.surfaceOnDark, strokeWidthDp = 6f, modifier = Modifier.size(88.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("LVL", style = MaterialTheme.typography.labelSmall, color = Color(0xB3FFFFFF))
-                Text("3", style = MaterialTheme.typography.displayLarge, color = Color.White, fontWeight = FontWeight.ExtraBold)
+                Text("LVL", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkMuted)
+                Text("3", style = MaterialTheme.typography.displayLarge, color = PardisColors.inkOnDark, fontWeight = FontWeight.ExtraBold)
             }
         }
         Column(Modifier.weight(1f)) {
-            Text("YOUR RANK", style = MaterialTheme.typography.labelSmall, color = Color(0xB3FFFFFF))
-            Text("Story Keeper", style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.ExtraBold)
+            Text("YOUR RANK", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkMuted)
+            Text("Story Keeper", style = MaterialTheme.typography.headlineSmall, color = PardisColors.inkOnDark, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("320 / 500 XP", style = MaterialTheme.typography.labelSmall, color = Color(0xD9FFFFFF))
-                Text("180 to Lvl 4", style = MaterialTheme.typography.labelSmall, color = Color(0xD9FFFFFF))
+                Text("320 / 500 XP", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkSoft)
+                Text("180 to Lvl 4", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkSoft)
             }
             Spacer(Modifier.height(5.dp))
-            PardisProgressBar(value = 320f / 500f, height = 6, color = Color(0xFFF4B53A))
+            PardisProgressBar(value = 320f / 500f, height = 6, color = PardisColors.sun)
         }
     }
     }
@@ -688,28 +689,28 @@ private fun StreakCalendar(modifier: Modifier) {
     val days = listOf("M", "T", "W", "T", "F", "S", "S")
     Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg))
-            .background(Brush.linearGradient(listOf(Color(0xFFF08A2D), Color(0xFFF4B53A), Color(0xFFFFD08A)))),
+            .background(PardisGradients.saffron),
     ) {
-    PardisPatternOverlay(PardisMotif.Paisley, Color.White, alpha = 0.14f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Paisley, PardisColors.inkOnDark, alpha = 0.14f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = Color.White)
-                Text("7-night streak", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.ExtraBold)
+                PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = PardisColors.inkOnDark)
+                Text("7-night streak", style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.ExtraBold)
             }
-            Text("Keep it lit!", style = MaterialTheme.typography.labelSmall, color = Color(0xD9FFFFFF))
+            Text("Keep it lit!", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkSoft)
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             days.forEach { d ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Box(
-                        Modifier.size(32.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White),
+                        Modifier.size(32.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.inkOnDark),
                         contentAlignment = Alignment.Center,
                     ) {
                         PardisIcon(PardisIconKind.Flame, contentDescription = null, tint = PardisColors.saffronDeep, size = 16.dp)
                     }
-                    Text(d, style = MaterialTheme.typography.labelSmall, color = Color(0xB3FFFFFF))
+                    Text(d, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDarkMuted)
                 }
             }
         }
@@ -752,7 +753,7 @@ private fun WordGarden(mastered: Int, growing: Int, modifier: Modifier) {
                 Modifier.size(38.dp).clip(RoundedCornerShape(PardisRadius.sm)).background(PardisColors.mint),
                 contentAlignment = Alignment.Center,
             ) {
-                PardisIcon(PardisIconKind.Sprout, contentDescription = null, tint = Color.White)
+                PardisIcon(PardisIconKind.Sprout, contentDescription = null, tint = PardisColors.inkOnDark)
             }
             Column(Modifier.weight(1f)) {
                 Text("${rivanaWords.size} words growing", style = MaterialTheme.typography.titleMedium, color = PardisColors.mintDeep, fontWeight = FontWeight.ExtraBold)
@@ -905,7 +906,7 @@ private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose
 private fun YouProfileCard(modifier: Modifier) {
     Box(
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
-            .background(Brush.linearGradient(listOf(Color(0xFFFFE9D2), Color(0xFFECE6FB), Color(0xFFE8EBFB))))
+            .background(PardisGradients.dawn)
             .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl)),
     ) {
     PardisPatternOverlay(PardisMotif.Paisley, PardisColors.indigo, alpha = 0.07f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
@@ -919,7 +920,7 @@ private fun YouProfileCard(modifier: Modifier) {
                 .background(Brush.linearGradient(listOf(PardisColors.saffron, PardisColors.saffronDeep))),
             contentAlignment = Alignment.Center,
         ) {
-            Text("R", style = MaterialTheme.typography.displayLarge, color = Color.White, fontWeight = FontWeight.Bold)
+            Text("R", style = MaterialTheme.typography.displayLarge, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.weight(1f)) {
             Text("Roya", style = MaterialTheme.typography.headlineSmall, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
@@ -959,7 +960,7 @@ private fun AppearanceGroup(modifier: Modifier) {
                 Modifier.size(width = 46.dp, height = 28.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.border),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                Box(Modifier.padding(start = 3.dp).size(22.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color.White))
+                Box(Modifier.padding(start = 3.dp).size(22.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.inkOnDark))
             }
         }
     }
@@ -1205,16 +1206,16 @@ private fun LibraryCover(
         Box(Modifier.fillMaxWidth().aspectRatio(0.78f).clip(RoundedCornerShape(PardisRadius.md))) {
             PardisRemoteImageFrame(imageUrl = cover, contentDescription = story.titleEn, modifier = Modifier.fillMaxSize())
             Box(
-                Modifier.align(Alignment.TopEnd).padding(8.dp).clip(RoundedCornerShape(PardisRadius.full)).background(Color(0x66000000)).padding(horizontal = 8.dp, vertical = 3.dp),
+                Modifier.align(Alignment.TopEnd).padding(8.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.scrimSoft).padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
-                Text("${story.minutes}m", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("${story.minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDark)
             }
             if (cached) {
                 Box(
                     Modifier.align(Alignment.TopStart).padding(8.dp).size(24.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.mint),
                     contentAlignment = Alignment.Center,
                 ) {
-                    PardisIcon(PardisIconKind.Check, contentDescription = "Offline", tint = Color.White, size = 14.dp)
+                    PardisIcon(PardisIconKind.Check, contentDescription = "Offline", tint = PardisColors.inkOnDark, size = 14.dp)
                 }
             }
         }

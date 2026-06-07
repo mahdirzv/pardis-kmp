@@ -792,7 +792,7 @@ fun PardisFeaturedStoryCard(
                     .background(PardisColors.saffron, RoundedCornerShape(PardisRadius.full)),
                 contentAlignment = Alignment.Center,
             ) {
-                PardisIcon(PardisIconKind.Play, contentDescription = actionLabel, tint = Color.White)
+                PardisIcon(PardisIconKind.Play, contentDescription = actionLabel, tint = PardisColors.inkOnDark)
             }
             // Overlaid text block, bottom.
             Column(
@@ -805,12 +805,12 @@ fun PardisFeaturedStoryCard(
                 Text(
                     text = eyebrow.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xCCFFFFFF),
+                    color = PardisColors.inkOnDarkSoft,
                 )
                 Text(
                     text = titleEn,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
+                    color = PardisColors.inkOnDark,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -818,7 +818,7 @@ fun PardisFeaturedStoryCard(
                 PersianReaderInline(
                     text = titleFa,
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xE6FFFFFF),
+                    color = PardisColors.inkOnDarkSoft,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -826,13 +826,13 @@ fun PardisFeaturedStoryCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs)) {
                     PardisMetaPill(
                         text = "$ageBand • ${minutes}m",
-                        containerColor = Color(0x33FFFFFF),
-                        contentColor = Color.White,
+                        containerColor = PardisColors.surfaceOnDark,
+                        contentColor = PardisColors.inkOnDark,
                     )
                     PardisMetaPill(
                         text = "$vocabCount words",
-                        containerColor = Color(0x33FFFFFF),
-                        contentColor = Color.White,
+                        containerColor = PardisColors.surfaceOnDark,
+                        contentColor = PardisColors.inkOnDark,
                     )
                 }
             }
