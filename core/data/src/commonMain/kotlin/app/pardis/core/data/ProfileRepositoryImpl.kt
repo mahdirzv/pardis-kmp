@@ -7,6 +7,7 @@ import app.pardis.core.domain.ProfileRepository
 import app.pardis.core.domain.SelectProfileUseCase
 import app.pardis.core.model.ChildProfile
 import app.pardis.core.model.pardisProfiles
+import kotlin.concurrent.Volatile
 
 private const val KEY_SELECTED_PROFILE = "selected_profile_id"
 
@@ -19,6 +20,9 @@ class ProfileRepositoryImpl(
     private val db: PardisDatabase? = null,
 ) : ProfileRepository {
 
+    // Repo is a Koin singleton; @Volatile makes the in-memory fallback's writes visible
+    // across coroutine dispatch threads (single-writer/single-reader).
+    @Volatile
     private var inMemorySelectedId: String? = null
 
     override fun profiles(): List<ChildProfile> = pardisProfiles
