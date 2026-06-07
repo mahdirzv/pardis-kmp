@@ -46,3 +46,15 @@ VALUES(?, ?, ?);
 
 selectPages:
 SELECT * FROM cached_pages WHERE slug = ?;
+
+-- Generic key-value app settings (e.g. selected_profile_id). Reusable beyond profiles.
+CREATE TABLE app_setting (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+setSetting:
+INSERT OR REPLACE INTO app_setting(key, value) VALUES(?, ?);
+
+getSetting:
+SELECT value FROM app_setting WHERE key = ?;
