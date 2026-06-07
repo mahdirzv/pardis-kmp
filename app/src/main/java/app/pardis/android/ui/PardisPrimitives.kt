@@ -29,20 +29,31 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -102,24 +113,73 @@ enum class PardisIconKind {
     ListView,
 }
 
-enum class PardisMotif { Paisley, Vine, Rosette }
+enum class PardisMotif { Paisley, Vine, Rosette, Star8 }
 
-/** Faint tiled Persian motif overlay for backgrounds and gradient cards (non-interactive). */
+/** Directional alpha fade for a pattern overlay, mirroring the design's `fade` prop. */
+enum class PardisPatternFade { None, Top, TopRight, BottomLeft, Bottom, Edges }
+
+/**
+ * Faint Persian motif overlay for backgrounds and gradient cards (non-interactive).
+ * Matches the design's CSS `mask-image` treatment: a single small motif tile *repeated*
+ * across the surface (not one motif stretched to fill). Tile defaults to each motif's
+ * canonical app.css size; override [tileWidth]/[tileHeight] to match a specific placement.
+ */
 @Composable
-fun PardisPatternOverlay(motif: PardisMotif, color: Color, modifier: Modifier = Modifier, alpha: Float = 0.06f) {
-    val res = when (motif) {
-        PardisMotif.Paisley -> R.drawable.pattern_paisley
-        PardisMotif.Vine -> R.drawable.pattern_vine
-        PardisMotif.Rosette -> R.drawable.pattern_rosette
+fun PardisPatternOverlay(
+    motif: PardisMotif,
+    color: Color,
+    modifier: Modifier = Modifier,
+    alpha: Float = 0.06f,
+    fade: PardisPatternFade = PardisPatternFade.None,
+    tileWidth: Dp = Dp.Unspecified,
+    tileHeight: Dp = Dp.Unspecified,
+) {
+    val (res, defaultW, defaultH) = when (motif) {
+        PardisMotif.Paisley -> Triple(R.drawable.pattern_paisley, 200.dp, 200.dp)
+        PardisMotif.Vine -> Triple(R.drawable.pattern_vine, 280.dp, 140.dp)
+        PardisMotif.Rosette -> Triple(R.drawable.pattern_rosette, 170.dp, 170.dp)
+        PardisMotif.Star8 -> Triple(R.drawable.pattern_star8, 120.dp, 120.dp)
     }
-    Image(
-        painter = painterResource(res),
-        contentDescription = null,
-        modifier = modifier,
-        contentScale = ContentScale.Crop,
-        colorFilter = ColorFilter.tint(color),
-        alpha = alpha,
-    )
+    val tileW = if (tileWidth != Dp.Unspecified) tileWidth else defaultW
+    val tileH = if (tileHeight != Dp.Unspecified) tileHeight else defaultH
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val tilePxW = with(density) { tileW.roundToPx() }
+    val tilePxH = with(density) { tileH.roundToPx() }
+    val tile = remember(res, tilePxW, tilePxH) {
+        val d = androidx.core.content.ContextCompat.getDrawable(context, res)!!
+        val bmp = android.graphics.Bitmap.createBitmap(tilePxW, tilePxH, android.graphics.Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(bmp)
+        d.setBounds(0, 0, tilePxW, tilePxH)
+        d.draw(c)
+        bmp.asImageBitmap()
+    }
+    val brush = remember(tile) { ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated)) }
+    val canvasModifier = if (fade != PardisPatternFade.None) {
+        modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    } else {
+        modifier
+    }
+    Canvas(canvasModifier) {
+        drawRect(brush = brush, alpha = alpha, colorFilter = ColorFilter.tint(color))
+        val mask = when (fade) {
+            PardisPatternFade.None -> null
+            PardisPatternFade.Top -> Brush.verticalGradient(listOf(Color.Black, Color.Transparent))
+            PardisPatternFade.Bottom -> Brush.verticalGradient(listOf(Color.Transparent, Color.Black))
+            PardisPatternFade.TopRight -> Brush.linearGradient(
+                listOf(Color.Black, Color.Transparent),
+                start = Offset(size.width, 0f),
+                end = Offset(0f, size.height),
+            )
+            PardisPatternFade.BottomLeft -> Brush.linearGradient(
+                listOf(Color.Black, Color.Transparent),
+                start = Offset(0f, size.height),
+                end = Offset(size.width, 0f),
+            )
+            PardisPatternFade.Edges -> Brush.radialGradient(listOf(Color.Transparent, Color.Black))
+        }
+        if (mask != null) drawRect(brush = mask, blendMode = BlendMode.DstIn)
+    }
 }
 
 /** Thin rounded linear progress bar. value in 0f..1f. */

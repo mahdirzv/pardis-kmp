@@ -38,4 +38,4 @@ iosApp/Pods/
 Thumbs.db
 
 # Generated
-composeApp/src/commonMain/composeResources/
+composeApp/src/commonMain/composeResources/.playwright-mcp/

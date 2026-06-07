@@ -171,7 +171,8 @@ private fun TodayScreen(
         motif = PardisMotif.Paisley,
         color = PardisColors.saffronDeep,
         alpha = 0.05f,
-        modifier = Modifier.fillMaxWidth().height(220.dp).align(Alignment.TopCenter),
+        fade = PardisPatternFade.Top,
+        modifier = Modifier.fillMaxWidth().height(260.dp).align(Alignment.TopCenter),
     )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -370,7 +371,7 @@ private fun TodayShelfCover(titleEn: String, titleFa: String, coverUrl: String?,
 @Composable
 private fun WordOfDayCard(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.lilacSoft)) {
-    PardisPatternOverlay(PardisMotif.Vine, PardisColors.lilacDeep, alpha = 0.10f, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Vine, PardisColors.lilacDeep, alpha = 0.10f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Column(Modifier.fillMaxWidth().padding(18.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("WORD OF THE DAY", style = MaterialTheme.typography.labelSmall, color = PardisColors.lilacDeep)
@@ -632,7 +633,7 @@ private fun RewardLevelHero(modifier: Modifier) {
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
             .background(Brush.linearGradient(listOf(Color(0xFF2436A1), Color(0xFF4F2EB5), Color(0xFF1A256E)))),
     ) {
-    PardisPatternOverlay(PardisMotif.Rosette, Color.White, alpha = 0.12f, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Star8, Color.White, alpha = 0.12f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Row(
         Modifier.fillMaxWidth().padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -689,7 +690,7 @@ private fun StreakCalendar(modifier: Modifier) {
         modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg))
             .background(Brush.linearGradient(listOf(Color(0xFFF08A2D), Color(0xFFF4B53A), Color(0xFFFFD08A)))),
     ) {
-    PardisPatternOverlay(PardisMotif.Paisley, Color.White, alpha = 0.14f, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Paisley, Color.White, alpha = 0.14f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -835,7 +836,8 @@ private fun YouScreen(downloadCount: Int, bottomContentPadding: androidx.compose
         motif = PardisMotif.Rosette,
         color = PardisColors.indigo,
         alpha = 0.05f,
-        modifier = Modifier.fillMaxWidth().height(180.dp).align(Alignment.TopCenter),
+        fade = PardisPatternFade.Top,
+        modifier = Modifier.fillMaxWidth().height(220.dp).align(Alignment.TopCenter),
     )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -906,7 +908,7 @@ private fun YouProfileCard(modifier: Modifier) {
             .background(Brush.linearGradient(listOf(Color(0xFFFFE9D2), Color(0xFFECE6FB), Color(0xFFE8EBFB))))
             .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl)),
     ) {
-    PardisPatternOverlay(PardisMotif.Paisley, PardisColors.indigo, alpha = 0.07f, modifier = Modifier.matchParentSize())
+    PardisPatternOverlay(PardisMotif.Paisley, PardisColors.indigo, alpha = 0.07f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
     Row(
         Modifier.fillMaxWidth().padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
