@@ -80,8 +80,19 @@ fun PardisApp() {
                 composable("library") {
                     RootShellRoute(
                         onOpenStory = { slug ->
-                            navController.navigate("reader/$slug")
+                            navController.navigate("detail/$slug")
                         }
+                    )
+                }
+                composable(
+                    "detail/{slug}",
+                    arguments = listOf(navArgument("slug") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val slug = backStackEntry.arguments?.getString("slug") ?: ""
+                    StoryDetailRoute(
+                        slug = slug,
+                        onRead = { navController.navigate("reader/$it") },
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(
