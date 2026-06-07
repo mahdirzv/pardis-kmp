@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.core.model.Story
+import app.pardis.core.model.VocabItem
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisRadius
 import app.pardis.design.PardisSpacing
@@ -53,6 +54,7 @@ fun StoryDetailRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     StoryDetailScreen(
         story = state.story,
+        words = state.words,
         canResume = state.canResume,
         isLoading = state.isLoading,
         errorMessage = state.errorMessage,
@@ -65,6 +67,7 @@ fun StoryDetailRoute(
 @Composable
 fun StoryDetailScreen(
     story: Story?,
+    words: List<VocabItem>,
     canResume: Boolean,
     isLoading: Boolean,
     errorMessage: String?,
@@ -80,6 +83,9 @@ fun StoryDetailScreen(
                     DetailMetaChips(story, Modifier.padding(horizontal = PardisSpacing.lg, vertical = PardisSpacing.sm))
                     DetailSynopsis(story, Modifier.padding(horizontal = PardisSpacing.lg))
                     DetailNarratorNote(Modifier.padding(PardisSpacing.lg))
+                    if (words.isNotEmpty()) {
+                        DetailVocabPreview(words, Modifier.padding(horizontal = PardisSpacing.lg))
+                    }
                     Spacer(Modifier.height(96.dp))
                 }
                 DetailCtaBar(
@@ -192,6 +198,30 @@ private fun DetailSynopsis(story: Story, modifier: Modifier) {
         )
         story.blurbFa?.let {
             PersianReaderInline(it, style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkMuted)
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun DetailVocabPreview(words: List<VocabItem>, modifier: Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
+        Text("WORDS YOU'LL LEARN", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
+        ) {
+            words.take(12).forEach { w ->
+                Row(
+                    Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.indigoSoft).padding(horizontal = 13.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                ) {
+                    PersianReaderInline(w.fa, style = MaterialTheme.typography.titleMedium, color = PardisColors.indigoDeep)
+                    Text(w.translit, style = MaterialTheme.typography.labelSmall, color = PardisColors.indigo)
+                }
+            }
         }
     }
 }

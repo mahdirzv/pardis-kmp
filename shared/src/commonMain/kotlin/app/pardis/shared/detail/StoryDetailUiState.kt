@@ -1,14 +1,16 @@
 package app.pardis.shared.detail
 
 import app.pardis.core.model.Story
+import app.pardis.core.model.VocabItem
 
 /**
- * Screen state for the story detail page (hero, synopsis, meta, CTA).
+ * Screen state for the story detail page (hero, synopsis, meta, vocab preview, CTA).
  * Platform UIs resolve raw values into native chrome.
  */
 data class StoryDetailUiState(
     val slug: String = "",
     val story: Story? = null,
+    val words: List<VocabItem> = emptyList(),
     val savedPage: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,

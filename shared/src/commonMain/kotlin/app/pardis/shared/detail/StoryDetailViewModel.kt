@@ -3,6 +3,7 @@ package app.pardis.shared.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.pardis.core.domain.GetProgressUseCase
+import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class StoryDetailViewModel(
     private val getStory: GetStoryUseCase,
     private val getProgress: GetProgressUseCase,
+    private val getStoryPages: GetStoryPagesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoryDetailUiState())
@@ -46,6 +48,12 @@ class StoryDetailViewModel(
                 _uiState.update {
                     it.copy(story = story, savedPage = savedPage, isLoading = false, errorMessage = null)
                 }
+                // Vocab preview is non-critical: load after the core metadata so the hero
+                // renders immediately even if pages are slow/unavailable.
+                val words = runCatching {
+                    getStoryPages(slug).flatMap { p -> p.vocabulary }.distinctBy { v -> v.fa }
+                }.getOrDefault(emptyList())
+                _uiState.update { it.copy(words = words) }
             } catch (e: Throwable) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Couldn't load this story.") }
             }
