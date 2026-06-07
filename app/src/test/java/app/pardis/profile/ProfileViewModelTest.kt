@@ -47,7 +47,7 @@ class ProfileViewModelTest {
         val fakes = FakeProfileUseCases()
         val vm = ProfileViewModel(fakes.getProfiles, fakes.getSelected, fakes.select)
         val state = vm.uiState.value
-        assertEquals(3, state.profiles.size)
+        assertEquals(pardisProfiles.size, state.profiles.size)
         assertNull(state.selectedProfile)
         assertFalse(state.isLoading)
     }
