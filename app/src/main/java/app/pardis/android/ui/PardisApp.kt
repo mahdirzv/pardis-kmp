@@ -406,7 +406,7 @@ private fun TodayGreeting(activeName: String, modifier: Modifier = Modifier) {
             Modifier.size(46.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.saffron),
             contentAlignment = Alignment.Center,
         ) {
-            Text("R", style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
+            Text(activeName.take(1), style = MaterialTheme.typography.titleMedium, color = PardisColors.inkOnDark, fontWeight = FontWeight.Bold)
         }
     }
 }
