@@ -102,7 +102,28 @@ fun PardisApp() {
                     val slug = backStackEntry.arguments?.getString("slug") ?: ""
                     ReaderRoute(
                         slug = slug,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onFinish = { finishedSlug ->
+                            // Replace the reader with the celebration so back doesn't re-enter the last page.
+                            navController.navigate("finish/$finishedSlug") {
+                                popUpTo("reader/$slug") { inclusive = true }
+                            }
+                        },
+                    )
+                }
+                composable(
+                    "finish/{slug}",
+                    arguments = listOf(navArgument("slug") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val slug = backStackEntry.arguments?.getString("slug") ?: ""
+                    StoryFinishRoute(
+                        slug = slug,
+                        onReadAgain = { s ->
+                            navController.navigate("reader/$s") {
+                                popUpTo("finish/$slug") { inclusive = true }
+                            }
+                        },
+                        onDone = { navController.popBackStack("library", inclusive = false) },
                     )
                 }
             }
@@ -1293,6 +1314,7 @@ private fun LibraryAgeTile(band: String, label: String, tone: String, modifier: 
 fun ReaderRoute(
     slug: String,
     onBack: () -> Unit,
+    onFinish: (String) -> Unit,
     viewModel: ReaderViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -1319,6 +1341,7 @@ fun ReaderRoute(
         state = state,
         onAction = viewModel::onAction,
         onBack = onBack,
+        onFinish = onFinish,
     )
 }
 
@@ -1327,6 +1350,7 @@ fun ReaderScreen(
     state: ReaderUiState,
     onAction: (ReaderAction) -> Unit,
     onBack: () -> Unit,
+    onFinish: (String) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -1553,12 +1577,13 @@ fun ReaderScreen(
                         OutlinedButton(onClick = { onAction(ReaderAction.PrevPage) }, enabled = state.currentPage > 0) {
                             Text("Prev")
                         }
+                        val onLastPage = state.currentPage == state.pages.lastIndex
                         Button(
-                            onClick = { onAction(ReaderAction.NextPage) },
-                            enabled = state.currentPage < state.pages.lastIndex,
+                            onClick = { if (onLastPage) onFinish(state.storySlug) else onAction(ReaderAction.NextPage) },
+                            enabled = state.pages.isNotEmpty(),
                             colors = ButtonDefaults.buttonColors(containerColor = PardisColors.saffron)
                         ) {
-                            Text(if (state.currentPage == state.pages.lastIndex) "Finish" else "Next")
+                            Text(if (onLastPage) "Finish" else "Next")
                         }
                         Spacer(Modifier.weight(1f))
                         if (state.videoUrlFa != null || state.videoUrlEn != null) {

@@ -111,6 +111,7 @@ enum class PardisIconKind {
     Bell,
     Grid,
     ListView,
+    Trophy,
 }
 
 enum class PardisMotif { Paisley, Vine, Rosette, Star8 }
@@ -259,6 +260,7 @@ fun PardisIcon(
         PardisIconKind.Bell -> R.drawable.ic_bell
         PardisIconKind.Grid -> R.drawable.ic_grid
         PardisIconKind.ListView -> R.drawable.ic_list
+        PardisIconKind.Trophy -> R.drawable.ic_trophy
     }
     Image(
         painter = painterResource(res),
