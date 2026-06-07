@@ -160,6 +160,7 @@ class ReaderViewModel(
 
                 _uiState.update {
                     it.copy(
+                        storyTitle = story?.titleEn ?: it.storyTitle,
                         pages = pagesResult,
                         videoUrlFa = story?.videoUrlFa,
                         videoUrlEn = story?.videoUrlEn,

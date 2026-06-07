@@ -5,6 +5,7 @@ import app.pardis.core.model.VocabItem
 
 data class ReaderUiState(
     val storySlug: String = "",
+    val storyTitle: String = "",
     val pages: List<StoryPage> = emptyList(),
     val currentPage: Int = 0,
     val isVideoMode: Boolean = false,
