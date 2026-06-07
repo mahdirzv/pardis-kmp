@@ -115,7 +115,7 @@ internal fun PardisOnboardingScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
-                    Modifier.clickable(onClick = onComingSoon).padding(8.dp),
+                    Modifier.clickable(onClickLabel = "Open parent area", onClick = onComingSoon).padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
@@ -133,7 +133,7 @@ private fun ProfilePickCard(profile: ChildProfile, onClick: () -> Unit) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.xl))
             .background(PardisColors.surface)
             .border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl))
-            .clickable(onClick = onClick).padding(vertical = 24.dp, horizontal = 16.dp),
+            .clickable(onClickLabel = "Read as ${profile.name}", onClick = onClick).padding(vertical = 24.dp, horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -155,7 +155,7 @@ private fun AddChildCard(onClick: () -> Unit) {
     Column(
         Modifier.fillMaxWidth().heightIn(min = 168.dp).clip(RoundedCornerShape(PardisRadius.xl))
             .border(2.dp, PardisColors.border, RoundedCornerShape(PardisRadius.xl))
-            .clickable(onClick = onClick),
+            .clickable(onClickLabel = "Add child", onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
