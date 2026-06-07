@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,12 +40,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.pardis.design.PardisFonts
@@ -547,6 +548,11 @@ private fun ReaderVideoControls(state: ReaderUiState, onAction: (ReaderAction) -
 /** Renders a Farsi paragraph with glossary words styled + tappable (opens the word sheet). */
 @Composable
 private fun FarsiGlossaryText(faText: String, vocab: List<VocabItem>, onTap: (VocabItem) -> Unit) {
+    // Glossary words use native clickable links (LinkAnnotation) so Compose owns hit-testing —
+    // this is robust inside a scroll + RTL container, unlike manual offset mapping.
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(color = PardisColors.indigoDeep, fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline),
+    )
     val annotated = buildAnnotatedString {
         var remaining = faText
         var guard = 0
@@ -564,16 +570,14 @@ private fun FarsiGlossaryText(faText: String, vocab: List<VocabItem>, onTap: (Vo
                 append(remaining); break
             }
             if (hitIdx > 0) append(remaining.substring(0, hitIdx))
-            pushStringAnnotation("vocab", v.fa)
-            withStyle(SpanStyle(color = PardisColors.indigoDeep, fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline)) {
+            withLink(LinkAnnotation.Clickable(tag = v.fa, styles = linkStyles, linkInteractionListener = { onTap(v) })) {
                 append(v.fa)
             }
-            pop()
             remaining = remaining.substring(hitIdx + v.fa.length)
         }
     }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        ClickableText(
+        Text(
             text = annotated,
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -581,11 +585,6 @@ private fun FarsiGlossaryText(faText: String, vocab: List<VocabItem>, onTap: (Vo
                 fontFamily = PardisFonts.persian,
                 textAlign = TextAlign.Start,
             ),
-            onClick = { offset ->
-                annotated.getStringAnnotations("vocab", offset, offset).firstOrNull()?.let { ann ->
-                    vocab.firstOrNull { it.fa == ann.item }?.let(onTap)
-                }
-            },
         )
     }
 }
