@@ -118,8 +118,8 @@ fun PardisApp() {
                     val slug = backStackEntry.arguments?.getString("slug") ?: ""
                     StoryFinishRoute(
                         slug = slug,
-                        onReadAgain = { s ->
-                            navController.navigate("reader/$s") {
+                        onNextStory = { nextSlug ->
+                            navController.navigate("detail/$nextSlug") {
                                 popUpTo("finish/$slug") { inclusive = true }
                             }
                         },

@@ -112,9 +112,10 @@ enum class PardisIconKind {
     Grid,
     ListView,
     Trophy,
+    StarFill,
 }
 
-enum class PardisMotif { Paisley, Vine, Rosette, Star8 }
+enum class PardisMotif { Paisley, Vine, Rosette, Star8, Nightsky }
 
 /** Directional alpha fade for a pattern overlay, mirroring the design's `fade` prop. */
 enum class PardisPatternFade { None, Top, TopRight, BottomLeft, Bottom, Edges }
@@ -140,6 +141,7 @@ fun PardisPatternOverlay(
         PardisMotif.Vine -> Triple(R.drawable.pattern_vine, 280.dp, 140.dp)
         PardisMotif.Rosette -> Triple(R.drawable.pattern_rosette, 170.dp, 170.dp)
         PardisMotif.Star8 -> Triple(R.drawable.pattern_star8, 120.dp, 120.dp)
+        PardisMotif.Nightsky -> Triple(R.drawable.pattern_nightsky, 130.dp, 130.dp)
     }
     val tileW = if (tileWidth != Dp.Unspecified) tileWidth else defaultW
     val tileH = if (tileHeight != Dp.Unspecified) tileHeight else defaultH
@@ -261,6 +263,7 @@ fun PardisIcon(
         PardisIconKind.Grid -> R.drawable.ic_grid
         PardisIconKind.ListView -> R.drawable.ic_list
         PardisIconKind.Trophy -> R.drawable.ic_trophy
+        PardisIconKind.StarFill -> R.drawable.ic_star_fill
     }
     Image(
         painter = painterResource(res),

@@ -4,5 +4,5 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val finishModule = module {
-    viewModel { StoryFinishViewModel(get()) }
+    viewModel { StoryFinishViewModel(get(), get()) }
 }
