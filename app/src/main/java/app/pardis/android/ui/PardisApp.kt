@@ -60,6 +60,7 @@ import app.pardis.core.model.ChildProfile
 import app.pardis.shared.profile.ProfileAction
 import app.pardis.shared.profile.ProfileViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 
 private enum class PardisRootTab(
     val title: String,
@@ -119,7 +120,6 @@ private fun PardisAppShell(
     NavHost(navController = navController, startDestination = "library") {
         composable("library") {
             RootShellRoute(
-                activeName = activeProfile.name,
                 activeProfile = activeProfile,
                 onOpenStory = { slug -> navController.navigate("detail/$slug") },
                 onOpenLullaby = { index -> navController.navigate("lullaby/$index") },
@@ -202,7 +202,6 @@ private fun PardisAppShell(
 
 @Composable
 private fun RootShellRoute(
-    activeName: String,
     activeProfile: ChildProfile,
     onOpenStory: (String) -> Unit,
     onOpenLullaby: (Int) -> Unit,
@@ -210,7 +209,9 @@ private fun RootShellRoute(
     onSwitchProfile: () -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
-    var selectedTab by remember { mutableStateOf(PardisRootTab.Library) }
+    // rememberSaveable so the selected tab survives the switch-profile route round-trip
+    // (navigate to "onboarding" and back) instead of resetting to Library.
+    var selectedTab by rememberSaveable { mutableStateOf(PardisRootTab.Library) }
     val tabs = remember { PardisRootTab.entries.toList() }
     val libraryState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -221,7 +222,7 @@ private fun RootShellRoute(
     ) {
         when (selectedTab) {
             PardisRootTab.Today -> TodayScreen(
-                activeName = activeName,
+                activeName = activeProfile.name,
                 state = libraryState,
                 onAction = viewModel::onAction,
                 onOpenStory = onOpenStory,

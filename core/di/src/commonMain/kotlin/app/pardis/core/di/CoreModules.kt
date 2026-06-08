@@ -25,6 +25,7 @@ import app.pardis.core.domain.GetLocalVideoPathUseCase
 import app.pardis.core.domain.GetCachedSizeUseCase
 import app.pardis.core.domain.OfflineAssetCache
 import app.cash.sqldelight.db.SqlDriver
+import app.pardis.core.database.PardisDatabase
 import app.pardis.core.database.createPardisDatabase
 import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoriesUseCase
@@ -41,21 +42,28 @@ import org.koin.dsl.module
 
 const val platformContextQualifier = "platformContext"
 
+/**
+ * Holds the single shared SQLDelight database (null when no driver is provided). A holder lets
+ * Koin keep one instance even when the DB is absent — Koin cannot store a null instance directly.
+ */
+class PardisDatabaseHolder(val database: PardisDatabase?)
+
 val pardisCoreModules = listOf(
     module {
         // Network client (can be overridden in platform modules for auth tokens)
         single { SupabaseClient() }
 
+        // Single shared SQLDelight database wrapper (null when no driver is present), reused by all repos.
+        single { PardisDatabaseHolder(getOrNull<SqlDriver>()?.let(::createPardisDatabase)) }
+
         // Repository layer (data) — uses DB when available for basic offline cache
         single<StoryRepository> {
-            val database = getOrNull<SqlDriver>()?.let(::createPardisDatabase)
-            StoryRepositoryImpl(get(), database)
+            StoryRepositoryImpl(get(), get<PardisDatabaseHolder>().database)
         }
 
         // Profile layer — selected profile persists via the shared SQLDelight DB when available.
         single<ProfileRepository> {
-            val database = getOrNull<SqlDriver>()?.let(::createPardisDatabase)
-            ProfileRepositoryImpl(database)
+            ProfileRepositoryImpl(get<PardisDatabaseHolder>().database)
         }
         single<GetProfilesUseCase> { GetProfilesUseCaseImpl(get()) }
         single<GetSelectedProfileUseCase> { GetSelectedProfileUseCaseImpl(get()) }
