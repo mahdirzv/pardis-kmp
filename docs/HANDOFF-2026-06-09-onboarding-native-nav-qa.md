@@ -85,9 +85,11 @@ verify the whole batch on an Xcode box before merge.** kmpSkill §10/§12 follow
 - ✅ **Bedtime + Lullaby player** (`f0627d8`): `PardisSceneArt` (Canvas port of the 7 scene variants),
   `BedtimeView`, `LullabyView` (animated MoonGlow/Waveform, sleep-timer sheet). Added on-dark token
   family + bedtime/lullaby night gradients + check/clock/pause icons.
-- ⏳ **Rewards + Character** — next; SceneArt now available, so unblocked.
-- ⏳ **Today/Library v2 visual rework** (iOS still on v1 layout).
-- ⏳ **Reader v2 rework**, **Finish** celebration, **Detail** route.
+- ✅ **Rewards + Character** (`a561828`): `RewardsView` (level hero, stats, streak calendar, next
+  badge, word garden, heroes scroll, badges grid), `CharacterView`. Added `PardisRing`/
+  `PardisProgressBar`, lapis/saffron gradients, 8 icons, iOS badge-icon mapping. All 5 tabs now real.
+- ⏳ **Today/Library v2 visual rework** (iOS still on v1 layout — functional, just not the v2 look).
+- ⏳ **Reader v2 rework** (iOS reader is the old layout — functional), **Finish** celebration, **Detail** route.
 
 **Known iOS follow-ups:** SceneArt omits the faint (0.14α) Persian-motif PNG overlay (needs
 asset-catalog images: paisley/vine/rosette). Onboarding omits the paisley header overlay similarly.
