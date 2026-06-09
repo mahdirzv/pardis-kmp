@@ -64,21 +64,29 @@ resolve at build time. Do **not** chase these; trust the `ios-app` CI result ins
 - `Cannot find 'PardisColors' in scope` (it's in `design-system/generated/ios/PardisTokens.swift`)
 - `Extraneous argument label 'hex:'` (the `Color(hex:)` extension lives in that same generated file)
 
-## Visual proof via simulator screenshot
+## Visual proof: per-screen screenshots via the UI-test tour
 
-The `ios-app` job goes past compile: it boots the runner's iPhone simulator, installs + launches
-the app (so a **launch-time crash fails the job**), and uploads a screenshot of the first screen as
-the **`ios-screenshots`** artifact. Pull it down and actually look at it:
+The `ios-app` job goes past compile. It boots the runner's iPhone simulator and runs
+`xcodebuild test`, which executes **`iosAppUITests/ScreenshotTests.swift`** — a tour that launches
+the app, navigates each screen, and saves a screenshot attachment per screen. CI extracts the
+attachments from the `.xcresult` with **xcparse** and uploads them as the **`ios-screenshots`**
+artifact. Pull them down and look:
 
 ```bash
-gh run download <run-id> -n ios-screenshots -D /tmp/ios-shots
-# then Read /tmp/ios-shots/01-onboarding.png
+gh run download <run-id> -n ios-screenshots -D /tmp/ios-tour
+ls /tmp/ios-tour      # 01-onboarding…, 02-today…, …, 08-character… — then Read each PNG
 ```
 
-This gives a real rendered frame (gradients, fonts, Persian, layout) without a local Xcode.
+This gives real rendered frames (gradients, fonts, Persian, layout) without a local Xcode, and a
+launch/navigation crash fails the test (visible in the step log).
+
+**Adding a screen to the tour:** add a `snap(app, "NN-name")` in `ScreenshotTests.swift` after
+navigating to it. Use stable selectors — set `.accessibilityLabel(...)` on the SwiftUI control and
+match it with `app.buttons["…"]` / `app.tabBars.buttons["…"]`. The test uses `waitForExistence` +
+guarded taps, so a missing element skips rather than failing the whole tour.
 
 ## Limits
 
-A green `ios-app` proves it **compiles, links, and launches**, and the screenshot shows the **first
-screen** (the onboarding gate). Capturing the other screens (You/Bedtime/Lullaby/Rewards/Character)
-needs XCUITest UI automation to navigate + snapshot each — a larger, separate add-on.
+Green proves it **compiles, links, launches, and the toured screens render**. Screens behind remote
+data (Reader/Detail/Finish need story content loaded) may show empty/loading states in CI. Pixel
+nuance still benefits from a real device, but the tour catches layout/crash regressions cheaply.
