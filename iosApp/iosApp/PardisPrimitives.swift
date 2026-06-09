@@ -12,10 +12,16 @@ enum PardisIconKind {
     case chevRight
     case clock
     case close
+    case compass
+    case crown
     case download
+    case feather
+    case flame
     case heart
     case home
     case languages
+    case lock
+    case mic
     case moon
     case pause
     case play
@@ -23,7 +29,9 @@ enum PardisIconKind {
     case search
     case settings
     case shield
+    case sprout
     case star
+    case starFill
     case trash
     case user
     case volume
@@ -44,14 +52,26 @@ enum PardisIconKind {
             return "clock"
         case .close:
             return "xmark"
+        case .compass:
+            return "safari.fill"
+        case .crown:
+            return "crown.fill"
         case .download:
             return "arrow.down.to.line"
+        case .feather:
+            return "pencil"
+        case .flame:
+            return "flame.fill"
         case .heart:
             return "heart"
         case .home:
             return "house"
         case .languages:
             return "globe"
+        case .lock:
+            return "lock.fill"
+        case .mic:
+            return "mic.fill"
         case .moon:
             return "moon"
         case .pause:
@@ -66,8 +86,12 @@ enum PardisIconKind {
             return "gearshape"
         case .shield:
             return "checkmark.shield"
+        case .sprout:
+            return "leaf.fill"
         case .star:
             return "star"
+        case .starFill:
+            return "star.fill"
         case .trash:
             return "trash"
         case .user:

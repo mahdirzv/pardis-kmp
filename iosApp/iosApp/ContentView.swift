@@ -11,6 +11,10 @@ private struct LullabyRoute: Hashable {
     let index: Int
 }
 
+private struct CharacterRoute: Hashable {
+    let index: Int
+}
+
 private struct SelectedVocab: Identifiable {
     let vocab: VocabItem
     var id: String { "\(vocab.fa)-\(vocab.translit)-\(vocab.en)" }
@@ -30,16 +34,6 @@ private enum PardisRootTab: CaseIterable, Hashable {
         case .bedtime: return "Bedtime"
         case .rewards: return "Rewards"
         case .you: return "You"
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .today: return "Daily reading rhythm"
-        case .library: return "Persian heritage stories"
-        case .bedtime: return "Calmer stories for later"
-        case .rewards: return "Reading progress and badges"
-        case .you: return "Family profile and preferences"
         }
     }
 
@@ -109,6 +103,7 @@ private struct MainShellView: View {
     @State private var todayRoute: ReaderRoute? = nil
     @State private var libraryRoute: ReaderRoute? = nil
     @State private var lullabyRoute: LullabyRoute? = nil
+    @State private var characterRoute: CharacterRoute? = nil
 
     var body: some View {
         // Native SwiftUI TabView — gets Liquid Glass automatically on iOS 26 and platform-correct
@@ -156,10 +151,20 @@ private struct MainShellView: View {
             .tabItem { Label(PardisRootTab.bedtime.title, systemImage: PardisRootTab.bedtime.icon.systemName) }
             .tag(PardisRootTab.bedtime)
 
-            PardisPlaceholderTabScreen(tab: .rewards)
-                .pardisScreenBackground()
-                .tabItem { Label(PardisRootTab.rewards.title, systemImage: PardisRootTab.rewards.icon.systemName) }
-                .tag(PardisRootTab.rewards)
+            NavigationStack {
+                RewardsView(
+                    storyCount: libraryModel.stories.count,
+                    onOpenCharacter: { index in characterRoute = CharacterRoute(index: index) }
+                )
+                .navigationDestination(item: $characterRoute) { route in
+                    CharacterView(
+                        character: RivanaContent.shared.characters[route.index],
+                        onBack: { characterRoute = nil }
+                    )
+                }
+            }
+            .tabItem { Label(PardisRootTab.rewards.title, systemImage: PardisRootTab.rewards.icon.systemName) }
+            .tag(PardisRootTab.rewards)
 
             NavigationStack {
                 YouView(
@@ -278,26 +283,6 @@ private struct TodayScreen: View {
             .padding()
             .safeAreaPadding(.bottom, bottomContentPadding)
         }
-    }
-}
-
-private struct PardisPlaceholderTabScreen: View {
-    let tab: PardisRootTab
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: PardisSpacing.md) {
-            PardisScreenHeader(title: tab.title, subtitle: tab.subtitle)
-            PardisPanel {
-                HStack(spacing: PardisSpacing.sm) {
-                    PardisIcon(kind: tab.icon, color: PardisColors.indigo)
-                    Text("\(tab.title) is ready for its shared state contract.")
-                        .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
-                        .foregroundStyle(PardisColors.inkSoft)
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .padding()
     }
 }
 

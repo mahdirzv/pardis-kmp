@@ -43,9 +43,13 @@ extension PardisColors {
     static let surfaceOnDarkSoft = Color.white.opacity(0.12)
     static let surfaceOnDarkFaint = Color.white.opacity(0.08) // progress tracks
     static let scrimSoft = Color.black.opacity(0.45)
+    static let scrim = Color.black.opacity(0.55)
     // Deep-night anchors used by the bedtime/lullaby gradients (mirror Android's inline hexes).
     static let nightMid = Color(hex: "#0F1330")
     static let nightDeep = Color(hex: "#0A0E22")
+    // Gradient mid/end stops present in Android's hand-authored tokens but not the generated file.
+    static let violet = Color(hex: "#4F2EB5")    // grad-lapis mid stop
+    static let sunPale = Color(hex: "#FFD08A")   // grad-saffron end stop
 }
 
 /// Semantic gradient tokens, mirroring Android `PardisGradients`. Lives in the hand-authored iOS
@@ -69,6 +73,16 @@ struct PardisGradients {
         ],
         startPoint: .top,
         endPoint: .bottom
+    )
+    static let lapis = LinearGradient(
+        colors: [PardisColors.indigo, PardisColors.violet, PardisColors.indigoDeep],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let saffron = LinearGradient(
+        colors: [PardisColors.saffron, PardisColors.sun, PardisColors.sunPale],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
     )
 }
 
