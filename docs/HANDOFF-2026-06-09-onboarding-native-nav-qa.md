@@ -71,9 +71,10 @@ OfflineDownloadManager 5, SharedInit 3).
 
 ### iOS parity (largest chunk) — these shipped Android-only, need SwiftUI equivalents
 
-All on branch `feat/ios-parity-onboarding`. **NONE built/verified — no Xcode here; build + visually
-verify the whole batch on an Xcode box before merge.** kmpSkill §10/§12 followed throughout
-(design tokens, `@Observable`+`.task`, callback navigation).
+All on branch `feat/ios-parity-onboarding` (draft PR #2 → `main`). **CI-verified to BUILD**: the
+`ios-app` job (macOS runner, `xcodegen` + `xcodebuild` simulator) is green — all SwiftUI compiles +
+links. Build ≠ visual QA; a simulator/device pass is still worthwhile before merge. kmpSkill §10/§12
+followed throughout. **To re-verify, use the `verify-ios-without-xcode` skill** (`.claude/skills/`).
 
 - ✅ **Onboarding picker + launch gate + switch-reader** (`5d2442e`): `ProfileSharedViewModel`,
   `OnboardingView`, `RootShellView` gate.
