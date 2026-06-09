@@ -14,6 +14,7 @@ enum PardisIconKind {
     case play
     case refresh
     case search
+    case shield
     case star
     case trash
     case user
@@ -38,6 +39,8 @@ enum PardisIconKind {
             return "arrow.clockwise"
         case .search:
             return "magnifyingglass"
+        case .shield:
+            return "checkmark.shield"
         case .star:
             return "star"
         case .trash:

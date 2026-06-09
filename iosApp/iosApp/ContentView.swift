@@ -56,7 +56,48 @@ struct ContentView: View {
     }
 }
 
+/// Profile gate, mirroring Android `PardisApp`: blocks the main shell until a profile is
+/// selected, shows the onboarding picker on first launch, and presents the switch-profile
+/// picker (isSwitch) as a cover. `ProfileSharedViewModel` is app-lifetime here.
 private struct RootShellView: View {
+    @State private var profileModel = ProfileSharedViewModel()
+    @State private var showSwitchProfile = false
+
+    var body: some View {
+        Group {
+            if profileModel.isLoading {
+                PardisColors.background.ignoresSafeArea()
+            } else if profileModel.selectedProfile == nil {
+                OnboardingView(
+                    profiles: profileModel.profiles,
+                    onSelect: { profileModel.select($0.id) }
+                )
+            } else {
+                MainShellView(
+                    activeProfile: profileModel.selectedProfile!,
+                    onSwitchProfile: { showSwitchProfile = true }
+                )
+                .fullScreenCover(isPresented: $showSwitchProfile) {
+                    OnboardingView(
+                        profiles: profileModel.profiles,
+                        isSwitch: true,
+                        onSelect: {
+                            profileModel.select($0.id)
+                            showSwitchProfile = false
+                        },
+                        onBack: { showSwitchProfile = false }
+                    )
+                }
+            }
+        }
+        .task { await profileModel.activate() }
+    }
+}
+
+private struct MainShellView: View {
+    let activeProfile: ChildProfile
+    let onSwitchProfile: () -> Void
+
     @State private var selectedTab: PardisRootTab = .library
     @State private var libraryModel = LibrarySharedViewModel()
     // Per-tab navigation routes — each content tab owns its own stack (recommended SwiftUI pattern),
@@ -67,7 +108,7 @@ private struct RootShellView: View {
     var body: some View {
         // Native SwiftUI TabView — gets Liquid Glass automatically on iOS 26 and platform-correct
         // behavior elsewhere. Brand accent via .tint; tab items use the same SF Symbols as PardisIcon.
-        // Bedtime/Rewards/You remain placeholders until those features land.
+        // Bedtime/Rewards remain placeholders until those features land; You is wired to the profile card.
         TabView(selection: $selectedTab) {
             NavigationStack {
                 TodayScreen(
@@ -98,12 +139,19 @@ private struct RootShellView: View {
             .tabItem { Label(PardisRootTab.library.title, systemImage: PardisRootTab.library.icon.systemName) }
             .tag(PardisRootTab.library)
 
-            ForEach([PardisRootTab.bedtime, .rewards, .you], id: \.self) { tab in
+            ForEach([PardisRootTab.bedtime, .rewards], id: \.self) { tab in
                 PardisPlaceholderTabScreen(tab: tab)
                     .pardisScreenBackground()
                     .tabItem { Label(tab.title, systemImage: tab.icon.systemName) }
                     .tag(tab)
             }
+
+            NavigationStack {
+                YouTabView(activeProfile: activeProfile, onSwitchProfile: onSwitchProfile)
+                    .pardisScreenBackground()
+            }
+            .tabItem { Label(PardisRootTab.you.title, systemImage: PardisRootTab.you.icon.systemName) }
+            .tag(PardisRootTab.you)
         }
         .tint(PardisColors.saffronDeep)
         .task {
@@ -231,6 +279,89 @@ private struct PardisPlaceholderTabScreen: View {
             Spacer(minLength: 0)
         }
         .padding()
+    }
+}
+
+// Minimal "You" tab: profile card + switch-reader entry point, mirroring Android `YouScreen`'s
+// `YouProfileCard`. Settings groups / appearance toggle / dawn gradient are deferred to the
+// dedicated You-parity task; this slice wires the switch-profile path live.
+private let youAvatarSize: CGFloat = 72
+
+private struct YouTabView: View {
+    let activeProfile: ChildProfile
+    let onSwitchProfile: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: PardisSpacing.md) {
+                Text("You")
+                    .font(PardisFonts.display(size: PardisTypography.xxl, weight: .heavy))
+                    .foregroundStyle(PardisColors.ink)
+
+                YouProfileCard(activeProfile: activeProfile, onSwitchProfile: onSwitchProfile)
+
+                VStack(spacing: PardisSpacing.xs) {
+                    Text("ریوانا · قصه‌های پارسی برای کودکان")
+                        .font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular))
+                        .foregroundStyle(PardisColors.inkFaint)
+                    Text("PARDIS · v1.0")
+                        .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
+                        .foregroundStyle(PardisColors.inkFaint)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, PardisSpacing.md)
+            }
+            .padding()
+        }
+    }
+}
+
+private struct YouProfileCard: View {
+    let activeProfile: ChildProfile
+    let onSwitchProfile: () -> Void
+
+    var body: some View {
+        HStack(spacing: PardisSpacing.md) {
+            ZStack {
+                Circle().fill(profileToneGradient(activeProfile.tone))
+                Text(String(activeProfile.name.prefix(1)))
+                    .font(PardisFonts.display(size: PardisTypography.xxxl, weight: .bold))
+                    .foregroundStyle(PardisColors.inkOnDark)
+            }
+            .frame(width: youAvatarSize, height: youAvatarSize)
+
+            VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
+                Text(activeProfile.name)
+                    .font(PardisFonts.display(size: PardisTypography.xl, weight: .heavy))
+                    .foregroundStyle(PardisColors.ink)
+                Text("Age \(activeProfile.age) · \(activeProfile.streak)-night streak")
+                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
+                    .foregroundStyle(PardisColors.inkSoft)
+
+                Button(action: onSwitchProfile) {
+                    HStack(spacing: PardisSpacing.sm - PardisSpacing.xxs) {
+                        PardisIcon(kind: .user, size: 15, color: PardisColors.ink)
+                        Text("Switch reader")
+                            .font(PardisFonts.body(size: PardisTypography.sm, weight: .bold))
+                            .foregroundStyle(PardisColors.ink)
+                    }
+                    .padding(.horizontal, PardisSpacing.md - PardisSpacing.xxs)
+                    .padding(.vertical, PardisSpacing.sm)
+                    .background(PardisColors.surface)
+                    .clipShape(Capsule(style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, PardisSpacing.sm)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(PardisSpacing.lg - PardisSpacing.xs)
+        .background(PardisColors.surfacePeach)
+        .clipShape(RoundedRectangle(cornerRadius: PardisRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PardisRadius.xl, style: .continuous)
+                .stroke(PardisColors.border, lineWidth: PardisSpacing.hairline)
+        )
     }
 }
 

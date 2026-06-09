@@ -58,8 +58,7 @@ OfflineDownloadManager 5, SharedInit 3).
 ## Verification Status
 
 - ✅ **iOS native TabView + offline caching** — user verified on device (2026-06-09).
-- ⏳ **Android M3 NavigationBar** — compiles, but on-device look/insets NOT yet eyeballed (device had
-  dropped off adb). Quick visual check needed when connected.
+- ✅ **Android M3 NavigationBar** — user verified on device (2026-06-09).
 
 ## What's Left
 
