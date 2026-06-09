@@ -21,13 +21,17 @@ import app.pardis.design.PardisRadius
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisGradients
 import app.pardis.design.PardisSpacing
+import app.pardis.core.model.RivanaBadge
+import app.pardis.core.model.RivanaCharacter
+import app.pardis.core.model.RivanaContent
+import app.pardis.core.model.RivanaWord
 import androidx.compose.runtime.getValue
 
 @Composable
 internal fun RewardsScreen(storyCount: Int, onOpenCharacter: (Int) -> Unit, bottomContentPadding: androidx.compose.ui.unit.Dp) {
     val gutter = PardisSpacing.lg
-    val mastered = rivanaWords.count { it.mastery >= 1f }
-    val growing = rivanaWords.size - mastered
+    val mastered = RivanaContent.words.count { it.mastery >= 1f }
+    val growing = RivanaContent.words.size - mastered
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(PardisColors.background),
         contentPadding = PaddingValues(top = PardisSpacing.xl, bottom = bottomContentPadding),
@@ -60,7 +64,7 @@ internal fun RewardsScreen(storyCount: Int, onOpenCharacter: (Int) -> Unit, bott
             Column(Modifier.padding(horizontal = gutter)) {
                 Text("ALMOST THERE", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
                 Spacer(Modifier.height(PardisSpacing.sm))
-                rivanaBadges.filter { !it.earned }.maxByOrNull { it.progress }?.let { NextBadgeCard(it) }
+                RivanaContent.badges.filter { !it.earned }.maxByOrNull { it.progress }?.let { NextBadgeCard(it) }
             }
         }
         item { WordGarden(mastered, growing, Modifier.padding(horizontal = gutter)) }
@@ -73,7 +77,7 @@ internal fun RewardsScreen(storyCount: Int, onOpenCharacter: (Int) -> Unit, bott
                     horizontalArrangement = Arrangement.spacedBy(PardisSpacing.md),
                 ) {
                     Spacer(Modifier.width(gutter - PardisSpacing.md))
-                    rivanaCharacters.forEachIndexed { i, c ->
+                    RivanaContent.characters.forEachIndexed { i, c ->
                         HeroTile(c, onClick = { onOpenCharacter(i) })
                     }
                     Spacer(Modifier.width(gutter - PardisSpacing.md))
@@ -202,7 +206,7 @@ private fun StreakCalendar(modifier: Modifier) {
 }
 
 @Composable
-private fun NextBadgeCard(b: RBadge) {
+private fun NextBadgeCard(b: RivanaBadge) {
     val (_, deep) = toneColors(b.tone)
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surface)
@@ -211,7 +215,7 @@ private fun NextBadgeCard(b: RBadge) {
         horizontalArrangement = Arrangement.spacedBy(15.dp),
     ) {
         PardisRing(progress = b.progress, ringColor = toneBase(b.tone), trackColor = PardisColors.backgroundAlt, strokeWidthDp = 5f, modifier = Modifier.size(60.dp)) {
-            PardisIcon(b.icon, contentDescription = null, tint = deep)
+            PardisIcon(b.icon.toPardisIconKind(), contentDescription = null, tint = deep)
         }
         Column(Modifier.weight(1f)) {
             Text(b.label, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.Bold)
@@ -239,11 +243,11 @@ private fun WordGarden(mastered: Int, growing: Int, modifier: Modifier) {
                 PardisIcon(PardisIconKind.Sprout, contentDescription = null, tint = PardisColors.inkOnDark)
             }
             Column(Modifier.weight(1f)) {
-                Text("${rivanaWords.size} words growing", style = MaterialTheme.typography.titleMedium, color = PardisColors.mintDeep, fontWeight = FontWeight.ExtraBold)
+                Text("${RivanaContent.words.size} words growing", style = MaterialTheme.typography.titleMedium, color = PardisColors.mintDeep, fontWeight = FontWeight.ExtraBold)
                 Text("$mastered mastered · $growing sprouting", style = MaterialTheme.typography.labelSmall, color = PardisColors.mintDeep)
             }
         }
-        rivanaWords.chunked(3).forEach { row ->
+        RivanaContent.words.chunked(3).forEach { row ->
             Row(Modifier.fillMaxWidth()) {
                 row.forEach { w -> WordCell(w, Modifier.weight(1f)) }
             }
@@ -252,7 +256,7 @@ private fun WordGarden(mastered: Int, growing: Int, modifier: Modifier) {
 }
 
 @Composable
-private fun WordCell(w: RWord, modifier: Modifier) {
+private fun WordCell(w: RivanaWord, modifier: Modifier) {
     Column(modifier.padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         PardisRing(
             progress = w.mastery,
@@ -271,7 +275,7 @@ private fun WordCell(w: RWord, modifier: Modifier) {
 @Composable
 private fun BadgesGrid() {
     Column(verticalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
-        rivanaBadges.chunked(3).forEach { row ->
+        RivanaContent.badges.chunked(3).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm)) {
                 row.forEach { b -> BadgeCell(b, Modifier.weight(1f)) }
             }
@@ -280,7 +284,7 @@ private fun BadgesGrid() {
 }
 
 @Composable
-private fun BadgeCell(b: RBadge, modifier: Modifier) {
+private fun BadgeCell(b: RivanaBadge, modifier: Modifier) {
     val (soft, deep) = toneColors(b.tone)
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
@@ -289,7 +293,7 @@ private fun BadgeCell(b: RBadge, modifier: Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             if (b.earned) {
-                PardisIcon(b.icon, contentDescription = b.label, tint = deep, size = 32.dp)
+                PardisIcon(b.icon.toPardisIconKind(), contentDescription = b.label, tint = deep, size = 32.dp)
             } else {
                 PardisIcon(PardisIconKind.Lock, contentDescription = "Locked: ${b.label}", tint = PardisColors.inkFaint, size = 24.dp)
                 if (b.progress > 0f) {

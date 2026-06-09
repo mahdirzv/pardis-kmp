@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
 import app.pardis.core.model.ChildProfile
+import app.pardis.core.model.RivanaContent
 import app.pardis.shared.profile.ProfileAction
 import app.pardis.shared.profile.ProfileViewModel
 import androidx.compose.runtime.getValue
@@ -148,7 +149,7 @@ private fun PardisAppShell(
             arguments = listOf(navArgument("index") { type = NavType.IntType })
         ) { backStackEntry ->
             val index = backStackEntry.arguments?.getInt("index") ?: 0
-            val lullaby = rivanaLullabies.getOrElse(index) { rivanaLullabies.first() }
+            val lullaby = RivanaContent.lullabies.getOrElse(index) { RivanaContent.lullabies.first() }
             LullabyPlayerScreen(lullaby = lullaby, onBack = { navController.popBackStack() })
         }
         composable(
@@ -156,7 +157,7 @@ private fun PardisAppShell(
             arguments = listOf(navArgument("index") { type = NavType.IntType })
         ) { backStackEntry ->
             val index = backStackEntry.arguments?.getInt("index") ?: 0
-            val character = rivanaCharacters.getOrElse(index) { rivanaCharacters.first() }
+            val character = RivanaContent.characters.getOrElse(index) { RivanaContent.characters.first() }
             CharacterScreen(character = character, onBack = { navController.popBackStack() })
         }
     }
