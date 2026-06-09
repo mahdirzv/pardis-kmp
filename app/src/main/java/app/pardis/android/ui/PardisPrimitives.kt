@@ -1073,3 +1073,17 @@ fun PersianReaderInline(
         )
     }
 }
+
+internal fun toneColors(t: String): Pair<Color, Color> = when (t) {
+    "mint" -> PardisColors.mintSoft to PardisColors.mintDeep
+    "saffron" -> PardisColors.saffronSoft to PardisColors.saffronDeep
+    "lapis" -> PardisColors.indigoSoft to PardisColors.indigoDeep
+    else -> PardisColors.lilacSoft to PardisColors.lilacDeep
+}
+
+internal fun toneBase(t: String): Color = when (t) {
+    "mint" -> PardisColors.mint
+    "saffron" -> PardisColors.saffron
+    "lapis" -> PardisColors.indigo
+    else -> PardisColors.lilac
+}
