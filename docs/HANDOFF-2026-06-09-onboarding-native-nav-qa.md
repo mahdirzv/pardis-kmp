@@ -70,16 +70,27 @@ OfflineDownloadManager 5, SharedInit 3).
 - ✅ Done: #1 Koin hardening, #2 commonTest, #3 offline tests, #6 subtitle cues.
 
 ### iOS parity (largest chunk) — these shipped Android-only, need SwiftUI equivalents
-- ✅ **Onboarding profile picker + launch gate + switch-reader path** — done on branch
-  `feat/ios-parity-onboarding` (commit `5d2442e`): `ProfileSharedViewModel`, `OnboardingView`,
-  `RootShellView` gate, `YouTabView` profile card. **NOT built/verified — no Xcode here; verify on
-  an Xcode box before merge.** kmpSkill §10/§12 followed (tokens, `@Observable`+`.task`, callbacks).
-- **You screen — full** (settings groups Reading/Family/About, appearance dark-mode toggle, dawn
-  gradient + ~8 new icon kinds). Only the profile card + switch is built so far.
-- **Today/Library v2 visual rework** (iOS still on v1 layout).
-- **Lullaby player**, **Character**, **reader v2 rework**, **Finish** celebration, **Detail** route.
-  Bedtime/Rewards/Lullaby/Character need the **Rivana static data** (`PardisRivanaData.kt`, Android-only)
-  — decision pending: hoist to a shared module (recommended) vs. duplicate in Swift.
+
+All on branch `feat/ios-parity-onboarding`. **NONE built/verified — no Xcode here; build + visually
+verify the whole batch on an Xcode box before merge.** kmpSkill §10/§12 followed throughout
+(design tokens, `@Observable`+`.task`, callback navigation).
+
+- ✅ **Onboarding picker + launch gate + switch-reader** (`5d2442e`): `ProfileSharedViewModel`,
+  `OnboardingView`, `RootShellView` gate.
+- ✅ **You screen — full** (`628eb2c`): `YouView` (profile card on dawn gradient, Reading/Family/About
+  settings groups, decorative dark-mode toggle, footer). Added `PardisGradients.dawn` + 6 icon kinds.
+- ✅ **Rivana data hoisted to `core/model`** (`05f3d67`, **Android-verified**): `RivanaContent` object +
+  data classes + `RivanaBadgeIcon` enum; Android rewired to `.toPardisIconKind()`. iOS reads
+  `RivanaContent.shared.*`.
+- ✅ **Bedtime + Lullaby player** (`f0627d8`): `PardisSceneArt` (Canvas port of the 7 scene variants),
+  `BedtimeView`, `LullabyView` (animated MoonGlow/Waveform, sleep-timer sheet). Added on-dark token
+  family + bedtime/lullaby night gradients + check/clock/pause icons.
+- ⏳ **Rewards + Character** — next; SceneArt now available, so unblocked.
+- ⏳ **Today/Library v2 visual rework** (iOS still on v1 layout).
+- ⏳ **Reader v2 rework**, **Finish** celebration, **Detail** route.
+
+**Known iOS follow-ups:** SceneArt omits the faint (0.14α) Persian-motif PNG overlay (needs
+asset-catalog images: paisley/vine/rosette). Onboarding omits the paisley header overlay similarly.
 
 ### Feature backlog (named earlier, not started)
 - **Parents'/Parent corner** ("I'm a parent" + Settings entries are stubs).
