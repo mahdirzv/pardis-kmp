@@ -64,7 +64,21 @@ resolve at build time. Do **not** chase these; trust the `ios-app` CI result ins
 - `Cannot find 'PardisColors' in scope` (it's in `design-system/generated/ios/PardisTokens.swift`)
 - `Extraneous argument label 'hex:'` (the `Color(hex:)` extension lives in that same generated file)
 
+## Visual proof via simulator screenshot
+
+The `ios-app` job goes past compile: it boots the runner's iPhone simulator, installs + launches
+the app (so a **launch-time crash fails the job**), and uploads a screenshot of the first screen as
+the **`ios-screenshots`** artifact. Pull it down and actually look at it:
+
+```bash
+gh run download <run-id> -n ios-screenshots -D /tmp/ios-shots
+# then Read /tmp/ios-shots/01-onboarding.png
+```
+
+This gives a real rendered frame (gradients, fonts, Persian, layout) without a local Xcode.
+
 ## Limits
 
-A green `ios-app` proves it **compiles and links** — not that it looks right. Visual/interaction QA
-still needs a real simulator or device (i.e., a machine with Xcode).
+A green `ios-app` proves it **compiles, links, and launches**, and the screenshot shows the **first
+screen** (the onboarding gate). Capturing the other screens (You/Bedtime/Lullaby/Rewards/Character)
+needs XCUITest UI automation to navigate + snapshot each — a larger, separate add-on.
