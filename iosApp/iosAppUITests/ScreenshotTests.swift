@@ -15,11 +15,10 @@ final class ScreenshotTests: XCTestCase {
 
         // Measure (don't eyeball) which brand fonts loaded — surfaced via an invisible probe.
         let probe = app.staticTexts["pardis-fonts"]
-        if probe.waitForExistence(timeout: 10) {
-            print("PARDIS-FONT-SUMMARY: \(probe.label)")
-        } else {
-            print("PARDIS-FONT-SUMMARY: <probe not found>")
-        }
+        XCTAssertTrue(probe.waitForExistence(timeout: 10), "font-status probe not found")
+        print("PARDIS-FONT-SUMMARY: \(probe.label)")
+        // Permanent guard: fail if any brand font fails to load (e.g. fonts dropped from the bundle).
+        XCTAssertFalse(probe.label.contains("MISSING"), "A brand font failed to load: \(probe.label)")
 
         // 1. Onboarding gate (first screen — no profile selected yet).
         snap(app, "01-onboarding")
