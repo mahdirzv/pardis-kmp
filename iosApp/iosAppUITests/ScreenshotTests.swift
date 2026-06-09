@@ -13,6 +13,14 @@ final class ScreenshotTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        // Measure (don't eyeball) which brand fonts loaded — surfaced via an invisible probe.
+        let probe = app.staticTexts["pardis-fonts"]
+        if probe.waitForExistence(timeout: 10) {
+            print("PARDIS-FONT-SUMMARY: \(probe.label)")
+        } else {
+            print("PARDIS-FONT-SUMMARY: <probe not found>")
+        }
+
         // 1. Onboarding gate (first screen — no profile selected yet).
         snap(app, "01-onboarding")
 

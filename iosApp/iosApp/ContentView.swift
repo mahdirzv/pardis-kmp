@@ -51,6 +51,13 @@ private enum PardisRootTab: CaseIterable, Hashable {
 struct ContentView: View {
     var body: some View {
         RootShellView()
+            // Invisible probe carrying the font-load status so the UI test can read + log it.
+            .overlay(alignment: .topLeading) {
+                Text(PardisFontRegistry.summary)
+                    .opacity(0.0001)
+                    .allowsHitTesting(false)
+                    .accessibilityIdentifier("pardis-fonts")
+            }
     }
 }
 

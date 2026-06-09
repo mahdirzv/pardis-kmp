@@ -42,4 +42,10 @@ enum PardisFontRegistry {
 
     /// The real registered family name for a role, or nil if the font failed to load.
     static func family(_ role: Role) -> String? { familyByRole[role] }
+
+    /// One-line status (role=family | … | role=MISSING) surfaced via an invisible accessibility
+    /// element so the UI test can read + log exactly which fonts loaded — a measurement, not a guess.
+    static var summary: String {
+        Role.allCases.map { "\($0.rawValue)=\(familyByRole[$0] ?? "MISSING")" }.joined(separator: " | ")
+    }
 }
