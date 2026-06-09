@@ -1,55 +1,18 @@
 package app.pardis.android.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import app.pardis.design.PardisRadius
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.pardis.design.PardisColors
-import app.pardis.design.PardisGradients
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlin.time.Duration.Companion.milliseconds
 import app.pardis.design.PardisSpacing
 import app.pardis.design.PardisTheme
 import app.pardis.design.pardisScreenBackground
-import app.pardis.shared.library.LibraryAction
-import app.pardis.shared.library.LibraryUiState
 import app.pardis.shared.library.LibraryViewModel
-import app.pardis.shared.reader.ReaderAction
-import app.pardis.shared.reader.ReaderUiState
-import app.pardis.shared.reader.ReaderViewModel
-import coil.imageLoader
-import coil.request.ImageRequest
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
-import android.media.MediaPlayer
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -64,14 +27,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 
 private enum class PardisRootTab(
     val title: String,
-    val subtitle: String,
     val icon: PardisIconKind,
 ) {
-    Today("Today", "Daily reading rhythm", PardisIconKind.Home),
-    Library("Library", "Persian heritage stories", PardisIconKind.Book),
-    Bedtime("Bedtime", "Calmer stories for later", PardisIconKind.Moon),
-    Rewards("Rewards", "Reading progress and badges", PardisIconKind.Star),
-    You("You", "Family profile and preferences", PardisIconKind.User),
+    Today("Today", PardisIconKind.Home),
+    Library("Library", PardisIconKind.Book),
+    Bedtime("Bedtime", PardisIconKind.Moon),
+    Rewards("Rewards", PardisIconKind.Star),
+    You("You", PardisIconKind.User),
 }
 
 @Composable
@@ -264,41 +226,6 @@ private fun RootShellRoute(
                     onSwitchProfile = onSwitchProfile,
                     downloadCount = libraryState.cachedStorySlugs.size,
                     bottomContentPadding = bottomReserve,
-                )
-                else -> PardisPlaceholderTabScreen(
-                    title = selectedTab.title,
-                    subtitle = selectedTab.subtitle,
-                    icon = selectedTab.icon,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PardisPlaceholderTabScreen(
-    title: String,
-    subtitle: String,
-    icon: PardisIconKind,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(PardisSpacing.md)
-            .padding(bottom = PardisSpacing.xxl + PardisSpacing.xl),
-        verticalArrangement = Arrangement.spacedBy(PardisSpacing.md),
-    ) {
-        PardisScreenHeader(title = title, subtitle = subtitle)
-        PardisPanel {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(PardisSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PardisIcon(icon, contentDescription = null, tint = PardisColors.indigo)
-                Text(
-                    text = "$title is ready for its shared state contract.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = PardisColors.inkSoft,
                 )
             }
         }
