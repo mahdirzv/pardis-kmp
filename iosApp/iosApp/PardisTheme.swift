@@ -1,23 +1,30 @@
 import SwiftUI
 
-// Brand typefaces, mirroring Android PardisFonts (bundled via UIAppFonts in Info.plist; the .ttf
-// files live in iosApp/Fonts). All are variable fonts, so .weight() varies the weight axis.
+// Brand typefaces, mirroring Android PardisFonts. The family names come from PardisFontRegistry
+// (read from the bundled .ttf files at launch), so there is no hand-guessed name to get wrong.
 // display → Bricolage Grotesque, body → Plus Jakarta Sans, persian → Vazirmatn, mono → JetBrains Mono.
 struct PardisFonts {
     static func display(size: CGFloat, weight: Font.Weight) -> Font {
-        .custom("Bricolage Grotesque", fixedSize: size).weight(weight)
+        custom(.display, size: size, weight: weight, fallback: .default)
     }
 
     static func body(size: CGFloat, weight: Font.Weight) -> Font {
-        .custom("Plus Jakarta Sans", fixedSize: size).weight(weight)
+        custom(.body, size: size, weight: weight, fallback: .default)
     }
 
     static func persian(size: CGFloat, weight: Font.Weight) -> Font {
-        .custom("Vazirmatn", fixedSize: size).weight(weight)
+        custom(.persian, size: size, weight: weight, fallback: .default)
     }
 
     static func mono(size: CGFloat, weight: Font.Weight) -> Font {
-        .custom("JetBrains Mono", fixedSize: size).weight(weight)
+        custom(.mono, size: size, weight: weight, fallback: .monospaced)
+    }
+
+    private static func custom(_ role: PardisFontRegistry.Role, size: CGFloat, weight: Font.Weight, fallback: Font.Design) -> Font {
+        if let family = PardisFontRegistry.family(role) {
+            return .custom(family, fixedSize: size).weight(weight)
+        }
+        return .system(size: size, weight: weight, design: fallback)
     }
 }
 

@@ -4,6 +4,8 @@ import Shared
 @main
 struct PardisiOSApp: App {
     init() {
+        // Register brand fonts before any view renders (reads family names from the bundled .ttf).
+        PardisFontRegistry.registerAll()
         // Initialize shared KMP logic + DI early.
         // Platform modules can supply iOS-specific config (e.g. future auth tokens, or overrides).
         // The Supabase public config is provided via iosMain actuals (no literals in common).

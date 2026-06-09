@@ -70,5 +70,15 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -arch arm64 \
+            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
+      - name: Verify brand fonts are bundled
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Debug-iphonesimulator/iosApp.app"
+          echo "Fonts in app bundle:"; find "$APP" -name '*.ttf' -print
+          for f in bricolage_grotesque plus_jakarta_sans vazirmatn jetbrains_mono; do
+            test -f "$APP/$f.ttf" || { echo "::error::$f.ttf NOT bundled into the app"; exit 1; }
+          done
+          echo "All four brand fonts are bundled ✅"
