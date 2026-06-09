@@ -62,11 +62,35 @@ jobs:
         run: |
           # Build a single concrete simulator arch: a generic destination yields ARCHS="arm64 x86_64"
           # + CURRENT_ARCH=undefined_arch, which embedAndSignAppleFrameworkForXcode can't resolve.
+          # -derivedDataPath so the next step knows where the built .app is.
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
             -arch arm64 \
+            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
+      - name: Launch in simulator + screenshot
+        run: |
+          set -euo pipefail
+          # Pick the first available iPhone simulator (robust to runner OS/device churn).
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for rt in d for x in d[rt] if 'iPhone' in x['name']))")
+          echo "Using simulator $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/iosApp.app
+          # Launch the onboarding gate (first screen); fails the step if the app crashes on launch.
+          xcrun simctl launch "$UDID" app.pardis.reader
+          sleep 6
+          mkdir -p screenshots
+          xcrun simctl io "$UDID" screenshot screenshots/01-onboarding.png
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: screenshots/
+          if-no-files-found: warn
