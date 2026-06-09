@@ -14,6 +14,9 @@ kotlin {
         namespace = "app.pardis.shared"
         compileSdk = 37
         minSdk = 24
+        // Opt-in to JVM host-side unit tests so commonTest runs locally without Xcode/a device
+        // (the iOS test targets need full Xcode to link/run; host tests run on the JVM).
+        withHostTest { }
     }
 
     listOf(
@@ -68,6 +71,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            // ProfileRepositoryImpl's public ctor takes PardisDatabase? (from core:database), which
+            // core:data only pulls via implementation — so the test needs it on its classpath.
+            implementation(project(":core:database"))
             // turbine for flow testing if added
         }
     }

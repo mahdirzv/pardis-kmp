@@ -62,7 +62,4 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.6")
 
     implementation(libs.kotlinx.coroutines.core)
-
-    testImplementation(kotlin("test-junit"))
-    testImplementation(libs.kotlinx.coroutines.test)
 }

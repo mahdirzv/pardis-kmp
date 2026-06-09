@@ -1,4 +1,4 @@
-package app.pardis.profile
+package app.pardis.shared.profile
 
 import app.pardis.core.data.ProfileRepositoryImpl
 import kotlinx.coroutines.test.runTest

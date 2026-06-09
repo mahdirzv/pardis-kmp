@@ -1,12 +1,10 @@
-package app.pardis.profile
+package app.pardis.shared.profile
 
 import app.pardis.core.domain.GetProfilesUseCase
 import app.pardis.core.domain.GetSelectedProfileUseCase
 import app.pardis.core.domain.SelectProfileUseCase
 import app.pardis.core.model.ChildProfile
 import app.pardis.core.model.pardisProfiles
-import app.pardis.shared.profile.ProfileAction
-import app.pardis.shared.profile.ProfileViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
