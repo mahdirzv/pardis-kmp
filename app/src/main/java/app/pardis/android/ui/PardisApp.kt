@@ -305,37 +305,3 @@ private fun PardisPlaceholderTabScreen(
     }
 }
 
-@Composable
-fun ReaderRoute(
-    slug: String,
-    onBack: () -> Unit,
-    onFinish: (String) -> Unit,
-    viewModel: ReaderViewModel = koinViewModel(),
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Load when slug changes (Route owns the VM and triggers load)
-    LaunchedEffect(slug) {
-        viewModel.onAction(ReaderAction.LoadStory(slug))
-    }
-
-    // Basic prefetch for next illustration (performance, using Coil) - prefer local cached if available
-    val context = LocalContext.current
-    LaunchedEffect(state.currentPage, state.pages, state.localIllustrationUrls) {
-        val nextPage = state.pages.getOrNull(state.currentPage + 1)
-        val url = nextPage?.let { state.localIllustrationUrls[it.page] ?: it.illustrationUrl }
-        url?.let {
-            val request = ImageRequest.Builder(context)
-                .data(it)
-                .build()
-            context.imageLoader.enqueue(request)
-        }
-    }
-
-    ReaderScreen(
-        state = state,
-        onAction = viewModel::onAction,
-        onBack = onBack,
-        onFinish = onFinish,
-    )
-}

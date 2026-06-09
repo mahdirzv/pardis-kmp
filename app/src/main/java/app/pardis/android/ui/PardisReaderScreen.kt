@@ -63,9 +63,14 @@ import app.pardis.design.PardisRadius
 import app.pardis.design.PardisSpacing
 import app.pardis.shared.reader.ReaderAction
 import app.pardis.shared.reader.ReaderUiState
+import app.pardis.shared.reader.ReaderViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.imageLoader
+import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
+import org.koin.compose.viewmodel.koinViewModel
 
 private val cueTagRegex = Regex("\\s*\\[[^\\]]*]")
 
@@ -587,4 +592,39 @@ private fun FarsiGlossaryText(faText: String, vocab: List<VocabItem>, onTap: (Vo
             ),
         )
     }
+}
+
+@Composable
+fun ReaderRoute(
+    slug: String,
+    onBack: () -> Unit,
+    onFinish: (String) -> Unit,
+    viewModel: ReaderViewModel = koinViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Load when slug changes (Route owns the VM and triggers load)
+    LaunchedEffect(slug) {
+        viewModel.onAction(ReaderAction.LoadStory(slug))
+    }
+
+    // Basic prefetch for next illustration (performance, using Coil) - prefer local cached if available
+    val context = LocalContext.current
+    LaunchedEffect(state.currentPage, state.pages, state.localIllustrationUrls) {
+        val nextPage = state.pages.getOrNull(state.currentPage + 1)
+        val url = nextPage?.let { state.localIllustrationUrls[it.page] ?: it.illustrationUrl }
+        url?.let {
+            val request = ImageRequest.Builder(context)
+                .data(it)
+                .build()
+            context.imageLoader.enqueue(request)
+        }
+    }
+
+    ReaderScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        onBack = onBack,
+        onFinish = onFinish,
+    )
 }
