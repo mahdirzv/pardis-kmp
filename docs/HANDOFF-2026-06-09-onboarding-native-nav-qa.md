@@ -70,9 +70,16 @@ OfflineDownloadManager 5, SharedInit 3).
 - ✅ Done: #1 Koin hardening, #2 commonTest, #3 offline tests, #6 subtitle cues.
 
 ### iOS parity (largest chunk) — these shipped Android-only, need SwiftUI equivalents
-- **Onboarding profile picker** + launch gate (iOS has the `ProfileViewModel` contract via
-  `PardisViewModelProvider.profileViewModel()`, no screen).
-- **Lullaby player**, **Character**, **reader v2 rework**, **Finish** celebration.
+- ✅ **Onboarding profile picker + launch gate + switch-reader path** — done on branch
+  `feat/ios-parity-onboarding` (commit `5d2442e`): `ProfileSharedViewModel`, `OnboardingView`,
+  `RootShellView` gate, `YouTabView` profile card. **NOT built/verified — no Xcode here; verify on
+  an Xcode box before merge.** kmpSkill §10/§12 followed (tokens, `@Observable`+`.task`, callbacks).
+- **You screen — full** (settings groups Reading/Family/About, appearance dark-mode toggle, dawn
+  gradient + ~8 new icon kinds). Only the profile card + switch is built so far.
+- **Today/Library v2 visual rework** (iOS still on v1 layout).
+- **Lullaby player**, **Character**, **reader v2 rework**, **Finish** celebration, **Detail** route.
+  Bedtime/Rewards/Lullaby/Character need the **Rivana static data** (`PardisRivanaData.kt`, Android-only)
+  — decision pending: hoist to a shared module (recommended) vs. duplicate in Swift.
 
 ### Feature backlog (named earlier, not started)
 - **Parents'/Parent corner** ("I'm a parent" + Settings entries are stubs).
