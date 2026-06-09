@@ -23,6 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -423,44 +426,42 @@ fun PardisBottomTabBar(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PardisThemedSurface(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xs),
-            horizontalArrangement = Arrangement.spacedBy(PardisSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items.forEachIndexed { index, item ->
-                val selected = index == selectedIndex
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onSelect(index) }
-                        .padding(vertical = PardisSpacing.xs),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(PardisSpacing.xxs),
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(PardisRadius.full),
-                        color = if (selected) PardisColors.saffronTint else Color.Transparent,
-                    ) {
-                        PardisIcon(
-                            icon = item.icon,
-                            contentDescription = null,
-                            tint = if (selected) PardisColors.saffronDeep else PardisColors.inkMuted,
-                            modifier = Modifier.padding(horizontal = PardisSpacing.sm, vertical = PardisSpacing.xxs),
-                        )
-                    }
+    // Native Material 3 navigation bar, brand-tinted via Pardis tokens. Labels kept (this is a
+    // kids' app — icon-only hurts discoverability). On iOS the equivalent is a native TabView.
+    NavigationBar(
+        modifier = modifier,
+        containerColor = PardisColors.surface,
+        tonalElevation = 0.dp,
+    ) {
+        items.forEachIndexed { index, item ->
+            val selected = index == selectedIndex
+            NavigationBarItem(
+                selected = selected,
+                onClick = { onSelect(index) },
+                icon = {
+                    PardisIcon(
+                        icon = item.icon,
+                        contentDescription = item.label,
+                        tint = if (selected) PardisColors.saffronDeep else PardisColors.inkMuted,
+                    )
+                },
+                label = {
                     Text(
                         text = item.label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (selected) PardisColors.saffronDeep else PardisColors.inkMuted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                }
-            }
+                },
+                alwaysShowLabel = true,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PardisColors.saffronDeep,
+                    unselectedIconColor = PardisColors.inkMuted,
+                    selectedTextColor = PardisColors.saffronDeep,
+                    unselectedTextColor = PardisColors.inkMuted,
+                    indicatorColor = PardisColors.saffronTint,
+                ),
+            )
         }
     }
 }

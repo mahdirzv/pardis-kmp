@@ -215,56 +215,63 @@ private fun RootShellRoute(
     val tabs = remember { PardisRootTab.entries.toList() }
     val libraryState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pardisScreenBackground(),
-    ) {
-        when (selectedTab) {
-            PardisRootTab.Today -> TodayScreen(
-                activeName = activeProfile.name,
-                state = libraryState,
-                onAction = viewModel::onAction,
-                onOpenStory = onOpenStory,
-                onOpenLibrary = { selectedTab = PardisRootTab.Library },
-                onOpenBedtime = { onOpenLullaby(1) },
-                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
+    Scaffold(
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = {
+            PardisBottomTabBar(
+                items = tabs.map { PardisTabItem(label = it.title, icon = it.icon) },
+                selectedIndex = tabs.indexOf(selectedTab),
+                onSelect = { selectedTab = tabs[it] },
             )
-            PardisRootTab.Library -> LibraryScreen(
-                state = libraryState,
-                onAction = viewModel::onAction,
-                onOpenStory = onOpenStory,
-                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
-            )
-            PardisRootTab.Bedtime -> BedtimeScreen(
-                onOpenLullaby = onOpenLullaby,
-                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
-            )
-            PardisRootTab.Rewards -> RewardsScreen(
-                storyCount = libraryState.stories.size,
-                onOpenCharacter = onOpenCharacter,
-                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
-            )
-            PardisRootTab.You -> YouScreen(
-                activeProfile = activeProfile,
-                onSwitchProfile = onSwitchProfile,
-                downloadCount = libraryState.cachedStorySlugs.size,
-                bottomContentPadding = PardisSpacing.xxl + PardisSpacing.xl,
-            )
-            else -> PardisPlaceholderTabScreen(
-                title = selectedTab.title,
-                subtitle = selectedTab.subtitle,
-                icon = selectedTab.icon,
-            )
-        }
-        PardisBottomTabBar(
-            items = tabs.map { PardisTabItem(label = it.title, icon = it.icon) },
-            selectedIndex = tabs.indexOf(selectedTab),
-            onSelect = { selectedTab = tabs[it] },
+        },
+    ) { innerPadding ->
+        // Reserve space for the native bar (its height + system nav inset) so scroll content
+        // clears it, with a little breathing room.
+        val bottomReserve = innerPadding.calculateBottomPadding() + PardisSpacing.sm
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(PardisSpacing.md),
-        )
+                .fillMaxSize()
+                .pardisScreenBackground(),
+        ) {
+            when (selectedTab) {
+                PardisRootTab.Today -> TodayScreen(
+                    activeName = activeProfile.name,
+                    state = libraryState,
+                    onAction = viewModel::onAction,
+                    onOpenStory = onOpenStory,
+                    onOpenLibrary = { selectedTab = PardisRootTab.Library },
+                    onOpenBedtime = { onOpenLullaby(1) },
+                    bottomContentPadding = bottomReserve,
+                )
+                PardisRootTab.Library -> LibraryScreen(
+                    state = libraryState,
+                    onAction = viewModel::onAction,
+                    onOpenStory = onOpenStory,
+                    bottomContentPadding = bottomReserve,
+                )
+                PardisRootTab.Bedtime -> BedtimeScreen(
+                    onOpenLullaby = onOpenLullaby,
+                    bottomContentPadding = bottomReserve,
+                )
+                PardisRootTab.Rewards -> RewardsScreen(
+                    storyCount = libraryState.stories.size,
+                    onOpenCharacter = onOpenCharacter,
+                    bottomContentPadding = bottomReserve,
+                )
+                PardisRootTab.You -> YouScreen(
+                    activeProfile = activeProfile,
+                    onSwitchProfile = onSwitchProfile,
+                    downloadCount = libraryState.cachedStorySlugs.size,
+                    bottomContentPadding = bottomReserve,
+                )
+                else -> PardisPlaceholderTabScreen(
+                    title = selectedTab.title,
+                    subtitle = selectedTab.subtitle,
+                    icon = selectedTab.icon,
+                )
+            }
+        }
     }
 }
 
