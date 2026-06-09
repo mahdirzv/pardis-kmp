@@ -12,7 +12,7 @@ private struct SelectedVocab: Identifiable {
     var id: String { "\(vocab.fa)-\(vocab.translit)-\(vocab.en)" }
 }
 
-private enum PardisRootTab: CaseIterable {
+private enum PardisRootTab: CaseIterable, Hashable {
     case today
     case library
     case bedtime
@@ -51,54 +51,61 @@ private enum PardisRootTab: CaseIterable {
 }
 
 struct ContentView: View {
-    @State private var selectedRoute: ReaderRoute? = nil
-    @State private var selectedTab: PardisRootTab = .library
-
     var body: some View {
-        NavigationStack {
-            RootShellView(
-                selectedTab: $selectedTab,
-                onSelectStory: { slug in selectedRoute = ReaderRoute(slug: slug) }
-            )
-                .navigationDestination(item: $selectedRoute) { route in
-                    ReaderScreen(slug: route.slug)
-                }
-        }
+        RootShellView()
     }
 }
 
 private struct RootShellView: View {
-    @Binding var selectedTab: PardisRootTab
+    @State private var selectedTab: PardisRootTab = .library
     @State private var libraryModel = LibrarySharedViewModel()
-    let onSelectStory: (String) -> Void
-
-    private let tabs = PardisRootTab.allCases
+    // Per-tab navigation routes — each content tab owns its own stack (recommended SwiftUI pattern),
+    // so opening a story pushes within that tab rather than over the whole shell.
+    @State private var todayRoute: ReaderRoute? = nil
+    @State private var libraryRoute: ReaderRoute? = nil
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            switch selectedTab {
-            case .today:
+        // Native SwiftUI TabView — gets Liquid Glass automatically on iOS 26 and platform-correct
+        // behavior elsewhere. Brand accent via .tint; tab items use the same SF Symbols as PardisIcon.
+        // Bedtime/Rewards/You remain placeholders until those features land.
+        TabView(selection: $selectedTab) {
+            NavigationStack {
                 TodayScreen(
                     model: libraryModel,
-                    onSelect: onSelectStory,
+                    onSelect: { slug in todayRoute = ReaderRoute(slug: slug) },
                     onOpenLibrary: { selectedTab = .library },
-                    bottomContentPadding: 116
+                    bottomContentPadding: 0
                 )
-            case .library:
-                LibraryScreen(model: libraryModel, onSelect: onSelectStory, bottomContentPadding: 116)
-            case .bedtime, .rewards, .you:
-                PardisPlaceholderTabScreen(tab: selectedTab)
-                    .padding(.bottom, 116)
+                .pardisScreenBackground()
+                .navigationDestination(item: $todayRoute) { route in
+                    ReaderScreen(slug: route.slug)
+                }
             }
+            .tabItem { Label(PardisRootTab.today.title, systemImage: PardisRootTab.today.icon.systemName) }
+            .tag(PardisRootTab.today)
 
-            PardisBottomTabBar(
-                items: tabs.map { PardisTabItem(label: $0.title, icon: $0.icon) },
-                selectedIndex: tabs.firstIndex(of: selectedTab) ?? 0,
-                onSelect: { selectedTab = tabs[$0] }
-            )
-            .padding(PardisSpacing.md)
+            NavigationStack {
+                LibraryScreen(
+                    model: libraryModel,
+                    onSelect: { slug in libraryRoute = ReaderRoute(slug: slug) },
+                    bottomContentPadding: 0
+                )
+                .pardisScreenBackground()
+                .navigationDestination(item: $libraryRoute) { route in
+                    ReaderScreen(slug: route.slug)
+                }
+            }
+            .tabItem { Label(PardisRootTab.library.title, systemImage: PardisRootTab.library.icon.systemName) }
+            .tag(PardisRootTab.library)
+
+            ForEach([PardisRootTab.bedtime, .rewards, .you], id: \.self) { tab in
+                PardisPlaceholderTabScreen(tab: tab)
+                    .pardisScreenBackground()
+                    .tabItem { Label(tab.title, systemImage: tab.icon.systemName) }
+                    .tag(tab)
+            }
         }
-        .pardisScreenBackground()
+        .tint(PardisColors.saffronDeep)
         .task {
             await libraryModel.activate()
         }
