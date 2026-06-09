@@ -43,3 +43,26 @@ targets:
         script: |
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.pardis.reader.uitests
+        TEST_TARGET_NAME: iosApp
+
+# Explicit scheme so `xcodebuild test -scheme iosApp` runs the UI-test tour.
+schemes:
+  iosApp:
+    build:
+      targets:
+        iosApp: all
+        iosAppUITests: [test]
+    test:
+      targets:
+        - iosAppUITests

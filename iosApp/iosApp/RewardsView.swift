@@ -369,6 +369,7 @@ private struct HeroTile: View {
             .frame(width: rewardHeroTileSize)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(character.name)
     }
 }
 
