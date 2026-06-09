@@ -11,6 +11,7 @@ import app.pardis.core.domain.GetProgressUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import app.pardis.core.domain.GetStoryUseCase
 import app.pardis.core.domain.SaveProgressUseCase
+import app.pardis.core.model.Story
 import app.pardis.core.model.StoryPage
 import app.pardis.shared.analytics.Analytics
 import kotlinx.coroutines.delay
@@ -125,27 +126,11 @@ class ReaderViewModel(
             try {
                 val story = getStory(slug)
                 val pagesResult = getStoryPages(slug)
-                val introDur = ((story?.introAudio?.fa?.durationSeconds ?: 0.0) + (story?.introAudio?.en?.durationSeconds ?: 0.0)) / 2.0
-                val outroDur = ((story?.outroAudio?.fa?.durationSeconds ?: 0.0) + (story?.outroAudio?.en?.durationSeconds ?: 0.0)) / 2.0
-
-                // Build simple cues (intro -> pages -> outro), using avg fa/en duration for demo
-                val cues = mutableListOf<SubtitleCue>()
-                var time = 0.0
-                // Intro cue (page 0 special or -1, use 0 for simplicity)
-                if (introDur > 0) {
-                    cues.add(SubtitleCue(pageIndex = 0, startSec = time, endSec = time + introDur))
-                    time += introDur
-                }
-                pagesResult.forEachIndexed { idx, p ->
-                    val dur = ((p.narrationFa?.durationSeconds ?: 0.0) + (p.narrationEn?.durationSeconds ?: 0.0)) / 2.0
-                    if (dur > 0) {
-                        cues.add(SubtitleCue(pageIndex = idx, startSec = time, endSec = time + dur))
-                        time += dur
-                    }
-                }
-                if (outroDur > 0) {
-                    cues.add(SubtitleCue(pageIndex = pagesResult.lastIndex, startSec = time, endSec = time + outroDur))
-                }
+                // Cues are synced to the single video track that actually plays (see buildVideoCueTimeline).
+                val timeline = buildVideoCueTimeline(story, pagesResult)
+                val introDur = timeline.introDuration
+                val outroDur = timeline.outroDuration
+                val cues = timeline.cues
 
                 // Restore last read page if we have saved progress
                 val savedPage = getProgress(slug) ?: 0
@@ -277,4 +262,47 @@ class ReaderViewModel(
             )
         }
     }
+}
+
+/** Page-sync cue timeline for video playback, plus the bookend durations it was built from. */
+internal data class VideoCueTimeline(
+    val cues: List<SubtitleCue>,
+    val introDuration: Double,
+    val outroDuration: Double,
+)
+
+/**
+ * Builds the page-sync cue timeline for video playback against the single video track that actually
+ * plays: the Fa video when present, otherwise En (there is no En-only download path or video-language
+ * toggle in the shells). Durations come from that one track's real per-page/bookend narration lengths.
+ *
+ * This replaces the previous approach of averaging the Fa and En durations, which matched neither
+ * track and accumulated drift across a story. If the chosen track is missing a duration for a given
+ * page, it falls back to the other track's duration rather than dropping the cue.
+ */
+internal fun buildVideoCueTimeline(story: Story?, pages: List<StoryPage>): VideoCueTimeline {
+    val faIsPlaying = story?.videoUrlFa != null
+    fun pick(faSec: Double?, enSec: Double?): Double =
+        if (faIsPlaying) (faSec ?: enSec ?: 0.0) else (enSec ?: faSec ?: 0.0)
+
+    val introDur = pick(story?.introAudio?.fa?.durationSeconds, story?.introAudio?.en?.durationSeconds)
+    val outroDur = pick(story?.outroAudio?.fa?.durationSeconds, story?.outroAudio?.en?.durationSeconds)
+
+    val cues = mutableListOf<SubtitleCue>()
+    var time = 0.0
+    if (introDur > 0) {
+        cues.add(SubtitleCue(pageIndex = 0, startSec = time, endSec = time + introDur))
+        time += introDur
+    }
+    pages.forEachIndexed { idx, p ->
+        val dur = pick(p.narrationFa?.durationSeconds, p.narrationEn?.durationSeconds)
+        if (dur > 0) {
+            cues.add(SubtitleCue(pageIndex = idx, startSec = time, endSec = time + dur))
+            time += dur
+        }
+    }
+    if (outroDur > 0 && pages.isNotEmpty()) {
+        cues.add(SubtitleCue(pageIndex = pages.lastIndex, startSec = time, endSec = time + outroDur))
+    }
+    return VideoCueTimeline(cues = cues, introDuration = introDur, outroDuration = outroDur)
 }
