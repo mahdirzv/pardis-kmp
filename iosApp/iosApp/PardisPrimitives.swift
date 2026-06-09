@@ -17,9 +17,11 @@ enum PardisIconKind {
     case download
     case feather
     case flame
+    case grid
     case heart
     case home
     case languages
+    case listView
     case lock
     case mic
     case moon
@@ -62,12 +64,16 @@ enum PardisIconKind {
             return "pencil"
         case .flame:
             return "flame.fill"
+        case .grid:
+            return "square.grid.2x2"
         case .heart:
             return "heart"
         case .home:
             return "house"
         case .languages:
             return "globe"
+        case .listView:
+            return "list.bullet"
         case .lock:
             return "lock.fill"
         case .mic:
@@ -365,25 +371,26 @@ struct PardisAsyncImageFrame: View {
     var placeholderText: String = "No illustration"
 
     var body: some View {
-        Group {
-            if let url {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    PardisComponentColors.mediaPlaceholderContainer
-                }
-            } else {
-                ZStack {
-                    PardisComponentColors.mediaPlaceholderContainer
+        // Size the box first (fill width when `width` is nil — e.g. grid cells), then fill it with
+        // the image via overlay + clip so scaledToFill crops to the box instead of overflowing it.
+        PardisComponentColors.mediaPlaceholderContainer
+            .frame(width: width, height: height)
+            .frame(maxWidth: width == nil ? .infinity : width)
+            .overlay {
+                if let url {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Color.clear
+                    }
+                } else {
                     Text(placeholderText)
                         .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
                         .foregroundStyle(PardisComponentColors.mediaPlaceholderContent)
                 }
             }
-        }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
-        .accessibilityLabel(accessibilityLabel)
+            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
+            .accessibilityLabel(accessibilityLabel)
     }
 }
 

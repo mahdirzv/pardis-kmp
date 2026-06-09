@@ -1,20 +1,23 @@
 import SwiftUI
 
+// Brand typefaces, mirroring Android PardisFonts (bundled via UIAppFonts in Info.plist; the .ttf
+// files live in iosApp/Fonts). All are variable fonts, so .weight() varies the weight axis.
+// display → Bricolage Grotesque, body → Plus Jakarta Sans, persian → Vazirmatn, mono → JetBrains Mono.
 struct PardisFonts {
     static func display(size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        .custom("Bricolage Grotesque", fixedSize: size).weight(weight)
     }
 
     static func body(size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        .custom("Plus Jakarta Sans", fixedSize: size).weight(weight)
     }
 
     static func persian(size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        .custom("Vazirmatn", fixedSize: size).weight(weight)
     }
 
     static func mono(size: CGFloat, weight: Font.Weight) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        .custom("JetBrains Mono", fixedSize: size).weight(weight)
     }
 }
 
@@ -83,6 +86,11 @@ struct PardisGradients {
         colors: [PardisColors.saffron, PardisColors.sun, PardisColors.sunPale],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
+    )
+    static let night = LinearGradient(
+        colors: [PardisColors.indigoDeep, PardisColors.indigo, PardisColors.violet],
+        startPoint: .top,
+        endPoint: .bottom
     )
 }
 

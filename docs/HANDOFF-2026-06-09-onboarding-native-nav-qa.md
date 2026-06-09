@@ -89,8 +89,14 @@ followed throughout. **To re-verify, use the `verify-ios-without-xcode` skill** 
 - ✅ **Rewards + Character** (`a561828`): `RewardsView` (level hero, stats, streak calendar, next
   badge, word garden, heroes scroll, badges grid), `CharacterView`. Added `PardisRing`/
   `PardisProgressBar`, lapis/saffron gradients, 8 icons, iOS badge-icon mapping. All 5 tabs now real.
-- ⏳ **Today/Library v2 visual rework** (iOS still on v1 layout — functional, just not the v2 look).
+- ✅ **Today + Library v2 rework** (branch `feat/ios-parity-rest`): `TodayView` (greeting, streak
+  strip, continue-reading, tonight's-bedtime, new-this-week, word-of-day, collections) + `LibraryView`
+  (grid/list toggle, search, filter pills, cover grid, by-age tiles). CI-built + tour-verified.
 - ⏳ **Reader v2 rework** (iOS reader is the old layout — functional), **Finish** celebration, **Detail** route.
+
+**CI note:** iOS build is split — `kmp-build.yml` `ios-app` is the fast ~3-min compile gate (every
+push); the ~20-min UI-test screenshot tour lives in `ios-screenshots.yml` (on-demand / PR-to-main).
+See the `verify-ios-without-xcode` skill.
 
 **Known iOS follow-ups:** SceneArt omits the faint (0.14α) Persian-motif PNG overlay (needs
 asset-catalog images: paisley/vine/rosette). Onboarding omits the paisley header overlay similarly.

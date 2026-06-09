@@ -111,11 +111,12 @@ private struct MainShellView: View {
         // Bedtime/Rewards remain placeholders until those features land; You is wired to the profile card.
         TabView(selection: $selectedTab) {
             NavigationStack {
-                TodayScreen(
+                TodayView(
                     model: libraryModel,
-                    onSelect: { slug in todayRoute = ReaderRoute(slug: slug) },
+                    activeName: activeProfile.name,
+                    onOpenStory: { todayRoute = ReaderRoute(slug: $0) },
                     onOpenLibrary: { selectedTab = .library },
-                    bottomContentPadding: 0
+                    onOpenBedtime: { selectedTab = .bedtime }
                 )
                 .pardisScreenBackground()
                 .navigationDestination(item: $todayRoute) { route in
@@ -126,10 +127,9 @@ private struct MainShellView: View {
             .tag(PardisRootTab.today)
 
             NavigationStack {
-                LibraryScreen(
+                LibraryView(
                     model: libraryModel,
-                    onSelect: { slug in libraryRoute = ReaderRoute(slug: slug) },
-                    bottomContentPadding: 0
+                    onOpenStory: { libraryRoute = ReaderRoute(slug: $0) }
                 )
                 .pardisScreenBackground()
                 .navigationDestination(item: $libraryRoute) { route in
@@ -181,245 +181,6 @@ private struct MainShellView: View {
         .task {
             await libraryModel.activate()
         }
-    }
-}
-
-private struct TodayScreen: View {
-    let model: LibrarySharedViewModel
-    let onSelect: (String) -> Void
-    let onOpenLibrary: () -> Void
-    var bottomContentPadding: CGFloat
-
-    private var featuredStory: Story? {
-        model.stories.first
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: PardisSpacing.md) {
-                PardisScreenHeader(title: "Today", subtitle: "A calm reading rhythm for the family")
-                    .accessibilityAddTraits(.isHeader)
-
-                PardisMetricStrip(metrics: [
-                    PardisMetric(
-                        value: model.stories.isEmpty && model.isLoading ? "..." : "\(model.stories.count)",
-                        label: "Stories",
-                        tone: .saffron
-                    ),
-                    PardisMetric(
-                        value: "\(model.cachedStorySlugs.count)",
-                        label: model.totalCachedLabel.isEmpty ? "Offline" : model.totalCachedLabel,
-                        tone: .mint
-                    ),
-                    PardisMetric(
-                        value: "\(model.ageBands.count)",
-                        label: "Age bands",
-                        tone: .indigo
-                    )
-                ])
-
-                if let story = featuredStory {
-                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                    PardisFeaturedStoryCard(
-                        titleEn: story.titleEn,
-                        titleFa: story.titleFa,
-                        ageBand: story.ageBand,
-                        minutes: story.minutes,
-                        vocabCount: story.vocabCount,
-                        coverUrl: coverUrlStr.flatMap(URL.init(string:)),
-                        onOpen: { onSelect(story.slug) },
-                        eyebrow: "Continue reading",
-                        blurb: story.blurbEn,
-                        actionLabel: "Open story"
-                    )
-                } else {
-                    PardisPanel {
-                        Text(model.isLoading ? "Loading today's stories..." : "Refresh Library to load today's reading list.")
-                            .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
-                            .foregroundStyle(PardisColors.inkSoft)
-                    }
-                }
-
-                PardisSectionHeader(
-                    title: "For later",
-                    subtitle: "Short stories that work well before bedtime",
-                    actionLabel: "Library",
-                    action: onOpenLibrary
-                )
-
-                ForEach(Array(model.stories.dropFirst().prefix(3)), id: \.slug) { story in
-                    let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                    PardisStoryCard(
-                        titleEn: story.titleEn,
-                        titleFa: story.titleFa,
-                        ageBand: story.ageBand,
-                        minutes: story.minutes,
-                        vocabCount: story.vocabCount,
-                        coverUrl: coverUrlStr.flatMap(URL.init(string:)),
-                        downloadProgress: model.downloadProgress[story.slug],
-                        downloadedSizeLabel: model.downloadedSizeLabels[story.slug],
-                        isFailed: model.failedDownloads.contains(story.slug),
-                        onSelect: { onSelect(story.slug) },
-                        onDownload: { model.downloadStory(story.slug) },
-                        onCancel: { model.cancelDownload(story.slug) },
-                        onRemove: { model.removeDownload(story.slug) }
-                    )
-                }
-
-                PardisPanel {
-                    HStack(spacing: PardisSpacing.sm) {
-                        PardisIcon(kind: .star, color: PardisColors.saffronDeep)
-                        VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
-                            Text("Vocabulary focus")
-                                .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
-                                .foregroundStyle(PardisColors.ink)
-                            Text(featuredStory.map { "\($0.vocabCount) words are ready inside \($0.titleEn)." } ?? "Open a story to start collecting new Persian words.")
-                                .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
-                                .foregroundStyle(PardisColors.inkSoft)
-                        }
-                    }
-                }
-            }
-            .padding()
-            .safeAreaPadding(.bottom, bottomContentPadding)
-        }
-    }
-}
-
-struct LibraryScreen: View {
-    let model: LibrarySharedViewModel
-    var onSelect: (String) -> Void
-    var bottomContentPadding: CGFloat = 0
-
-    private var storySectionSubtitle: String {
-        if let band = model.selectedAgeBand {
-            return "Filtered for \(band)"
-        }
-        return "All available stories"
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: PardisSpacing.sm) {
-            PardisScreenHeader(title: "Pardis", subtitle: "Persian heritage stories")
-                .accessibilityAddTraits(.isHeader)
-
-            PardisMetricStrip(metrics: [
-                PardisMetric(
-                    value: "\(model.stories.count)",
-                    label: "Stories",
-                    tone: .saffron
-                ),
-                PardisMetric(
-                    value: "\(model.ageBands.count)",
-                    label: "Age bands",
-                    tone: .indigo
-                ),
-                PardisMetric(
-                    value: "\(model.cachedStorySlugs.count)",
-                    label: model.totalCachedLabel.isEmpty ? "Offline" : model.totalCachedLabel,
-                    tone: .mint
-                )
-            ])
-
-            if let story = model.stories.first {
-                let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                PardisFeaturedStoryCard(
-                    titleEn: story.titleEn,
-                    titleFa: story.titleFa,
-                    ageBand: story.ageBand,
-                    minutes: story.minutes,
-                    vocabCount: story.vocabCount,
-                    coverUrl: coverUrlStr.flatMap(URL.init(string:)),
-                    onOpen: { onSelect(story.slug) },
-                    blurb: story.blurbEn
-                )
-            }
-
-            PardisPanel {
-                HStack(spacing: PardisSpacing.sm) {
-                    PardisIcon(kind: .search, size: 16, color: PardisColors.inkMuted)
-                    TextField(
-                        "Search stories",
-                        text: Binding(
-                            get: { model.searchQuery },
-                            set: { query in
-                                model.searchQuery = query
-                                model.search(query: query)
-                            }
-                        )
-                    )
-                        .textFieldStyle(.plain)
-                }
-                .padding(.horizontal, PardisSpacing.sm)
-                .frame(height: 44)
-                .background(PardisColors.backgroundAlt)
-                .clipShape(RoundedRectangle(cornerRadius: PardisRadius.sm, style: .continuous))
-            }
-
-            if !model.ageBands.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: PardisSpacing.sm) {
-                        PardisFilterPill(title: "All ages", selected: model.selectedAgeBand == nil) {
-                            model.setAgeBand(nil)
-                        }
-                        ForEach(model.ageBands, id: \.self) { band in
-                            PardisFilterPill(title: band, selected: model.selectedAgeBand == band) {
-                                model.setAgeBand(model.selectedAgeBand == band ? nil : band)
-                            }
-                        }
-                    }
-                }
-            }
-
-            PardisPanel {
-                Button(model.showOnlyCached ? "Show all stories" : "Show only offline cached") {
-                    model.toggleShowOnlyCached()
-                }
-
-                if !model.totalCachedLabel.isEmpty {
-                    Text("Cached offline: \(model.totalCachedLabel)")
-                        .font(.caption)
-                        .foregroundStyle(PardisColors.inkSoft)
-                }
-            }
-
-            PardisSectionHeader(
-                title: "Stories",
-                subtitle: storySectionSubtitle,
-                actionLabel: "Refresh",
-                action: { model.refresh() }
-            )
-
-            if model.isLoading && model.stories.isEmpty {
-                ProgressView().tint(PardisColors.saffron)
-            }
-
-            List(model.stories, id: \.slug) { story in
-                let coverUrlStr = model.localCoverUrls[story.slug] ?? story.coverUrl
-                PardisStoryCard(
-                    titleEn: story.titleEn,
-                    titleFa: story.titleFa,
-                    ageBand: story.ageBand,
-                    minutes: story.minutes,
-                    vocabCount: story.vocabCount,
-                    coverUrl: coverUrlStr.flatMap(URL.init(string:)),
-                    downloadProgress: model.downloadProgress[story.slug],
-                    downloadedSizeLabel: model.downloadedSizeLabels[story.slug],
-                    isFailed: model.failedDownloads.contains(story.slug),
-                    onSelect: { onSelect(story.slug) },
-                    onDownload: { model.downloadStory(story.slug) },
-                    onCancel: { model.cancelDownload(story.slug) },
-                    onRemove: { model.removeDownload(story.slug) }
-                )
-                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .safeAreaPadding(.bottom, bottomContentPadding)
-        }
-        .padding()
     }
 }
 
