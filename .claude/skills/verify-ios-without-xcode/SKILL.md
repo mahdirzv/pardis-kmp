@@ -19,13 +19,22 @@ xcrun --sdk iphonesimulator --show-sdk-path 2>&1  # → "SDK ... cannot be locat
 Shared **Kotlin** still verifies locally (no Xcode): `./gradlew :PardisAndroidApp:compileDebugKotlin`
 and `:shared:testAndroidHostTest`. Only the **SwiftUI app build** needs the macOS CI runner.
 
-## The build already exists
+## Two workflows: fast gate vs. on-demand screenshots
 
-`.github/workflows/kmp-build.yml` → job **`ios-app`** is the source of truth. It:
-`xcodegen generate` (the `.xcodeproj` is gitignored, regenerated from `iosApp/project.yml`) →
-`xcodebuild` for the simulator with `CODE_SIGNING_ALLOWED=NO`. The Kotlin `Shared.framework` is
-built mid-`xcodebuild` by the `embedAndSignAppleFrameworkForXcode` pre-build script. Sibling jobs:
-`android` (Linux) and `ios-framework` (Kotlin/Native link only).
+Split intentionally so routine iteration is cheap:
+
+- **`.github/workflows/kmp-build.yml` → `ios-app`** — the fast **compile gate (~3 min)**: `xcodegen
+  generate` (the `.xcodeproj` is gitignored, regenerated from `iosApp/project.yml`) → `xcodebuild …
+  build` for the simulator, no signing. The `Shared.framework` is built mid-build by the
+  `embedAndSignAppleFrameworkForXcode` pre-build script. Sibling jobs: `android`, `ios-framework`.
+  **This is the iteration loop** — runs on push/PR to main and `workflow_dispatch`.
+- **`.github/workflows/ios-screenshots.yml`** — the **slow visual tour (~15–20 min)**: `xcodebuild
+  test` runs the UI tour and uploads the `ios-screenshots` artifact. Runs **on-demand**
+  (`workflow_dispatch`) and on PRs to main. Don't put this in the per-push loop — `xcodebuild test`
+  roughly 7×'d the build time (3 min → 20 min) when it lived in `ios-app`.
+
+Rule of thumb: iterate against the ~3-min compile gate; fire the screenshot tour only when you
+actually need to see the screens.
 
 ## The ritual
 

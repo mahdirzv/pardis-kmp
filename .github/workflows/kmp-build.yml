@@ -60,48 +60,15 @@ jobs:
         run: xcodegen generate
       - name: Build iOS app (simulator, no signing)
         run: |
-          # Build a single concrete simulator arch: a generic destination yields ARCHS="arm64 x86_64"
-          # + CURRENT_ARCH=undefined_arch, which embedAndSignAppleFrameworkForXcode can't resolve.
-          # -derivedDataPath so the next step knows where the built .app is.
+          # Compile-only gate (~3 min). A generic destination yields ARCHS="arm64 x86_64" +
+          # CURRENT_ARCH=undefined_arch, which embedAndSignAppleFrameworkForXcode can't resolve,
+          # so pin a single concrete simulator arch. The full UI-test screenshot tour lives in
+          # ios-screenshots.yml (on-demand) so routine iteration stays fast.
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
             -arch arm64 \
-            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
-      - name: UI-test tour (per-screen screenshots)
-        run: |
-          set -uo pipefail
-          # Pick the first available iPhone simulator (robust to runner OS/device churn).
-          UDID=$(xcrun simctl list devices available --json \
-            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for rt in d for x in d[rt] if 'iPhone' in x['name']))")
-          echo "Using simulator $UDID"
-          xcrun simctl boot "$UDID" || true
-          xcrun simctl bootstatus "$UDID" -b
-          # Runs ScreenshotTests, which navigates each screen and saves a screenshot attachment.
-          # `|| true`: screenshots are best-effort; the separate build step above is the compile gate.
-          xcodebuild test \
-            -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -configuration Debug \
-            -destination "id=$UDID" \
-            -derivedDataPath build \
-            -resultBundlePath build/result.xcresult \
-            CODE_SIGNING_ALLOWED=NO || true
-      - name: Extract screenshots from .xcresult
-        if: always()
-        run: |
-          brew install chargepoint/xcparse/xcparse
-          mkdir -p screenshots
-          xcparse screenshots build/result.xcresult screenshots/ || true
-          ls -la screenshots/ || true
-      - name: Upload screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-screenshots
-          path: screenshots/
-          if-no-files-found: warn
