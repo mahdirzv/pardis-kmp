@@ -20,6 +20,11 @@ targets:
       - path: iosApp
         excludes:
           - "Info.plist"
+          - "Fonts"
+      # Brand fonts — declared explicitly as resources so they're guaranteed in the app bundle
+      # (registered at launch by PardisFontRegistry), not left to source-glob auto-detection.
+      - path: iosApp/Fonts
+        buildPhase: resources
       # Generated design-system tokens (PardisColors/PardisSpacing/PardisRadius) live outside iosApp/.
       - path: ../design-system/generated/ios/PardisTokens.swift
     settings:
