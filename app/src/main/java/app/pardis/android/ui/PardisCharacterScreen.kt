@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisRadius
 import app.pardis.design.PardisSpacing
+import app.pardis.core.model.RivanaCharacter
 
 private fun toneAccent(tone: String): Color = when (tone) {
     "saffron" -> PardisColors.saffronDeep

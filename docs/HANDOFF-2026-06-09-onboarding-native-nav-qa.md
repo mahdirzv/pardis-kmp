@@ -58,8 +58,7 @@ OfflineDownloadManager 5, SharedInit 3).
 ## Verification Status
 
 - ✅ **iOS native TabView + offline caching** — user verified on device (2026-06-09).
-- ⏳ **Android M3 NavigationBar** — compiles, but on-device look/insets NOT yet eyeballed (device had
-  dropped off adb). Quick visual check needed when connected.
+- ✅ **Android M3 NavigationBar** — user verified on device (2026-06-09).
 
 ## What's Left
 
@@ -71,9 +70,30 @@ OfflineDownloadManager 5, SharedInit 3).
 - ✅ Done: #1 Koin hardening, #2 commonTest, #3 offline tests, #6 subtitle cues.
 
 ### iOS parity (largest chunk) — these shipped Android-only, need SwiftUI equivalents
-- **Onboarding profile picker** + launch gate (iOS has the `ProfileViewModel` contract via
-  `PardisViewModelProvider.profileViewModel()`, no screen).
-- **Lullaby player**, **Character**, **reader v2 rework**, **Finish** celebration.
+
+All on branch `feat/ios-parity-onboarding` (draft PR #2 → `main`). **CI-verified to BUILD**: the
+`ios-app` job (macOS runner, `xcodegen` + `xcodebuild` simulator) is green — all SwiftUI compiles +
+links. Build ≠ visual QA; a simulator/device pass is still worthwhile before merge. kmpSkill §10/§12
+followed throughout. **To re-verify, use the `verify-ios-without-xcode` skill** (`.claude/skills/`).
+
+- ✅ **Onboarding picker + launch gate + switch-reader** (`5d2442e`): `ProfileSharedViewModel`,
+  `OnboardingView`, `RootShellView` gate.
+- ✅ **You screen — full** (`628eb2c`): `YouView` (profile card on dawn gradient, Reading/Family/About
+  settings groups, decorative dark-mode toggle, footer). Added `PardisGradients.dawn` + 6 icon kinds.
+- ✅ **Rivana data hoisted to `core/model`** (`05f3d67`, **Android-verified**): `RivanaContent` object +
+  data classes + `RivanaBadgeIcon` enum; Android rewired to `.toPardisIconKind()`. iOS reads
+  `RivanaContent.shared.*`.
+- ✅ **Bedtime + Lullaby player** (`f0627d8`): `PardisSceneArt` (Canvas port of the 7 scene variants),
+  `BedtimeView`, `LullabyView` (animated MoonGlow/Waveform, sleep-timer sheet). Added on-dark token
+  family + bedtime/lullaby night gradients + check/clock/pause icons.
+- ✅ **Rewards + Character** (`a561828`): `RewardsView` (level hero, stats, streak calendar, next
+  badge, word garden, heroes scroll, badges grid), `CharacterView`. Added `PardisRing`/
+  `PardisProgressBar`, lapis/saffron gradients, 8 icons, iOS badge-icon mapping. All 5 tabs now real.
+- ⏳ **Today/Library v2 visual rework** (iOS still on v1 layout — functional, just not the v2 look).
+- ⏳ **Reader v2 rework** (iOS reader is the old layout — functional), **Finish** celebration, **Detail** route.
+
+**Known iOS follow-ups:** SceneArt omits the faint (0.14α) Persian-motif PNG overlay (needs
+asset-catalog images: paisley/vine/rosette). Onboarding omits the paisley header overlay similarly.
 
 ### Feature backlog (named earlier, not started)
 - **Parents'/Parent corner** ("I'm a parent" + Settings entries are stubs).

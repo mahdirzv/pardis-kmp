@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import app.pardis.design.PardisRadius
 import app.pardis.design.PardisColors
 import app.pardis.design.PardisSpacing
+import app.pardis.core.model.Lullaby
+import app.pardis.core.model.RivanaContent
 import androidx.compose.runtime.getValue
 
 @Composable
@@ -41,7 +43,7 @@ internal fun BedtimeScreen(onOpenLullaby: (Int) -> Unit, bottomContentPadding: a
                     PersianReaderInline("وقتِ خواب · لای‌لای", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkOnDarkFaint)
                 }
             }
-            item { BedtimeFeatured(rivanaLullabies[0], onClick = { onOpenLullaby(0) }, Modifier.padding(horizontal = gutter)) }
+            item { BedtimeFeatured(RivanaContent.lullabies[0], onClick = { onOpenLullaby(0) }, Modifier.padding(horizontal = gutter)) }
             item { WindDownCard(Modifier.padding(horizontal = gutter)) }
             item {
                 Text(
@@ -52,7 +54,7 @@ internal fun BedtimeScreen(onOpenLullaby: (Int) -> Unit, bottomContentPadding: a
                     modifier = Modifier.padding(horizontal = gutter, vertical = PardisSpacing.xs),
                 )
             }
-            itemsIndexed(rivanaLullabies.drop(1)) { i, l -> LullabyRow(l, onClick = { onOpenLullaby(i + 1) }, Modifier.padding(horizontal = gutter)) }
+            itemsIndexed(RivanaContent.lullabies.drop(1)) { i, l -> LullabyRow(l, onClick = { onOpenLullaby(i + 1) }, Modifier.padding(horizontal = gutter)) }
             item {
                 Text(
                     "شب بخیر · خواب‌های خوش",

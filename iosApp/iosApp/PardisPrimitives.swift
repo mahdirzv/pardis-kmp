@@ -6,44 +6,98 @@ private let pardisFeaturedStoryCoverHeight: CGFloat = 156
 
 enum PardisIconKind {
     case back
+    case bell
     case book
+    case check
+    case chevRight
+    case clock
     case close
+    case compass
+    case crown
     case download
+    case feather
+    case flame
+    case heart
     case home
+    case languages
+    case lock
+    case mic
     case moon
+    case pause
     case play
     case refresh
     case search
+    case settings
+    case shield
+    case sprout
     case star
+    case starFill
     case trash
     case user
+    case volume
 
     var systemName: String {
         switch self {
         case .back:
             return "chevron.left"
+        case .bell:
+            return "bell"
         case .book:
             return "book.closed"
+        case .check:
+            return "checkmark"
+        case .chevRight:
+            return "chevron.right"
+        case .clock:
+            return "clock"
         case .close:
             return "xmark"
+        case .compass:
+            return "safari.fill"
+        case .crown:
+            return "crown.fill"
         case .download:
             return "arrow.down.to.line"
+        case .feather:
+            return "pencil"
+        case .flame:
+            return "flame.fill"
+        case .heart:
+            return "heart"
         case .home:
             return "house"
+        case .languages:
+            return "globe"
+        case .lock:
+            return "lock.fill"
+        case .mic:
+            return "mic.fill"
         case .moon:
             return "moon"
+        case .pause:
+            return "pause.fill"
         case .play:
             return "play.fill"
         case .refresh:
             return "arrow.clockwise"
         case .search:
             return "magnifyingglass"
+        case .settings:
+            return "gearshape"
+        case .shield:
+            return "checkmark.shield"
+        case .sprout:
+            return "leaf.fill"
         case .star:
             return "star"
+        case .starFill:
+            return "star.fill"
         case .trash:
             return "trash"
         case .user:
             return "person"
+        case .volume:
+            return "speaker.wave.2"
         }
     }
 }
