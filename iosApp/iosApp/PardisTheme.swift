@@ -84,6 +84,11 @@ struct PardisGradients {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+    static let night = LinearGradient(
+        colors: [PardisColors.indigoDeep, PardisColors.indigo, PardisColors.violet],
+        startPoint: .top,
+        endPoint: .bottom
+    )
 }
 
 struct PardisScreenBackground: ViewModifier {

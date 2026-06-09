@@ -17,9 +17,11 @@ enum PardisIconKind {
     case download
     case feather
     case flame
+    case grid
     case heart
     case home
     case languages
+    case listView
     case lock
     case mic
     case moon
@@ -62,12 +64,16 @@ enum PardisIconKind {
             return "pencil"
         case .flame:
             return "flame.fill"
+        case .grid:
+            return "square.grid.2x2"
         case .heart:
             return "heart"
         case .home:
             return "house"
         case .languages:
             return "globe"
+        case .listView:
+            return "list.bullet"
         case .lock:
             return "lock.fill"
         case .mic:
