@@ -8,13 +8,16 @@ enum PardisIconKind {
     case back
     case bell
     case book
+    case check
     case chevRight
+    case clock
     case close
     case download
     case heart
     case home
     case languages
     case moon
+    case pause
     case play
     case refresh
     case search
@@ -33,8 +36,12 @@ enum PardisIconKind {
             return "bell"
         case .book:
             return "book.closed"
+        case .check:
+            return "checkmark"
         case .chevRight:
             return "chevron.right"
+        case .clock:
+            return "clock"
         case .close:
             return "xmark"
         case .download:
@@ -47,6 +54,8 @@ enum PardisIconKind {
             return "globe"
         case .moon:
             return "moon"
+        case .pause:
+            return "pause.fill"
         case .play:
             return "play.fill"
         case .refresh:

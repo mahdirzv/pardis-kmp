@@ -32,6 +32,22 @@ struct PardisComponentColors {
     static let mediaPlaceholderContent = PardisColors.inkSoft
 }
 
+/// On-dark color tokens + scrim, mirroring the hand-authored extensions in Android's
+/// `app/.../design/PardisTokens.kt` (the generated token file carries only `inkOnDark`).
+/// Added here in the hand-authored iOS theme layer rather than the generated file.
+extension PardisColors {
+    static let inkOnDarkSoft = Color.white.opacity(0.85)   // secondary text
+    static let inkOnDarkMuted = Color.white.opacity(0.70)  // labels / eyebrows
+    static let inkOnDarkFaint = Color.white.opacity(0.50)  // faint text / tracks
+    static let surfaceOnDark = Color.white.opacity(0.16)
+    static let surfaceOnDarkSoft = Color.white.opacity(0.12)
+    static let surfaceOnDarkFaint = Color.white.opacity(0.08) // progress tracks
+    static let scrimSoft = Color.black.opacity(0.45)
+    // Deep-night anchors used by the bedtime/lullaby gradients (mirror Android's inline hexes).
+    static let nightMid = Color(hex: "#0F1330")
+    static let nightDeep = Color(hex: "#0A0E22")
+}
+
 /// Semantic gradient tokens, mirroring Android `PardisGradients`. Lives in the hand-authored iOS
 /// theme layer (not the generated token file). 135° ≈ topLeading → bottomTrailing.
 struct PardisGradients {
@@ -39,6 +55,20 @@ struct PardisGradients {
         colors: [PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
+    )
+    static let bedtimeNight = LinearGradient(
+        colors: [PardisColors.indigoDeep, PardisColors.nightMid, PardisColors.nightDeep],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let lullabyNight = LinearGradient(
+        stops: [
+            .init(color: PardisColors.indigoDeep, location: 0.0),
+            .init(color: PardisColors.indigoDarker, location: 0.6),
+            .init(color: PardisColors.nightDeep, location: 1.0),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
     )
 }
 

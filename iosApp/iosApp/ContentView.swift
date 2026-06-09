@@ -7,6 +7,10 @@ private struct ReaderRoute: Hashable {
     let slug: String
 }
 
+private struct LullabyRoute: Hashable {
+    let index: Int
+}
+
 private struct SelectedVocab: Identifiable {
     let vocab: VocabItem
     var id: String { "\(vocab.fa)-\(vocab.translit)-\(vocab.en)" }
@@ -104,6 +108,7 @@ private struct MainShellView: View {
     // so opening a story pushes within that tab rather than over the whole shell.
     @State private var todayRoute: ReaderRoute? = nil
     @State private var libraryRoute: ReaderRoute? = nil
+    @State private var lullabyRoute: LullabyRoute? = nil
 
     var body: some View {
         // Native SwiftUI TabView — gets Liquid Glass automatically on iOS 26 and platform-correct
@@ -139,12 +144,22 @@ private struct MainShellView: View {
             .tabItem { Label(PardisRootTab.library.title, systemImage: PardisRootTab.library.icon.systemName) }
             .tag(PardisRootTab.library)
 
-            ForEach([PardisRootTab.bedtime, .rewards], id: \.self) { tab in
-                PardisPlaceholderTabScreen(tab: tab)
-                    .pardisScreenBackground()
-                    .tabItem { Label(tab.title, systemImage: tab.icon.systemName) }
-                    .tag(tab)
+            NavigationStack {
+                BedtimeView(onOpenLullaby: { index in lullabyRoute = LullabyRoute(index: index) })
+                    .navigationDestination(item: $lullabyRoute) { route in
+                        LullabyView(
+                            lullaby: RivanaContent.shared.lullabies[route.index],
+                            onBack: { lullabyRoute = nil }
+                        )
+                    }
             }
+            .tabItem { Label(PardisRootTab.bedtime.title, systemImage: PardisRootTab.bedtime.icon.systemName) }
+            .tag(PardisRootTab.bedtime)
+
+            PardisPlaceholderTabScreen(tab: .rewards)
+                .pardisScreenBackground()
+                .tabItem { Label(PardisRootTab.rewards.title, systemImage: PardisRootTab.rewards.icon.systemName) }
+                .tag(PardisRootTab.rewards)
 
             NavigationStack {
                 YouView(
