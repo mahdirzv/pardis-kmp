@@ -32,6 +32,16 @@ struct PardisComponentColors {
     static let mediaPlaceholderContent = PardisColors.inkSoft
 }
 
+/// Semantic gradient tokens, mirroring Android `PardisGradients`. Lives in the hand-authored iOS
+/// theme layer (not the generated token file). 135° ≈ topLeading → bottomTrailing.
+struct PardisGradients {
+    static let dawn = LinearGradient(
+        colors: [PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+}
+
 struct PardisScreenBackground: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 

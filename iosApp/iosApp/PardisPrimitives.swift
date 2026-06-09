@@ -6,31 +6,45 @@ private let pardisFeaturedStoryCoverHeight: CGFloat = 156
 
 enum PardisIconKind {
     case back
+    case bell
     case book
+    case chevRight
     case close
     case download
+    case heart
     case home
+    case languages
     case moon
     case play
     case refresh
     case search
+    case settings
     case shield
     case star
     case trash
     case user
+    case volume
 
     var systemName: String {
         switch self {
         case .back:
             return "chevron.left"
+        case .bell:
+            return "bell"
         case .book:
             return "book.closed"
+        case .chevRight:
+            return "chevron.right"
         case .close:
             return "xmark"
         case .download:
             return "arrow.down.to.line"
+        case .heart:
+            return "heart"
         case .home:
             return "house"
+        case .languages:
+            return "globe"
         case .moon:
             return "moon"
         case .play:
@@ -39,6 +53,8 @@ enum PardisIconKind {
             return "arrow.clockwise"
         case .search:
             return "magnifyingglass"
+        case .settings:
+            return "gearshape"
         case .shield:
             return "checkmark.shield"
         case .star:
@@ -47,6 +63,8 @@ enum PardisIconKind {
             return "trash"
         case .user:
             return "person"
+        case .volume:
+            return "speaker.wave.2"
         }
     }
 }

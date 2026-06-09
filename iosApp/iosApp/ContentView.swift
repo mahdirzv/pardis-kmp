@@ -147,8 +147,12 @@ private struct MainShellView: View {
             }
 
             NavigationStack {
-                YouTabView(activeProfile: activeProfile, onSwitchProfile: onSwitchProfile)
-                    .pardisScreenBackground()
+                YouView(
+                    activeProfile: activeProfile,
+                    downloadCount: libraryModel.cachedStorySlugs.count,
+                    onSwitchProfile: onSwitchProfile
+                )
+                .pardisScreenBackground()
             }
             .tabItem { Label(PardisRootTab.you.title, systemImage: PardisRootTab.you.icon.systemName) }
             .tag(PardisRootTab.you)
@@ -279,89 +283,6 @@ private struct PardisPlaceholderTabScreen: View {
             Spacer(minLength: 0)
         }
         .padding()
-    }
-}
-
-// Minimal "You" tab: profile card + switch-reader entry point, mirroring Android `YouScreen`'s
-// `YouProfileCard`. Settings groups / appearance toggle / dawn gradient are deferred to the
-// dedicated You-parity task; this slice wires the switch-profile path live.
-private let youAvatarSize: CGFloat = 72
-
-private struct YouTabView: View {
-    let activeProfile: ChildProfile
-    let onSwitchProfile: () -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: PardisSpacing.md) {
-                Text("You")
-                    .font(PardisFonts.display(size: PardisTypography.xxl, weight: .heavy))
-                    .foregroundStyle(PardisColors.ink)
-
-                YouProfileCard(activeProfile: activeProfile, onSwitchProfile: onSwitchProfile)
-
-                VStack(spacing: PardisSpacing.xs) {
-                    Text("ریوانا · قصه‌های پارسی برای کودکان")
-                        .font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular))
-                        .foregroundStyle(PardisColors.inkFaint)
-                    Text("PARDIS · v1.0")
-                        .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
-                        .foregroundStyle(PardisColors.inkFaint)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, PardisSpacing.md)
-            }
-            .padding()
-        }
-    }
-}
-
-private struct YouProfileCard: View {
-    let activeProfile: ChildProfile
-    let onSwitchProfile: () -> Void
-
-    var body: some View {
-        HStack(spacing: PardisSpacing.md) {
-            ZStack {
-                Circle().fill(profileToneGradient(activeProfile.tone))
-                Text(String(activeProfile.name.prefix(1)))
-                    .font(PardisFonts.display(size: PardisTypography.xxxl, weight: .bold))
-                    .foregroundStyle(PardisColors.inkOnDark)
-            }
-            .frame(width: youAvatarSize, height: youAvatarSize)
-
-            VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
-                Text(activeProfile.name)
-                    .font(PardisFonts.display(size: PardisTypography.xl, weight: .heavy))
-                    .foregroundStyle(PardisColors.ink)
-                Text("Age \(activeProfile.age) · \(activeProfile.streak)-night streak")
-                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
-                    .foregroundStyle(PardisColors.inkSoft)
-
-                Button(action: onSwitchProfile) {
-                    HStack(spacing: PardisSpacing.sm - PardisSpacing.xxs) {
-                        PardisIcon(kind: .user, size: 15, color: PardisColors.ink)
-                        Text("Switch reader")
-                            .font(PardisFonts.body(size: PardisTypography.sm, weight: .bold))
-                            .foregroundStyle(PardisColors.ink)
-                    }
-                    .padding(.horizontal, PardisSpacing.md - PardisSpacing.xxs)
-                    .padding(.vertical, PardisSpacing.sm)
-                    .background(PardisColors.surface)
-                    .clipShape(Capsule(style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .padding(.top, PardisSpacing.sm)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(PardisSpacing.lg - PardisSpacing.xs)
-        .background(PardisColors.surfacePeach)
-        .clipShape(RoundedRectangle(cornerRadius: PardisRadius.xl, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PardisRadius.xl, style: .continuous)
-                .stroke(PardisColors.border, lineWidth: PardisSpacing.hairline)
-        )
     }
 }
 
