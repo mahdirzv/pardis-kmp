@@ -43,6 +43,24 @@ targets:
           - -framework
           - Shared
     preBuildScripts:
+      # Keep the (gitignored) .xcodeproj in sync with this spec. If project.yml changed
+      # since the last generate, regenerate so additions like font resources aren't missed.
+      # NOTE: the regenerated project applies to the NEXT build (Xcode has the current one
+      # loaded), so a project.yml change needs one extra build — far better than silently
+      # shipping a stale bundle.
+      - name: "Regenerate project from project.yml (if stale)"
+        basedOnDependencyAnalysis: false
+        script: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            echo "warning: xcodegen not found — skipping project regeneration (install via 'brew install xcodegen')"
+            exit 0
+          fi
+          PBXPROJ="$SRCROOT/iosApp.xcodeproj/project.pbxproj"
+          if [ ! -f "$PBXPROJ" ] || [ "$SRCROOT/project.yml" -nt "$PBXPROJ" ]; then
+            echo "project.yml is newer than the project — regenerating with xcodegen"
+            (cd "$SRCROOT" && xcodegen generate)
+          fi
       - name: "Build KMP Shared.framework"
         basedOnDependencyAnalysis: false
         script: |
