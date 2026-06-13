@@ -597,15 +597,19 @@ struct VideoPlayerView: UIViewRepresentable {
         // Start playback
         player.play()
 
-        // Periodic time observer for cue-driven page sync (every ~300ms)
+        // Periodic time observer for cue-driven page sync (every ~300ms).
+        // Capture the coordinator WEAKLY: the observer block is retained by the player, the player is
+        // retained by the coordinator, so a strong capture here would form a cycle (coordinator ->
+        // player -> block -> coordinator) and `deinit` would never fire to remove the observer.
         let interval = CMTime(seconds: 0.3, preferredTimescale: 600)
-        context.coordinator.timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+        context.coordinator.timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak coordinator = context.coordinator] time in
+            guard let coordinator else { return }
             let pos = time.seconds
-            if let matching = context.coordinator.cues.first(where: { pos >= $0.startSec && pos < $0.endSec }) {
+            if let matching = coordinator.cues.first(where: { pos >= $0.startSec && pos < $0.endSec }) {
                 let page = Int(matching.pageIndex) // SubtitleCue.pageIndex is Kotlin Int -> Swift Int32
-                if page != context.coordinator.lastSyncedPage {
-                    context.coordinator.lastSyncedPage = page
-                    context.coordinator.onPageChange(page)
+                if page != coordinator.lastSyncedPage {
+                    coordinator.lastSyncedPage = page
+                    coordinator.onPageChange(page)
                 }
             }
         }
