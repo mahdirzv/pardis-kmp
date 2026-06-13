@@ -5,6 +5,7 @@ import app.pardis.shared.finish.StoryFinishViewModel
 import app.pardis.shared.library.LibraryViewModel
 import app.pardis.shared.profile.ProfileViewModel
 import app.pardis.shared.reader.ReaderViewModel
+import app.pardis.shared.theme.ThemeViewModel
 import org.koin.mp.KoinPlatform
 
 /**
@@ -25,5 +26,8 @@ object PardisViewModelProvider {
         KoinPlatform.getKoin().get()
 
     fun storyFinishViewModel(): StoryFinishViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun themeViewModel(): ThemeViewModel =
         KoinPlatform.getKoin().get()
 }
