@@ -10,6 +10,14 @@ private let todayTonightArt: CGFloat = 64
 
 /// "Today" tab (v2), mirroring Android `TodayScreen`: greeting, streak strip, continue-reading,
 /// tonight's bedtime, new-this-week shelf, word of the day, explore collections.
+///
+/// Font mapping follows Android's Material typography scheme (`PardisTheme.kt`): eyebrow labels
+/// are `labelSmall` → mono + 0.6 tracking; `displayLarge` → display/xxxl; `bodyMedium` → body/sm;
+/// `bodySmall` → body/sm/medium. Gutter padding is applied per-section (not to the whole column)
+/// so the horizontal shelves scroll full-bleed to the screen edge like Android's gutter-spacer rows.
+///
+/// Note: omits the Paisley (top), Rosette (bedtime) and Vine (word-of-day) pattern overlays like
+/// the other iOS screens — needs asset-catalog motif images (known follow-up).
 struct TodayView: View {
     let model: LibrarySharedViewModel
     let activeName: String
@@ -27,12 +35,16 @@ struct TodayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: PardisSpacing.md) {
-                TodayGreeting(activeName: activeName).accessibilityAddTraits(.isHeader)
+                TodayGreeting(activeName: activeName)
+                    .accessibilityAddTraits(.isHeader)
+                    .padding(.horizontal, PardisSpacing.lg)
                 TodayStreakStrip(words: wordCount)
+                    .padding(.horizontal, PardisSpacing.lg)
 
                 VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                     Text("CONTINUE READING")
-                        .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
+                        .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                        .kerning(0.6)
                         .foregroundStyle(PardisColors.inkMuted)
                     if let f = featured {
                         PardisFeaturedStoryCard(
@@ -49,40 +61,46 @@ struct TodayView: View {
                         }
                     }
                 }
+                .padding(.horizontal, PardisSpacing.lg)
 
                 TonightBedtimeCard(onOpen: onOpenBedtime)
+                    .padding(.horizontal, PardisSpacing.lg)
 
                 VStack(alignment: .leading, spacing: PardisSpacing.sm) {
                     PardisSectionHeader(title: "New this week", subtitle: "تازه‌ها", actionLabel: "See all", action: onOpenLibrary)
+                        .padding(.horizontal, PardisSpacing.lg)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: PardisSpacing.sm) {
                             ForEach(model.stories, id: \.slug) { s in
                                 TodayShelfCover(titleEn: s.titleEn, titleFa: s.titleFa, cover: coverURL(s)) { onOpenStory(s.slug) }
                             }
                         }
+                        .padding(.horizontal, PardisSpacing.lg)
                     }
                 }
 
                 WordOfDayCard()
+                    .padding(.horizontal, PardisSpacing.lg)
 
                 VStack(alignment: .leading, spacing: PardisSpacing.sm) {
                     PardisSectionHeader(title: "Explore collections", subtitle: "مجموعه‌ها")
+                        .padding(.horizontal, PardisSpacing.lg)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: PardisSpacing.sm) {
                             CollectionCard(name: "Shahnameh Heroes", fa: "پهلوانان", variant: 0, onTap: onOpenLibrary)
                             CollectionCard(name: "Creatures of Myth", fa: "هیولاها", variant: 5, onTap: onOpenLibrary)
                             CollectionCard(name: "Voyages", fa: "سفرها", variant: 4, onTap: onOpenLibrary)
                         }
+                        .padding(.horizontal, PardisSpacing.lg)
                     }
                 }
 
                 Text("پایانِ امروز · فردا قصه‌ای تازه")
-                    .font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular))
+                    .font(PardisFonts.persian(size: PardisTypography.sm, weight: .medium))
                     .foregroundStyle(PardisColors.inkFaint)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, PardisSpacing.md)
             }
-            .padding(.horizontal, PardisSpacing.lg)
             .padding(.top, PardisSpacing.xl)
         }
     }
@@ -100,10 +118,11 @@ private struct TodayGreeting: View {
         HStack {
             VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
                 Text("\(greeting), \(activeName)".uppercased())
-                    .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
+                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                    .kerning(0.6)
                     .foregroundStyle(PardisColors.saffronDeep)
                 Text("Salâm")
-                    .font(PardisFonts.display(size: PardisTypography.xxl, weight: .heavy))
+                    .font(PardisFonts.display(size: PardisTypography.xxxl, weight: .heavy))
                     .foregroundStyle(PardisColors.ink)
                 Text("سلام، روزت پر از قصه")
                     .font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular))
@@ -143,7 +162,10 @@ private struct StreakTile: View {
             PardisIcon(kind: icon, size: 18, color: fg)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value).font(PardisFonts.display(size: PardisTypography.base, weight: .heavy)).foregroundStyle(fg)
-                Text(label.uppercased()).font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(fg)
+                Text(label.uppercased())
+                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                    .kerning(0.6)
+                    .foregroundStyle(fg)
             }
             Spacer(minLength: 0)
         }
@@ -163,9 +185,12 @@ private struct TonightBedtimeCard: View {
                     .frame(width: todayTonightArt, height: todayTonightArt)
                     .clipShape(RoundedRectangle(cornerRadius: PardisRadius.base, style: .continuous))
                 VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
-                    Text("TONIGHT'S BEDTIME").font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.inkOnDarkMuted)
+                    Text("TONIGHT'S BEDTIME")
+                        .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                        .kerning(0.6)
+                        .foregroundStyle(PardisColors.inkOnDarkMuted)
                     Text("Laay Laay, Little Star").font(PardisFonts.display(size: PardisTypography.base, weight: .bold)).foregroundStyle(PardisColors.inkOnDark)
-                    Text("12 min · sleep timer ready").font(PardisFonts.body(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.inkOnDarkMuted)
+                    Text("12 min · sleep timer ready").font(PardisFonts.body(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.inkOnDarkMuted)
                 }
                 Spacer(minLength: 0)
                 ZStack {
@@ -191,7 +216,7 @@ private struct TodayShelfCover: View {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                 PardisAsyncImageFrame(url: cover, accessibilityLabel: titleEn, width: todayShelfCoverWidth, height: todayShelfCoverHeight)
                 Text(titleEn).font(PardisFonts.display(size: PardisTypography.base, weight: .semibold)).foregroundStyle(PardisColors.ink).lineLimit(1)
-                Text(titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.indigo).lineLimit(1)
+                Text(titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.indigo).lineLimit(1)
             }
             .frame(width: todayShelfCoverWidth)
         }
@@ -203,13 +228,16 @@ private struct WordOfDayCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: PardisSpacing.xs) {
             HStack {
-                Text("WORD OF THE DAY").font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.lilacDeep)
+                Text("WORD OF THE DAY")
+                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                    .kerning(0.6)
+                    .foregroundStyle(PardisColors.lilacDeep)
                 Spacer()
                 PardisIcon(kind: .volume, size: 18, color: PardisColors.lilacDeep)
             }
-            Text("دلیر").font(PardisFonts.persian(size: PardisTypography.xxl, weight: .heavy)).foregroundStyle(PardisColors.lilacDeep)
-            Text("delir — \"brave\"").font(PardisFonts.body(size: PardisTypography.base, weight: .regular)).foregroundStyle(PardisColors.lilacDeep)
-            Text("A delir heart fears nothing.").font(PardisFonts.body(size: PardisTypography.base, weight: .regular)).italic().foregroundStyle(PardisColors.inkSoft)
+            Text("دلیر").font(PardisFonts.persian(size: PardisTypography.xxxl, weight: .heavy)).foregroundStyle(PardisColors.lilacDeep)
+            Text("delir — \"brave\"").font(PardisFonts.body(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.lilacDeep)
+            Text("A delir heart fears nothing.").font(PardisFonts.body(size: PardisTypography.sm, weight: .regular)).italic().foregroundStyle(PardisColors.inkSoft)
         }
         .padding(.horizontal, 20).padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -231,7 +259,7 @@ private struct CollectionCard: View {
                 LinearGradient(colors: [.clear, PardisColors.scrim], startPoint: .top, endPoint: .bottom)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(name).font(PardisFonts.display(size: PardisTypography.base, weight: .bold)).foregroundStyle(PardisColors.inkOnDark).lineLimit(1)
-                    Text(fa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.inkOnDarkSoft).lineLimit(1)
+                    Text(fa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.inkOnDarkSoft).lineLimit(1)
                 }
                 .padding(13)
             }
