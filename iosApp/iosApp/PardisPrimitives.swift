@@ -8,6 +8,7 @@ enum PardisIconKind {
     case back
     case bell
     case book
+    case bookmark
     case check
     case chevRight
     case clock
@@ -31,6 +32,7 @@ enum PardisIconKind {
     case search
     case settings
     case shield
+    case sparkle
     case sprout
     case star
     case starFill
@@ -46,6 +48,8 @@ enum PardisIconKind {
             return "bell"
         case .book:
             return "book.closed"
+        case .bookmark:
+            return "bookmark"
         case .check:
             return "checkmark"
         case .chevRight:
@@ -90,6 +94,8 @@ enum PardisIconKind {
             return "magnifyingglass"
         case .settings:
             return "gearshape"
+        case .sparkle:
+            return "sparkle"
         case .shield:
             return "checkmark.shield"
         case .sprout:
@@ -369,6 +375,7 @@ struct PardisAsyncImageFrame: View {
     let width: CGFloat?
     let height: CGFloat
     var placeholderText: String = "No illustration"
+    var cornerRadius: CGFloat = PardisRadius.md
 
     var body: some View {
         // Size the box first (fill width when `width` is nil — e.g. grid cells), then fill it with
@@ -389,7 +396,7 @@ struct PardisAsyncImageFrame: View {
                         .foregroundStyle(PardisComponentColors.mediaPlaceholderContent)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .accessibilityLabel(accessibilityLabel)
     }
 }

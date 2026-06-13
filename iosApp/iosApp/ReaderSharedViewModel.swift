@@ -14,6 +14,7 @@ final class ReaderSharedViewModel {
 
     // Exposed as observable properties
     var storySlug: String = ""
+    var storyTitle: String = ""
     var pages: [StoryPage] = []
     var currentPage: Int = 0
     var isVideoMode: Bool = false
@@ -32,6 +33,9 @@ final class ReaderSharedViewModel {
     var playbackRate: Float = 1.0
     var cues: [SubtitleCue] = []
     var selectedVocab: VocabItem? = nil
+    /// True while a narration clip is playing (drives the dock's play/pause button,
+    /// mirroring Android's local `narrating` flag). One-shot vocab clips don't set it.
+    var isNarrating = false
 
     // Retained one-shot audio player for narration / vocab pronunciation. A local AVPlayer would be
     // deallocated when the button closure returns (so it wouldn't reliably play); we keep a single
@@ -46,11 +50,16 @@ final class ReaderSharedViewModel {
     /// Play a one-shot audio clip (narration or vocab). Retains the player so it actually plays,
     /// applies the playback rate, and (for narration) auto-advances to the next page on completion.
     func playAudio(urlString: String, rate: Float = 1.0, autoAdvance: Bool = false) {
-        guard let url = URL(string: urlString) else { return }
+        // Local absolute paths come from the offline narration cache; remote URLs from Supabase.
+        let url: URL? = urlString.hasPrefix("/")
+            ? URL(fileURLWithPath: urlString)
+            : URL(string: urlString)
+        guard let url else { return }
         stopAudio() // tear down any prior clip + its observer first
 
         let player = AVPlayer(url: url)
         audioPlayer = player
+        isNarrating = autoAdvance
         if let item = player.currentItem {
             audioEndObserver = NotificationCenter.default.addObserver(
                 forName: .AVPlayerItemDidPlayToEndTime,
@@ -76,6 +85,7 @@ final class ReaderSharedViewModel {
             audioEndObserver = nil
         }
         audioPlayer = nil
+        isNarrating = false
     }
 
     func activate() async {
@@ -134,6 +144,7 @@ final class ReaderSharedViewModel {
 
     private func apply(_ state: ReaderUiState) {
         self.storySlug = state.storySlug
+        self.storyTitle = state.storyTitle
         self.pages = state.pages
         self.currentPage = Int(state.currentPage)
         self.isVideoMode = state.isVideoMode
