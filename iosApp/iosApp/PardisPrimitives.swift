@@ -2,7 +2,7 @@ import SwiftUI
 import Shared
 
 private let pardisStoryCoverSize: CGFloat = 68
-private let pardisFeaturedStoryCoverHeight: CGFloat = 156
+private let pardisFeaturedStoryCoverHeight: CGFloat = 230
 
 enum PardisIconKind {
     case back
@@ -385,16 +385,13 @@ struct PardisAsyncImageFrame: View {
             .frame(width: width, height: height)
             .frame(maxWidth: width == nil ? .infinity : width)
             .overlay {
+                // No "missing image" message: a blank tinted placeholder reads cleaner than text.
                 if let url {
                     AsyncImage(url: url) { image in
                         image.resizable().scaledToFill()
                     } placeholder: {
                         Color.clear
                     }
-                } else {
-                    Text(placeholderText)
-                        .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
-                        .foregroundStyle(PardisComponentColors.mediaPlaceholderContent)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -489,54 +486,60 @@ struct PardisFeaturedStoryCard: View {
     var noCoverLabel: String = "No cover"
 
     var body: some View {
-        VStack(alignment: .leading, spacing: PardisSpacing.sm) {
-            PardisAsyncImageFrame(
-                url: coverUrl,
-                accessibilityLabel: "Cover image for featured story \(titleEn)",
-                width: nil,
-                height: pardisFeaturedStoryCoverHeight,
-                placeholderText: noCoverLabel
-            )
+        // Immersive hero, mirroring the handoff continue-reading card: scene-art background, dark
+        // scrim, and the title / Persian title / a glassy tag + play button overlaid at the bottom.
+        Button(action: onOpen) {
+            ZStack(alignment: .bottomLeading) {
+                PardisSceneArt(seed: titleEn)
+                    .overlay {
+                        if let coverUrl {
+                            AsyncImage(url: coverUrl) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                        }
+                    }
+                    .frame(height: pardisFeaturedStoryCoverHeight)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
 
-            Text(eyebrow)
-                .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
-                .foregroundStyle(PardisColors.inkMuted)
+                LinearGradient(colors: [.clear, PardisColors.scrim], startPoint: .center, endPoint: .bottom)
 
-            Text(titleEn)
-                .font(PardisFonts.display(size: PardisTypography.xl, weight: .bold))
-                .foregroundStyle(PardisColors.ink)
-                .lineLimit(2)
+                VStack(alignment: .leading, spacing: PardisSpacing.xs) {
+                    Text(ageBand)
+                        .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                        .foregroundStyle(PardisColors.inkOnDark)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(.ultraThinMaterial, in: Capsule())
 
-            PersianReaderText(
-                text: titleFa,
-                font: PardisFonts.persian(size: PardisTypography.lg, weight: .semibold),
-                color: PardisColors.indigo
-            )
-            .lineLimit(1)
+                    Text(titleEn)
+                        .font(PardisFonts.display(size: PardisTypography.xl, weight: .bold))
+                        .foregroundStyle(PardisColors.inkOnDark)
+                        .lineLimit(2)
+                    Text(titleFa)
+                        .font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular))
+                        .foregroundStyle(PardisColors.inkOnDarkSoft)
+                        .lineLimit(1)
 
-            if let blurb, !blurb.isEmpty {
-                Text(blurb)
-                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
-                    .foregroundStyle(PardisColors.inkSoft)
-                    .lineLimit(2)
-            }
-
-            HStack(spacing: PardisSpacing.xs) {
-                PardisMetaPill(text: "\(ageBand) • \(minutes)m", background: PardisColors.saffronTint, foreground: PardisColors.saffronDeep)
-                PardisMetaPill(text: "\(vocabCount) words", background: PardisColors.indigoTint, foreground: PardisColors.indigoDeep)
-            }
-
-            Button(action: onOpen) {
-                HStack(spacing: PardisSpacing.xs) {
-                    PardisIcon(kind: .book, color: PardisComponentColors.primaryActionContent)
-                    Text(actionLabel)
+                    HStack(spacing: 11) {
+                        ZStack {
+                            Circle().fill(PardisColors.saffron)
+                            PardisIcon(kind: .play, size: 20, color: PardisColors.inkOnDark)
+                        }
+                        .frame(width: 50, height: 50)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(actionLabel)
+                                .font(PardisFonts.body(size: PardisTypography.sm, weight: .bold))
+                                .foregroundStyle(PardisColors.inkOnDark)
+                            Text("\(ageBand) · \(minutes)m · \(vocabCount) words")
+                                .font(PardisFonts.body(size: PardisTypography.xs, weight: .medium))
+                                .foregroundStyle(PardisColors.inkOnDarkMuted)
+                        }
+                    }
+                    .padding(.top, PardisSpacing.xs)
                 }
+                .padding(18)
             }
-                .buttonStyle(PardisPrimaryButtonStyle())
+            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.xl, style: .continuous))
         }
-        .padding(PardisSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .pardisCardSurface(cornerRadius: PardisRadius.lg)
+        .buttonStyle(.plain)
     }
 }
 

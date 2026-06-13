@@ -159,8 +159,11 @@ private struct LibraryCover: View {
     var body: some View {
         Button(action: onOpen) {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
-                PardisAsyncImageFrame(url: cover, accessibilityLabel: story.titleEn, width: nil, height: libraryGridCoverHeight)
+                coverArt
+                    .frame(height: libraryGridCoverHeight)
+                    .frame(maxWidth: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
+                    // Time badge sits on the art, top-right (design).
                     .overlay(alignment: .topTrailing) {
                         Text("\(story.minutes)m")
                             .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
@@ -169,34 +172,42 @@ private struct LibraryCover: View {
                             .background(PardisColors.scrimSoft).clipShape(Capsule())
                             .padding(8)
                     }
-                    .overlay(alignment: .topLeading) {
-                        if cached {
-                            ZStack {
-                                Circle().fill(PardisColors.mint)
-                                PardisIcon(kind: .check, size: 14, color: PardisColors.inkOnDark)
-                            }.frame(width: 24, height: 24).padding(8)
-                        }
-                    }
+                    // Download control on the art, top-left: icon-only download, a tick when offline,
+                    // a spinner while downloading.
+                    .overlay(alignment: .topLeading) { downloadControl.padding(8) }
                 Text(story.titleEn).font(PardisFonts.display(size: PardisTypography.base, weight: .semibold)).foregroundStyle(PardisColors.ink).lineLimit(1)
-                Text(story.titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.indigo).lineLimit(1)
-                Group {
-                    if let p = progress {
-                        Text(p).font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.inkMuted)
-                    } else if cached {
-                        Text("✓ Offline").font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.mintDeep)
-                    } else {
-                        HStack(spacing: 5) {
-                            PardisIcon(kind: .download, size: 14, color: PardisColors.saffronDeep)
-                            Text(failed ? "Retry" : "Download").font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.saffronDeep)
-                        }
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(PardisColors.saffronSoft).clipShape(Capsule())
-                        .onTapGesture(perform: onDownload)
-                    }
-                }
+                Text(story.titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.inkMuted).lineLimit(1)
             }
         }
         .buttonStyle(.plain)
+    }
+
+    // Scene art as the cover base (design uses procedural art — no blank "missing" placeholder),
+    // with the remote cover drawn on top when it loads.
+    private var coverArt: some View {
+        PardisSceneArt(seed: story.slug)
+            .overlay {
+                if let cover {
+                    AsyncImage(url: cover) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                }
+            }
+            .clipped()
+    }
+
+    @ViewBuilder
+    private var downloadControl: some View {
+        if cached {
+            badge(fill: PardisColors.mint) { PardisIcon(kind: .check, size: 14, color: PardisColors.inkOnDark) }
+        } else if progress != nil {
+            badge(fill: PardisColors.scrim) { ProgressView().tint(PardisColors.inkOnDark).scaleEffect(0.6) }
+        } else {
+            badge(fill: PardisColors.scrim) { PardisIcon(kind: failed ? .refresh : .download, size: 14, color: PardisColors.inkOnDark) }
+                .highPriorityGesture(TapGesture().onEnded { onDownload() })
+        }
+    }
+
+    private func badge<Content: View>(fill: Color, @ViewBuilder _ content: () -> Content) -> some View {
+        ZStack { Circle().fill(fill); content() }.frame(width: 28, height: 28)
     }
 }
 
@@ -211,7 +222,7 @@ private struct LibraryListRow: View {
                     .clipShape(RoundedRectangle(cornerRadius: PardisRadius.sm, style: .continuous))
                 VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
                     Text(story.titleEn).font(PardisFonts.display(size: PardisTypography.base, weight: .semibold)).foregroundStyle(PardisColors.ink).lineLimit(1)
-                    Text(story.titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.indigo).lineLimit(1)
+                    Text(story.titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.inkMuted).lineLimit(1)
                     Text("\(story.ageBand) · \(story.minutes)m · \(story.vocabCount) words").font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold)).foregroundStyle(PardisColors.inkMuted)
                 }
                 Spacer(minLength: 0)
