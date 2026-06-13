@@ -114,14 +114,18 @@ private struct TodayGreeting: View {
         switch h { case ..<12: return "Good morning"; case ..<18: return "Good afternoon"; default: return "Good evening" }
     }
 
+    // Weekday name, mirroring the handoff eyebrow `{greeting} · {weekday}`.
+    private var weekday: String { Date().formatted(.dateTime.weekday(.wide)) }
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
-                Text("\(greeting), \(activeName)".uppercased())
+                // Eyebrow is greeting + weekday (no name); the name goes on the Salâm title.
+                Text("\(greeting) · \(weekday)".uppercased())
                     .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                     .kerning(0.6)
                     .foregroundStyle(PardisColors.saffronDeep)
-                Text("Salâm")
+                Text("Salâm, \(activeName)")
                     .font(PardisFonts.display(size: PardisTypography.xxxl, weight: .heavy))
                     .foregroundStyle(PardisColors.ink)
                 Text("سلام، روزت پر از قصه")
@@ -216,7 +220,7 @@ private struct TodayShelfCover: View {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                 PardisAsyncImageFrame(url: cover, accessibilityLabel: titleEn, width: todayShelfCoverWidth, height: todayShelfCoverHeight)
                 Text(titleEn).font(PardisFonts.display(size: PardisTypography.base, weight: .semibold)).foregroundStyle(PardisColors.ink).lineLimit(1)
-                Text(titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.indigo).lineLimit(1)
+                Text(titleFa).font(PardisFonts.persian(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.inkMuted).lineLimit(1)
             }
             .frame(width: todayShelfCoverWidth)
         }
@@ -235,11 +239,12 @@ private struct WordOfDayCard: View {
                 Spacer()
                 PardisIcon(kind: .volume, size: 18, color: PardisColors.lilacDeep)
             }
-            Text("دلیر").font(PardisFonts.persian(size: PardisTypography.xxxl, weight: .heavy)).foregroundStyle(PardisColors.lilacDeep)
-            Text("delir — \"brave\"").font(PardisFonts.body(size: PardisTypography.sm, weight: .regular)).foregroundStyle(PardisColors.lilacDeep)
+            // The hero word is the handoff's literal 40pt (no nearer type token); translit is mono.
+            Text("دلیر").font(PardisFonts.persian(size: 40, weight: .bold)).foregroundStyle(PardisColors.lilacDeep)
+            Text("delir — \"brave\"").font(PardisFonts.mono(size: PardisTypography.sm, weight: .medium)).foregroundStyle(PardisColors.lilacDeep)
             Text("A delir heart fears nothing.").font(PardisFonts.body(size: PardisTypography.sm, weight: .regular)).italic().foregroundStyle(PardisColors.inkSoft)
         }
-        .padding(.horizontal, 20).padding(.vertical, 22)
+        .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(PardisColors.lilacSoft)
         .clipShape(RoundedRectangle(cornerRadius: PardisRadius.lg, style: .continuous))

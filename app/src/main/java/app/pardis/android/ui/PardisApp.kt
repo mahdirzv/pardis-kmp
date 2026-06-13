@@ -1,8 +1,12 @@
 package app.pardis.android.ui
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -59,6 +63,22 @@ fun PardisApp(
     // pre-interaction default.
     val onSetDark: (Boolean) -> Unit = {
         themeViewModel.onAction(ThemeAction.SetPreference(if (it) ThemePreference.DARK else ThemePreference.LIGHT))
+    }
+
+    // Tint the system status/navigation bars to the themed background + flip their icon appearance,
+    // so the system chrome follows dark/light instead of staying light. (Direct window colours keep
+    // the current non-edge-to-edge layout; the screens don't apply status-bar insets.)
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val window = (view.context as Activity).window
+        val barColor = (if (darkTheme) PardisColors.darkBackground else PardisColors.background).toArgb()
+        SideEffect {
+            @Suppress("DEPRECATION") run { window.statusBarColor = barColor; window.navigationBarColor = barColor }
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
     }
 
     PardisTheme(darkTheme = darkTheme) {
