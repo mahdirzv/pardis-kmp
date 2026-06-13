@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Shared
 
 /// Adapter over the shared `ThemeViewModel`, same pattern as `ProfileSharedViewModel`:
@@ -26,6 +27,15 @@ final class ThemeSharedViewModel {
 
     func setPreference(_ preference: ThemePreference) {
         viewModel.onAction(action: ThemeActionSetPreference(preference: preference))
+    }
+
+    /// The SwiftUI override for `.preferredColorScheme`: nil = follow the system (SYSTEM preference).
+    var colorScheme: ColorScheme? {
+        switch preference {
+        case .dark: return .dark
+        case .light: return .light
+        default: return nil
+        }
     }
 
     private func apply(_ state: ThemeUiState) {

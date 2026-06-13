@@ -37,6 +37,7 @@ struct YouView: View {
     let activeProfile: ChildProfile
     let downloadCount: Int
     let onSwitchProfile: () -> Void
+    var onSetDark: (Bool) -> Void = { _ in }
 
     var body: some View {
         ScrollView {
@@ -47,7 +48,7 @@ struct YouView: View {
 
                 YouProfileCard(activeProfile: activeProfile, onSwitchProfile: onSwitchProfile)
 
-                AppearanceGroup()
+                AppearanceGroup(onSetDark: onSetDark)
 
                 SettingsGroup(label: "Reading", items: [
                     SettingsItem(icon: .languages, tone: "lapis", label: "Story language", detail: "English & فارسی"),
@@ -133,42 +134,54 @@ private struct YouProfileCard: View {
 }
 
 private struct AppearanceGroup: View {
+    let onSetDark: (Bool) -> Void
+    // Reflects the effective scheme (after .preferredColorScheme is applied), so the knob tracks
+    // what's actually on screen whether the preference is explicit or following the system.
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var isDark: Bool { colorScheme == .dark }
+
     var body: some View {
         VStack(alignment: .leading, spacing: PardisSpacing.sm) {
             Text("APPEARANCE")
                 .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
                 .foregroundStyle(PardisColors.inkMuted)
 
-            HStack(spacing: PardisSpacing.sm + PardisSpacing.xs + PardisSpacing.hairline) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: PardisRadius.sm, style: .continuous)
-                        .fill(PardisColors.lilacSoft)
-                    PardisIcon(kind: .moon, size: 18, color: PardisColors.lilacDeep)
-                }
-                .frame(width: youSettingsIconBox, height: youSettingsIconBox)
+            Button(action: { onSetDark(!isDark) }) {
+                HStack(spacing: PardisSpacing.sm + PardisSpacing.xs + PardisSpacing.hairline) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: PardisRadius.sm, style: .continuous)
+                            .fill(PardisColors.lilacSoft)
+                        PardisIcon(kind: .moon, size: 18, color: PardisColors.lilacDeep)
+                    }
+                    .frame(width: youSettingsIconBox, height: youSettingsIconBox)
 
-                Text("Dark mode")
-                    .font(PardisFonts.body(size: PardisTypography.lg, weight: .semibold))
-                    .foregroundStyle(PardisColors.ink)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Dark mode")
+                        .font(PardisFonts.body(size: PardisTypography.lg, weight: .semibold))
+                        .foregroundStyle(PardisColors.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Decorative off toggle (dark mode not wired yet) — matches Android.
-                ZStack(alignment: .leading) {
-                    Capsule(style: .continuous).fill(PardisColors.border)
-                    Circle().fill(PardisColors.inkOnDark)
-                        .frame(width: youToggleKnob, height: youToggleKnob)
-                        .padding(.leading, 3)
+                    ZStack(alignment: isDark ? .trailing : .leading) {
+                        Capsule(style: .continuous).fill(isDark ? PardisColors.saffron : PardisColors.border)
+                        Circle().fill(PardisColors.inkOnDark)
+                            .frame(width: youToggleKnob, height: youToggleKnob)
+                            .padding(.horizontal, 3)
+                    }
+                    .frame(width: youToggleWidth, height: youToggleHeight)
+                    .animation(.easeInOut(duration: 0.18), value: isDark)
+                    .accessibilityLabel("Dark mode")
+                    .accessibilityValue(isDark ? "on" : "off")
                 }
-                .frame(width: youToggleWidth, height: youToggleHeight)
+                .padding(.horizontal, PardisSpacing.md)
+                .padding(.vertical, PardisSpacing.sm + PardisSpacing.xs + PardisSpacing.hairline)
+                .background(PardisColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: PardisRadius.lg, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PardisRadius.lg, style: .continuous)
+                        .stroke(PardisColors.border, lineWidth: PardisSpacing.hairline)
+                )
             }
-            .padding(.horizontal, PardisSpacing.md)
-            .padding(.vertical, PardisSpacing.sm + PardisSpacing.xs + PardisSpacing.hairline)
-            .background(PardisColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.lg, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: PardisRadius.lg, style: .continuous)
-                    .stroke(PardisColors.border, lineWidth: PardisSpacing.hairline)
-            )
+            .buttonStyle(.plain)
         }
     }
 }

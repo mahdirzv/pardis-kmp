@@ -38,8 +38,11 @@ private enum PardisRootTab: CaseIterable, Hashable {
 }
 
 struct ContentView: View {
+    // App-lifetime theme preference; drives the whole app's light/dark appearance.
+    @State private var themeModel = ThemeSharedViewModel()
+
     var body: some View {
-        RootShellView()
+        RootShellView(onSetDark: { themeModel.setPreference($0 ? .dark : .light) })
             // Invisible probe carrying the font-load status so the UI test can read + log it.
             .overlay(alignment: .topLeading) {
                 Text(PardisFontRegistry.summary)
@@ -47,6 +50,10 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                     .accessibilityIdentifier("pardis-fonts")
             }
+            // Apply the persisted preference (nil = follow system). The dynamic PardisColors tokens
+            // resolve against whatever scheme this sets.
+            .preferredColorScheme(themeModel.colorScheme)
+            .task { await themeModel.activate() }
     }
 }
 
@@ -54,6 +61,7 @@ struct ContentView: View {
 /// selected, shows the onboarding picker on first launch, and presents the switch-profile
 /// picker (isSwitch) as a cover. `ProfileSharedViewModel` is app-lifetime here.
 private struct RootShellView: View {
+    let onSetDark: (Bool) -> Void
     @State private var profileModel = ProfileSharedViewModel()
     @State private var showSwitchProfile = false
 
@@ -69,7 +77,8 @@ private struct RootShellView: View {
             } else {
                 MainShellView(
                     activeProfile: profileModel.selectedProfile!,
-                    onSwitchProfile: { showSwitchProfile = true }
+                    onSwitchProfile: { showSwitchProfile = true },
+                    onSetDark: onSetDark
                 )
                 .fullScreenCover(isPresented: $showSwitchProfile) {
                     OnboardingView(
@@ -91,6 +100,7 @@ private struct RootShellView: View {
 private struct MainShellView: View {
     let activeProfile: ChildProfile
     let onSwitchProfile: () -> Void
+    let onSetDark: (Bool) -> Void
 
     @State private var selectedTab: PardisRootTab = .library
     @State private var libraryModel = LibrarySharedViewModel()
@@ -163,7 +173,8 @@ private struct MainShellView: View {
                 YouView(
                     activeProfile: activeProfile,
                     downloadCount: libraryModel.cachedStorySlugs.count,
-                    onSwitchProfile: onSwitchProfile
+                    onSwitchProfile: onSwitchProfile,
+                    onSetDark: onSetDark
                 )
                 .pardisScreenBackground()
             }

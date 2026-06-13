@@ -1,17 +1,21 @@
 import SwiftUI
+import UIKit
 
 /// Generated from design-system/tokens.json + web neutral.ts
 /// Pardis palette only. Use in SwiftUI.
 struct PardisColors {
-    static let background = Color(hex: "#FAF6EE")
-    static let backgroundAlt = Color(hex: "#F3EEDD")
-    static let backgroundStage = Color(hex: "#EDE6D6")
-    static let surface = Color.white
-    static let surface2 = Color(hex: "#FDFAF0")
-    static let surfaceSoft = Color(hex: "#E8EBFB")
-    static let surfaceMint = Color(hex: "#DEF5E9")
-    static let surfacePeach = Color(hex: "#FFE9D2")
-    static let surfaceLilac = Color(hex: "#ECE6FB")
+    // Neutrals + generic surface tints resolve per color scheme (dark values are the purpose-built
+    // dark* tokens / derived dark tints). Brand accents and accent chip tints stay constant so
+    // their on-chip text contrast is preserved and they pop on a dark background.
+    static let background = Color.dynamic(light: Color(hex: "#FAF6EE"), dark: Color(hex: "#141019"))
+    static let backgroundAlt = Color.dynamic(light: Color(hex: "#F3EEDD"), dark: Color(hex: "#1D1825"))
+    static let backgroundStage = Color.dynamic(light: Color(hex: "#EDE6D6"), dark: Color(hex: "#241E2D"))
+    static let surface = Color.dynamic(light: .white, dark: Color(hex: "#211C2B"))
+    static let surface2 = Color.dynamic(light: Color(hex: "#FDFAF0"), dark: Color(hex: "#2A2435"))
+    static let surfaceSoft = Color.dynamic(light: Color(hex: "#E8EBFB"), dark: Color(hex: "#1E2236"))
+    static let surfaceMint = Color.dynamic(light: Color(hex: "#DEF5E9"), dark: Color(hex: "#16271F"))
+    static let surfacePeach = Color.dynamic(light: Color(hex: "#FFE9D2"), dark: Color(hex: "#2C2218"))
+    static let surfaceLilac = Color.dynamic(light: Color(hex: "#ECE6FB"), dark: Color(hex: "#221D33"))
     static let darkBackground = Color(hex: "#141019")
     static let darkBackgroundAlt = Color(hex: "#1D1825")
     static let darkSurface = Color(hex: "#211C2B")
@@ -44,15 +48,15 @@ struct PardisColors {
     static let sun = Color(hex: "#F4B53A")
     static let sunDeep = Color(hex: "#9A6B12")
     static let sunSoft = Color(hex: "#FCEAB6")
-    static let ink = Color(hex: "#14111B")
-    static let inkSoft = Color(hex: "#4B4760")
-    static let inkMuted = Color(hex: "#8A8499")
-    static let inkFaint = Color(hex: "#B6B0C0")
+    static let ink = Color.dynamic(light: Color(hex: "#14111B"), dark: Color(hex: "#F4F1FA"))
+    static let inkSoft = Color.dynamic(light: Color(hex: "#4B4760"), dark: Color(hex: "#C3BDD2"))
+    static let inkMuted = Color.dynamic(light: Color(hex: "#8A8499"), dark: Color(hex: "#8E87A0"))
+    static let inkFaint = Color.dynamic(light: Color(hex: "#B6B0C0"), dark: Color(hex: "#5F596F"))
     static let inkOnDark = Color.white
-    static let border = Color(hex: "#ECE3D0")
-    static let borderSoft = Color(hex: "#F2ECDD")
-    static let borderStrong = Color(hex: "#DDD2BC")
-    static let error = Color(hex: "#EF4444")
+    static let border = Color.dynamic(light: Color(hex: "#ECE3D0"), dark: Color(hex: "#322C40"))
+    static let borderSoft = Color.dynamic(light: Color(hex: "#F2ECDD"), dark: Color(hex: "#28222F"))
+    static let borderStrong = Color.dynamic(light: Color(hex: "#DDD2BC"), dark: Color(hex: "#443C56"))
+    static let error = Color.dynamic(light: Color(hex: "#EF4444"), dark: Color(hex: "#FF8A80"))
     static let errorDark = Color(hex: "#FF8A80")
     static let errorContainerDark = Color(hex: "#6D2C2C")
     static let onErrorContainerDark = Color(hex: "#FFDAD4")
@@ -120,6 +124,17 @@ struct PardisShadows {
 }
 
 extension Color {
+    /// A color that resolves to `light` or `dark` based on the active interface style, so the
+    /// static `PardisColors` tokens flip with the color scheme. A manual override (the in-app
+    /// dark-mode toggle) drives this via `.preferredColorScheme`, which sets the trait the
+    /// dynamic `UIColor` reads. Call sites stay unchanged — `PardisColors.background` just resolves
+    /// per scheme.
+    static func dynamic(light: Color, dark: Color) -> Color {
+        Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+    }
+
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
