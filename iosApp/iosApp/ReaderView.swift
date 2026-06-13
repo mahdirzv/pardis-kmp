@@ -97,17 +97,25 @@ struct ReaderScreen: View {
         let hasVideo = model.videoUrlFa != nil || model.videoUrlEn != nil
 
         return VStack(spacing: 0) {
-            ReaderTopBar(
-                title: storyTitle,
-                page: model.currentPage + 1,
-                total: model.pages.count,
-                onBack: { dismiss() }
-            )
-            ReaderPageDots(
-                total: model.pages.count,
-                current: model.currentPage,
-                onGoTo: { model.goToPage(Int32($0)) }
-            )
+            VStack(spacing: 0) {
+                ReaderTopBar(
+                    title: storyTitle,
+                    page: model.currentPage + 1,
+                    total: model.pages.count,
+                    onBack: { dismiss() }
+                )
+                ReaderPageDots(
+                    total: model.pages.count,
+                    current: model.currentPage,
+                    onGoTo: { model.goToPage(Int32($0)) }
+                )
+            }
+            .background(alignment: .top) {
+                ReaderTopChromeBackground()
+                    .frame(height: ReaderTopChromeMetrics.backgroundHeight)
+                    .ignoresSafeArea(edges: .top)
+                    .allowsHitTesting(false)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Spacer().frame(height: PardisSpacing.sm)
@@ -227,6 +235,72 @@ struct ReaderScreen: View {
         )
         guard let url else { return }
         model.playAudio(urlString: url, rate: model.playbackRate, autoAdvance: true)
+    }
+}
+
+private enum ReaderTopChromeMetrics {
+    static let backgroundHeight: CGFloat = PardisSpacing.xxl * 3
+    static let solidStop: CGFloat = 0.0
+    static let tintStop: CGFloat = 0.36
+    static let fadeStop: CGFloat = 0.72
+    static let clearStop: CGFloat = 1.0
+    static let materialOpacity = 0.86
+    static let backgroundOpacity = 0.82
+    static let backgroundAltOpacity = 0.48
+    static let indigoGlowOpacity = 0.18
+    static let saffronGlowOpacity = 0.12
+}
+
+private struct ReaderTopChromeBackground: View {
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .opacity(ReaderTopChromeMetrics.materialOpacity)
+
+            LinearGradient(
+                stops: [
+                    .init(
+                        color: PardisColors.background.opacity(ReaderTopChromeMetrics.backgroundOpacity),
+                        location: ReaderTopChromeMetrics.solidStop
+                    ),
+                    .init(
+                        color: PardisColors.backgroundAlt.opacity(ReaderTopChromeMetrics.backgroundAltOpacity),
+                        location: ReaderTopChromeMetrics.tintStop
+                    ),
+                    .init(color: .clear, location: ReaderTopChromeMetrics.clearStop),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            LinearGradient(
+                stops: [
+                    .init(
+                        color: PardisColors.indigoSoft.opacity(ReaderTopChromeMetrics.indigoGlowOpacity),
+                        location: ReaderTopChromeMetrics.solidStop
+                    ),
+                    .init(
+                        color: PardisColors.saffronSoft.opacity(ReaderTopChromeMetrics.saffronGlowOpacity),
+                        location: ReaderTopChromeMetrics.tintStop
+                    ),
+                    .init(color: .clear, location: ReaderTopChromeMetrics.fadeStop),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: ReaderTopChromeMetrics.solidStop),
+                    .init(color: .black, location: ReaderTopChromeMetrics.fadeStop),
+                    .init(color: .clear, location: ReaderTopChromeMetrics.clearStop),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
 }
 
