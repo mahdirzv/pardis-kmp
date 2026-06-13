@@ -65,19 +65,29 @@ extension PardisColors {
 /// Semantic gradient tokens, mirroring Android `PardisGradients`. Lives in the hand-authored iOS
 /// theme layer (not the generated token file). 135° ≈ topLeading → bottomTrailing.
 struct PardisGradients {
+    // The deep-blue night/lapis anchor is pinned to a literal hex (not PardisColors.indigoDeep, which
+    // brightens for *text* in dark mode) so these gradients stay constant across schemes, matching the
+    // handoff's literal --grad-night / --grad-lapis.
+    private static let gradIndigoDeep = Color(hex: "#1A256E")
+
+    // dawn has its own canonical light→dark stops (handoff --grad-dawn), not the accent-soft tints.
     static let dawn = LinearGradient(
-        colors: [PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft],
+        colors: [
+            Color.dynamic(light: Color(hex: "#FFE9D2"), dark: Color(hex: "#221A2E")),
+            Color.dynamic(light: Color(hex: "#ECE6FB"), dark: Color(hex: "#1A2140")),
+            Color.dynamic(light: Color(hex: "#E8EBFB"), dark: Color(hex: "#16223E")),
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     static let bedtimeNight = LinearGradient(
-        colors: [PardisColors.indigoDeep, PardisColors.nightMid, PardisColors.nightDeep],
+        colors: [gradIndigoDeep, PardisColors.nightMid, PardisColors.nightDeep],
         startPoint: .top,
         endPoint: .bottom
     )
     static let lullabyNight = LinearGradient(
         stops: [
-            .init(color: PardisColors.indigoDeep, location: 0.0),
+            .init(color: gradIndigoDeep, location: 0.0),
             .init(color: PardisColors.indigoDarker, location: 0.6),
             .init(color: PardisColors.nightDeep, location: 1.0),
         ],
@@ -85,7 +95,7 @@ struct PardisGradients {
         endPoint: .bottom
     )
     static let lapis = LinearGradient(
-        colors: [PardisColors.indigo, PardisColors.violet, PardisColors.indigoDeep],
+        colors: [PardisColors.indigo, PardisColors.violet, gradIndigoDeep],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -95,7 +105,7 @@ struct PardisGradients {
         endPoint: .bottomTrailing
     )
     static let night = LinearGradient(
-        colors: [PardisColors.indigoDeep, PardisColors.indigo, PardisColors.violet],
+        colors: [gradIndigoDeep, PardisColors.indigo, PardisColors.violet],
         startPoint: .top,
         endPoint: .bottom
     )

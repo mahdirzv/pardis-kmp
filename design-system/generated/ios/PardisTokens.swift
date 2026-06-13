@@ -4,18 +4,19 @@ import UIKit
 /// Generated from design-system/tokens.json + web neutral.ts
 /// Pardis palette only. Use in SwiftUI.
 struct PardisColors {
-    // Neutrals + generic surface tints resolve per color scheme (dark values are the purpose-built
-    // dark* tokens / derived dark tints). Brand accents and accent chip tints stay constant so
-    // their on-chip text contrast is preserved and they pop on a dark background.
+    // Scheme-reactive tokens — dark values are the canonical handoff palette (app.css
+    // [data-theme="dark"]): neutrals → dark* tokens; accent soft/tint backgrounds darken; accent
+    // deep text colors brighten. Base accents (saffron/indigo/…), on-dark overlays and scrims stay
+    // constant. surface tints map to the matching accent-soft dark value.
     static let background = Color.dynamic(light: Color(hex: "#FAF6EE"), dark: Color(hex: "#141019"))
     static let backgroundAlt = Color.dynamic(light: Color(hex: "#F3EEDD"), dark: Color(hex: "#1D1825"))
     static let backgroundStage = Color.dynamic(light: Color(hex: "#EDE6D6"), dark: Color(hex: "#241E2D"))
     static let surface = Color.dynamic(light: .white, dark: Color(hex: "#211C2B"))
     static let surface2 = Color.dynamic(light: Color(hex: "#FDFAF0"), dark: Color(hex: "#2A2435"))
-    static let surfaceSoft = Color.dynamic(light: Color(hex: "#E8EBFB"), dark: Color(hex: "#1E2236"))
-    static let surfaceMint = Color.dynamic(light: Color(hex: "#DEF5E9"), dark: Color(hex: "#16271F"))
-    static let surfacePeach = Color.dynamic(light: Color(hex: "#FFE9D2"), dark: Color(hex: "#2C2218"))
-    static let surfaceLilac = Color.dynamic(light: Color(hex: "#ECE6FB"), dark: Color(hex: "#221D33"))
+    static let surfaceSoft = Color.dynamic(light: Color(hex: "#E8EBFB"), dark: Color(hex: "#1F2547"))
+    static let surfaceMint = Color.dynamic(light: Color(hex: "#DEF5E9"), dark: Color(hex: "#143027"))
+    static let surfacePeach = Color.dynamic(light: Color(hex: "#FFE9D2"), dark: Color(hex: "#3A2A18"))
+    static let surfaceLilac = Color.dynamic(light: Color(hex: "#ECE6FB"), dark: Color(hex: "#261F44"))
     static let darkBackground = Color(hex: "#141019")
     static let darkBackgroundAlt = Color(hex: "#1D1825")
     static let darkSurface = Color(hex: "#211C2B")
@@ -27,27 +28,30 @@ struct PardisColors {
     static let darkInkSoft = Color(hex: "#C3BDD2")
     static let darkInkMuted = Color(hex: "#8E87A0")
     static let darkInkFaint = Color(hex: "#5F596F")
+    // Base accents stay constant; *Soft/*Tint backgrounds darken and *Deep text colors brighten in
+    // dark, per the canonical handoff. indigoDeep also anchors the night/lapis gradients, which are
+    // pinned to literal hexes in PardisGradients so the gradients don't follow the text brightening.
     static let saffron = Color(hex: "#F08A2D")
-    static let saffronDeep = Color(hex: "#C46A12")
-    static let saffronSoft = Color(hex: "#FFE9D2")
-    static let saffronTint = Color(hex: "#FFF4E5")
+    static let saffronDeep = Color.dynamic(light: Color(hex: "#C46A12"), dark: Color(hex: "#F2B074"))
+    static let saffronSoft = Color.dynamic(light: Color(hex: "#FFE9D2"), dark: Color(hex: "#3A2A18"))
+    static let saffronTint = Color.dynamic(light: Color(hex: "#FFF4E5"), dark: Color(hex: "#241B12"))
     static let indigo = Color(hex: "#2436A1")
-    static let indigoDeep = Color(hex: "#1A256E")
+    static let indigoDeep = Color.dynamic(light: Color(hex: "#1A256E"), dark: Color(hex: "#AEB9F4"))
     static let indigoDarker = Color(hex: "#0F1849")
-    static let indigoSoft = Color(hex: "#E8EBFB")
-    static let indigoTint = Color(hex: "#F0F2FC")
+    static let indigoSoft = Color.dynamic(light: Color(hex: "#E8EBFB"), dark: Color(hex: "#1F2547"))
+    static let indigoTint = Color.dynamic(light: Color(hex: "#F0F2FC"), dark: Color(hex: "#181C36"))
     static let mint = Color(hex: "#2FA876")
-    static let mintDeep = Color(hex: "#1F7A52")
-    static let mintSoft = Color(hex: "#DEF5E9")
+    static let mintDeep = Color.dynamic(light: Color(hex: "#1F7A52"), dark: Color(hex: "#7FD9B0"))
+    static let mintSoft = Color.dynamic(light: Color(hex: "#DEF5E9"), dark: Color(hex: "#143027"))
     static let lilac = Color(hex: "#8B6FE6")
-    static let lilacDeep = Color(hex: "#5235B6")
-    static let lilacSoft = Color(hex: "#ECE6FB")
+    static let lilacDeep = Color.dynamic(light: Color(hex: "#5235B6"), dark: Color(hex: "#C5B4F4"))
+    static let lilacSoft = Color.dynamic(light: Color(hex: "#ECE6FB"), dark: Color(hex: "#261F44"))
     static let rose = Color(hex: "#E1547A")
-    static let roseDeep = Color(hex: "#B83A5E")
-    static let roseSoft = Color(hex: "#FCDEE6")
+    static let roseDeep = Color.dynamic(light: Color(hex: "#B83A5E"), dark: Color(hex: "#F18AA6"))
+    static let roseSoft = Color.dynamic(light: Color(hex: "#FCDEE6"), dark: Color(hex: "#3A1E28"))
     static let sun = Color(hex: "#F4B53A")
-    static let sunDeep = Color(hex: "#9A6B12")
-    static let sunSoft = Color(hex: "#FCEAB6")
+    static let sunDeep = Color.dynamic(light: Color(hex: "#9A6B12"), dark: Color(hex: "#F2C14E"))
+    static let sunSoft = Color.dynamic(light: Color(hex: "#FCEAB6"), dark: Color(hex: "#34280F"))
     static let ink = Color.dynamic(light: Color(hex: "#14111B"), dark: Color(hex: "#F4F1FA"))
     static let inkSoft = Color.dynamic(light: Color(hex: "#4B4760"), dark: Color(hex: "#C3BDD2"))
     static let inkMuted = Color.dynamic(light: Color(hex: "#8A8499"), dark: Color(hex: "#8E87A0"))

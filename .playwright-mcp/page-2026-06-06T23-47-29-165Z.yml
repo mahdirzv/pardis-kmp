@@ -1,0 +1,40 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: 9:41
+      - generic [ref=e9]:
+        - img [ref=e10]
+        - img [ref=e15]
+        - img [ref=e19]
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Rivana
+          - generic [ref=e29]: ریوانا
+        - heading "Who's reading tonight?" [level=1] [ref=e30]
+        - paragraph [ref=e31]: امشب کی قصه می‌خواند؟
+      - generic [ref=e32]:
+        - button "R Roya Age 7" [ref=e34] [cursor=pointer]:
+          - generic [ref=e35]: R
+          - generic [ref=e36]:
+            - paragraph [ref=e37]: Roya
+            - paragraph [ref=e38]: Age 7
+        - button "D Darius Age 9" [ref=e40] [cursor=pointer]:
+          - generic [ref=e41]: D
+          - generic [ref=e42]:
+            - paragraph [ref=e43]: Darius
+            - paragraph [ref=e44]: Age 9
+        - button "M Mina Age 5" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: M
+          - generic [ref=e48]:
+            - paragraph [ref=e49]: Mina
+            - paragraph [ref=e50]: Age 5
+        - button "Add child" [ref=e52] [cursor=pointer]:
+          - img [ref=e54]
+          - generic [ref=e55]: Add child
+      - button "I'm a parent" [ref=e58] [cursor=pointer]:
+        - img [ref=e59]
+        - text: I'm a parent
+  - generic [ref=e61]:
+    - generic [ref=e62]: Rivana · ریوانا
+    - generic [ref=e63]: Persian myth storyteller — iOS
