@@ -18,6 +18,10 @@ final class DetailSharedViewModel {
         self.viewModel = viewModel
     }
 
+    // iOS has no ViewModelStore to trigger the Kotlin VM's internal clear(), so cancel its
+    // scope here when the SwiftUI view (and this @State adapter) is torn down.
+    deinit { viewModel.dispose() }
+
     func activate() async {
         for await state in viewModel.uiState {
             apply(state)

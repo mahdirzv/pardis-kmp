@@ -25,7 +25,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build Android debug
         run: ./gradlew :PardisAndroidApp:assembleDebug --no-daemon
-      # Add tests here once a test suite exists: ./gradlew test --no-daemon
+      - name: Run shared/common unit tests (JVM)
+        # The shared/core suite runs on the JVM via withHostTest (no Xcode/emulator needed):
+        # Profile, BuildVideoCueTimeline, OfflineDownloadManager, SharedInit, etc.
+        run: ./gradlew :shared:testAndroidHostTest --no-daemon
 
   ios-framework:
     # Kotlin/Native iOS targets require a macOS host.

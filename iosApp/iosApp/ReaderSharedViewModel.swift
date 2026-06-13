@@ -47,6 +47,12 @@ final class ReaderSharedViewModel {
         self.viewModel = viewModel
     }
 
+    // iOS has no ViewModelStore to trigger the Kotlin VM's internal clear(); cancel its scope.
+    // Audio teardown (observer removal + pause) is handled by ReaderView's `.onDisappear`, which
+    // fires before this @State adapter is released — a nonisolated deinit can't touch the
+    // @MainActor-isolated audio properties anyway.
+    deinit { viewModel.dispose() }
+
     /// Play a one-shot audio clip (narration or vocab). Retains the player so it actually plays,
     /// applies the playback rate, and (for narration) auto-advances to the next page on completion.
     func playAudio(urlString: String, rate: Float = 1.0, autoAdvance: Bool = false) {
