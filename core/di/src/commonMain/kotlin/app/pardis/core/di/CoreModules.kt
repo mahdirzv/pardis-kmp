@@ -17,6 +17,9 @@ import app.pardis.core.data.ProfileRepositoryImpl
 import app.pardis.core.data.GetProfilesUseCaseImpl
 import app.pardis.core.data.GetSelectedProfileUseCaseImpl
 import app.pardis.core.data.SelectProfileUseCaseImpl
+import app.pardis.core.data.ThemeRepositoryImpl
+import app.pardis.core.data.GetThemePreferenceUseCaseImpl
+import app.pardis.core.data.SetThemePreferenceUseCaseImpl
 import app.pardis.core.domain.ClearStoryAssetsUseCase
 import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
@@ -37,6 +40,9 @@ import app.pardis.core.domain.ProfileRepository
 import app.pardis.core.domain.GetProfilesUseCase
 import app.pardis.core.domain.GetSelectedProfileUseCase
 import app.pardis.core.domain.SelectProfileUseCase
+import app.pardis.core.domain.ThemeRepository
+import app.pardis.core.domain.GetThemePreferenceUseCase
+import app.pardis.core.domain.SetThemePreferenceUseCase
 import app.pardis.core.network.SupabaseClient
 import org.koin.dsl.module
 
@@ -68,6 +74,13 @@ val pardisCoreModules = listOf(
         single<GetProfilesUseCase> { GetProfilesUseCaseImpl(get()) }
         single<GetSelectedProfileUseCase> { GetSelectedProfileUseCaseImpl(get()) }
         single<SelectProfileUseCase> { SelectProfileUseCaseImpl(get()) }
+
+        // Theme layer — preference persists via the shared SQLDelight DB when available.
+        single<ThemeRepository> {
+            ThemeRepositoryImpl(get<PardisDatabaseHolder>().database)
+        }
+        single<GetThemePreferenceUseCase> { GetThemePreferenceUseCaseImpl(get()) }
+        single<SetThemePreferenceUseCase> { SetThemePreferenceUseCaseImpl(get()) }
 
         // Use cases (domain, depend on repo)
         single<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }
