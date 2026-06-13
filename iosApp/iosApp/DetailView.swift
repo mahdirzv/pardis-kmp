@@ -77,7 +77,8 @@ private struct DetailHero: View {
                 accessibilityLabel: story.titleEn,
                 width: nil,
                 height: 360,
-                placeholderText: "No cover"
+                placeholderText: "No cover",
+                cornerRadius: 0
             )
             // Scrim: subtle dark at top (for the controls), strong fade to page bg at bottom (title).
             LinearGradient(
