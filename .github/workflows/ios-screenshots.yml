@@ -7,6 +7,13 @@ name: iOS Screenshots
 # Also runs on PRs to main so reviewers get visual diffs.
 on:
   workflow_dispatch:
+    inputs:
+      appearance:
+        description: "Simulator appearance for the tour"
+        required: false
+        default: "light"
+        type: choice
+        options: [light, dark]
   pull_request:
     branches: [ main ]
 
@@ -36,6 +43,10 @@ jobs:
         working-directory: iosApp
         run: xcodegen generate
       - name: UI-test tour (per-screen screenshots)
+        env:
+          # Constrained choice input (light|dark); defaults to light on PR runs. Set via env (not
+          # interpolated into the script body) per workflow-injection hygiene.
+          APPEARANCE: ${{ github.event.inputs.appearance || 'light' }}
         run: |
           set -uo pipefail
           # First available iPhone simulator (robust to runner OS/device churn).
@@ -44,6 +55,10 @@ jobs:
           echo "Using simulator $UDID"
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
+          # App default preference is SYSTEM, so it follows the simulator appearance. Lets us
+          # capture the dark palette by dispatching this workflow with appearance=dark.
+          xcrun simctl ui "$UDID" appearance "$APPEARANCE" || true
+          echo "Simulator appearance: $APPEARANCE"
           # Single build via `test` (no separate build step) — ScreenshotTests navigates each
           # screen and saves a screenshot attachment. `|| true`: artifact upload happens regardless.
           xcodebuild test \
