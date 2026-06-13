@@ -204,42 +204,41 @@ private fun LibraryCover(
     Column(modifier.clickable { onOpenStory(story.slug) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(0.78f).clip(RoundedCornerShape(PardisRadius.md))) {
             PardisRemoteImageFrame(imageUrl = cover, contentDescription = story.titleEn, modifier = Modifier.fillMaxSize())
+            // Time badge on the art, top-right (design).
             Box(
                 Modifier.align(Alignment.TopEnd).padding(8.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.scrimSoft).padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
                 Text("${story.minutes}m", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkOnDark)
             }
-            if (cached) {
-                Box(
-                    Modifier.align(Alignment.TopStart).padding(8.dp).size(24.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.mint),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    PardisIcon(PardisIconKind.Check, contentDescription = "Offline", tint = PardisColors.inkOnDark, size = 14.dp)
+            // Download control on the art, top-left: icon-only download, a tick when offline, a
+            // spinner while downloading.
+            Box(Modifier.align(Alignment.TopStart).padding(8.dp)) {
+                when {
+                    cached -> DownloadBadge(PardisColors.mint) {
+                        PardisIcon(PardisIconKind.Check, contentDescription = "Offline", tint = PardisColors.inkOnDark, size = 14.dp)
+                    }
+                    progress != null -> DownloadBadge(PardisColors.scrim) {
+                        CircularProgressIndicator(Modifier.size(16.dp), color = PardisColors.inkOnDark, strokeWidth = 2.dp)
+                    }
+                    else -> DownloadBadge(PardisColors.scrim, onClick = { onAction(LibraryAction.DownloadStory(story.slug)) }) {
+                        PardisIcon(if (failed) PardisIconKind.Refresh else PardisIconKind.Download, contentDescription = if (failed) "Retry" else "Download", tint = PardisColors.inkOnDark, size = 14.dp)
+                    }
                 }
             }
         }
         Spacer(Modifier.height(6.dp))
         Text(story.titleEn, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.indigo, maxLines = 1)
-        Spacer(Modifier.height(6.dp))
-        when {
-            progress != null -> Text(progress, style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
-            cached -> Text("✓ Offline", style = MaterialTheme.typography.labelSmall, color = PardisColors.mintDeep, fontWeight = FontWeight.SemiBold)
-            else -> ClickPill(if (failed) "Retry" else "Download") { onAction(LibraryAction.DownloadStory(story.slug)) }
-        }
+        PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted, maxLines = 1)
     }
 }
 
 @Composable
-private fun ClickPill(label: String, onClick: () -> Unit) {
-    Row(
-        Modifier.clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.saffronSoft).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        PardisIcon(PardisIconKind.Download, contentDescription = null, tint = PardisColors.saffronDeep, size = 14.dp)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep, fontWeight = FontWeight.SemiBold)
-    }
+private fun DownloadBadge(fill: Color, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
+    Box(
+        Modifier.size(28.dp).clip(RoundedCornerShape(PardisRadius.full)).background(fill)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) { content() }
 }
 
 @Composable
@@ -258,7 +257,7 @@ private fun LibraryListRow(
         PardisRemoteImageFrame(imageUrl = cover, contentDescription = story.titleEn, modifier = Modifier.size(width = 60.dp, height = 78.dp))
         Column(Modifier.weight(1f)) {
             Text(story.titleEn, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.indigo, maxLines = 1)
+            PersianReaderInline(story.titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted, maxLines = 1)
             Spacer(Modifier.height(4.dp))
             Text("${story.ageBand} · ${story.minutes}m · ${story.vocabCount} words", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted)
         }

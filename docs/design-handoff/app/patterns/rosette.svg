@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+  <title>Rivana motif — shamseh (rosette)</title>
+  <g>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(45 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(90 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(135 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(180 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(225 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(270 60 60)"></path>
+    <path d="M60 50 Q52 36 60 22 Q68 36 60 50 Z" transform="rotate(315 60 60)"></path>
+  </g>
+  <circle cx="60" cy="60" r="10"></circle>
+  <circle cx="60" cy="60" r="2.6" fill="currentColor" stroke="none"></circle>
+  <g fill="currentColor" stroke="none">
+    <circle cx="60" cy="9" r="1.5"></circle>
+    <circle cx="96" cy="24" r="1.5"></circle>
+    <circle cx="111" cy="60" r="1.5"></circle>
+    <circle cx="96" cy="96" r="1.5"></circle>
+    <circle cx="60" cy="111" r="1.5"></circle>
+    <circle cx="24" cy="96" r="1.5"></circle>
+    <circle cx="9" cy="60" r="1.5"></circle>
+    <circle cx="24" cy="24" r="1.5"></circle>
+  </g>
+</svg>
