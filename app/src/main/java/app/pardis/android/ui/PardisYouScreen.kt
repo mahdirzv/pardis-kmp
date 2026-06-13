@@ -9,7 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -24,7 +26,7 @@ import androidx.compose.runtime.getValue
 private data class SettingsItem(val icon: PardisIconKind, val tone: String, val label: String, val detail: String? = null)
 
 @Composable
-internal fun YouScreen(activeProfile: ChildProfile, onSwitchProfile: () -> Unit, downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp) {
+internal fun YouScreen(activeProfile: ChildProfile, onSwitchProfile: () -> Unit, downloadCount: Int, bottomContentPadding: androidx.compose.ui.unit.Dp, isDark: Boolean = false, onSetDark: (Boolean) -> Unit = {}) {
     val gutter = PardisSpacing.lg
     Box(Modifier.fillMaxSize().background(PardisColors.background)) {
     PardisPatternOverlay(
@@ -43,7 +45,7 @@ internal fun YouScreen(activeProfile: ChildProfile, onSwitchProfile: () -> Unit,
             Text("You", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = gutter))
         }
         item { YouProfileCard(activeProfile = activeProfile, onSwitchProfile = onSwitchProfile, modifier = Modifier.padding(horizontal = gutter)) }
-        item { AppearanceGroup(Modifier.padding(horizontal = gutter)) }
+        item { AppearanceGroup(isDark = isDark, onSetDark = onSetDark, modifier = Modifier.padding(horizontal = gutter)) }
         item {
             SettingsGroup(
                 "Reading",
@@ -134,11 +136,11 @@ private fun YouProfileCard(activeProfile: ChildProfile, onSwitchProfile: () -> U
 }
 
 @Composable
-private fun AppearanceGroup(modifier: Modifier) {
+private fun AppearanceGroup(isDark: Boolean, onSetDark: (Boolean) -> Unit, modifier: Modifier) {
     Column(modifier) {
         Text("APPEARANCE", style = MaterialTheme.typography.labelSmall, color = PardisColors.inkMuted, modifier = Modifier.padding(bottom = PardisSpacing.sm))
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surface).padding(horizontal = 16.dp, vertical = 13.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(PardisRadius.lg)).border(1.dp, PardisColors.border, RoundedCornerShape(PardisRadius.lg)).background(PardisColors.surface).clickable { onSetDark(!isDark) }.padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(13.dp),
         ) {
@@ -149,15 +151,23 @@ private fun AppearanceGroup(modifier: Modifier) {
                 PardisIcon(PardisIconKind.Moon, contentDescription = null, tint = PardisColors.lilacDeep, size = 18.dp)
             }
             Text("Dark mode", style = MaterialTheme.typography.bodyLarge, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            // Decorative off toggle (dark mode not wired yet)
+            // Functional toggle: knob slides to the saffron-filled right when dark is on.
+            val knobAlignment by animateHorizontalAlignmentAsState(if (isDark) 1f else -1f)
             Box(
-                Modifier.size(width = 46.dp, height = 28.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.border),
-                contentAlignment = Alignment.CenterStart,
+                Modifier.size(width = 46.dp, height = 28.dp).clip(RoundedCornerShape(PardisRadius.full)).background(if (isDark) PardisColors.saffron else PardisColors.border),
+                contentAlignment = knobAlignment,
             ) {
-                Box(Modifier.padding(start = 3.dp).size(22.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.inkOnDark))
+                Box(Modifier.padding(horizontal = 3.dp).size(22.dp).clip(RoundedCornerShape(PardisRadius.full)).background(PardisColors.inkOnDark))
             }
         }
     }
+}
+
+/** Animates a horizontal [BiasAlignment] for the toggle knob (-1f = start, 1f = end). */
+@Composable
+private fun animateHorizontalAlignmentAsState(targetBias: Float): State<BiasAlignment> {
+    val bias by animateFloatAsState(targetBias, label = "toggleKnob")
+    return remember { derivedStateOf { BiasAlignment(bias, 0f) } }
 }
 
 @Composable
