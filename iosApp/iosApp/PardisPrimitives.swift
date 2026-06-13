@@ -646,6 +646,58 @@ struct PardisControlGroup<Content: View>: View {
     }
 }
 
+/// Wrapping row of variable-width chips, mirroring Compose `FlowRow` (used by Detail meta/vocab
+/// chips and the Finish garden chips). Lays children left-to-right, wrapping to a new line when
+/// the proposed width is exceeded; `spacing` applies both between items and between lines.
+struct PardisFlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        let width = proposal.width ?? rows.map(\.width).max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in computeRows(proposal: proposal, subviews: subviews) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        let maxWidth = proposal.width ?? .infinity
+        var rows: [Row] = []
+        var current = Row()
+        for (index, subview) in subviews.enumerated() {
+            let size = subview.sizeThatFits(.unspecified)
+            let extra = current.indices.isEmpty ? size.width : size.width + spacing
+            if !current.indices.isEmpty && current.width + extra > maxWidth {
+                rows.append(current)
+                current = Row()
+            }
+            current.width += current.indices.isEmpty ? size.width : size.width + spacing
+            current.indices.append(index)
+            current.height = max(current.height, size.height)
+        }
+        if !current.indices.isEmpty { rows.append(current) }
+        return rows
+    }
+}
+
 struct PardisVocabChipView: View {
     let vocab: VocabItem
     let onTap: () -> Void
