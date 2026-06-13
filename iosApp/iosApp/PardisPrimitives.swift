@@ -196,7 +196,8 @@ struct PardisSectionHeader: View {
         HStack(alignment: .center, spacing: PardisSpacing.md) {
             VStack(alignment: .leading, spacing: PardisSpacing.xs) {
                 Text(title)
-                    .font(PardisFonts.display(size: PardisTypography.xl, weight: .bold))
+                    // Android `PardisSectionHeader` title = titleLarge (display/lg/semibold).
+                    .font(PardisFonts.display(size: PardisTypography.lg, weight: .semibold))
                     .foregroundStyle(PardisColors.ink)
                 if let subtitle {
                         Text(subtitle)
