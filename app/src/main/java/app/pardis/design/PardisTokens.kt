@@ -50,34 +50,43 @@ object PardisColors {
     val darkInkSoft = Color(0xFFC3BDD2)
     val darkInkMuted = Color(0xFF8E87A0)
     val darkInkFaint = Color(0xFF5F596F)
-    // Derived dark equivalents for tokens without a prior dark* value (stage bg + tinted surfaces).
+    // Canonical handoff dark equivalents (app.css [data-theme="dark"]). Stage bg is app-specific
+    // (no handoff token); the surface tints equal their matching accent-soft dark value.
     private val darkBackgroundStage = Color(0xFF241E2D)
-    private val darkSurfaceSoft = Color(0xFF1E2236)
-    private val darkSurfaceMint = Color(0xFF16271F)
-    private val darkSurfacePeach = Color(0xFF2C2218)
-    private val darkSurfaceLilac = Color(0xFF221D33)
+    private val darkSurfaceSoft = Color(0xFF1F2547)   // = lapis-soft
+    private val darkSurfaceMint = Color(0xFF143027)   // = mint-soft
+    private val darkSurfacePeach = Color(0xFF3A2A18)  // = saffron-soft
+    private val darkSurfaceLilac = Color(0xFF261F44)  // = lilac-soft
 
+    /** True while the dark scheme is active; lets [PardisGradients.dawn] pick its dark stops. */
+    var isDarkScheme by mutableStateOf(false)
+        private set
+
+    // Base accents stay constant; their *Soft/*Tint backgrounds darken and *Deep text colors brighten
+    // in dark (scheme-reactive, set in applyScheme to the canonical handoff values). indigoDeep also
+    // anchors the night/lapis gradients — those are pinned to a literal hex in PardisGradients so the
+    // gradients don't follow the text brightening.
     val saffron = Color(0xFFF08A2D)
-    val saffronDeep = Color(0xFFC46A12)
-    val saffronSoft = Color(0xFFFFE9D2)
-    val saffronTint = Color(0xFFFFF4E5)
+    var saffronDeep by mutableStateOf(Color(0xFFC46A12))
+    var saffronSoft by mutableStateOf(Color(0xFFFFE9D2))
+    var saffronTint by mutableStateOf(Color(0xFFFFF4E5))
     val indigo = Color(0xFF2436A1)
-    val indigoDeep = Color(0xFF1A256E)
+    var indigoDeep by mutableStateOf(Color(0xFF1A256E))
     val indigoDarker = Color(0xFF0F1849)
-    val indigoSoft = Color(0xFFE8EBFB)
-    val indigoTint = Color(0xFFF0F2FC)
+    var indigoSoft by mutableStateOf(Color(0xFFE8EBFB))
+    var indigoTint by mutableStateOf(Color(0xFFF0F2FC))
     val mint = Color(0xFF2FA876)
-    val mintDeep = Color(0xFF1F7A52)
-    val mintSoft = Color(0xFFDEF5E9)
+    var mintDeep by mutableStateOf(Color(0xFF1F7A52))
+    var mintSoft by mutableStateOf(Color(0xFFDEF5E9))
     val lilac = Color(0xFF8B6FE6)
-    val lilacDeep = Color(0xFF5235B6)
-    val lilacSoft = Color(0xFFECE6FB)
+    var lilacDeep by mutableStateOf(Color(0xFF5235B6))
+    var lilacSoft by mutableStateOf(Color(0xFFECE6FB))
     val rose = Color(0xFFE1547A)
-    val roseDeep = Color(0xFFB83A5E)
-    val roseSoft = Color(0xFFFCDEE6)
+    var roseDeep by mutableStateOf(Color(0xFFB83A5E))
+    var roseSoft by mutableStateOf(Color(0xFFFCDEE6))
     val sun = Color(0xFFF4B53A)
-    val sunDeep = Color(0xFF9A6B12)
-    val sunSoft = Color(0xFFFCEAB6)
+    var sunDeep by mutableStateOf(Color(0xFF9A6B12))
+    var sunSoft by mutableStateOf(Color(0xFFFCEAB6))
     val sunPale = Color(0xFFFFD08A) // grad-saffron end stop
     val violet = Color(0xFF4F2EB5) // grad-night / grad-lapis mid stop
     val errorDark = Color(0xFFFF8A80)
@@ -123,6 +132,24 @@ object PardisColors {
         borderSoft = if (dark) darkBorderSoft else Color(0xFFF2ECDD)
         borderStrong = if (dark) darkBorderStrong else Color(0xFFDDD2BC)
         error = if (dark) errorDark else Color(0xFFEF4444)
+
+        // Accent soft/tint backgrounds darken; accent deep text colors brighten (canonical handoff).
+        saffronSoft = if (dark) Color(0xFF3A2A18) else Color(0xFFFFE9D2)
+        saffronTint = if (dark) Color(0xFF241B12) else Color(0xFFFFF4E5)
+        saffronDeep = if (dark) Color(0xFFF2B074) else Color(0xFFC46A12)
+        indigoSoft = if (dark) Color(0xFF1F2547) else Color(0xFFE8EBFB)
+        indigoTint = if (dark) Color(0xFF181C36) else Color(0xFFF0F2FC)
+        indigoDeep = if (dark) Color(0xFFAEB9F4) else Color(0xFF1A256E)
+        mintSoft = if (dark) Color(0xFF143027) else Color(0xFFDEF5E9)
+        mintDeep = if (dark) Color(0xFF7FD9B0) else Color(0xFF1F7A52)
+        lilacSoft = if (dark) Color(0xFF261F44) else Color(0xFFECE6FB)
+        lilacDeep = if (dark) Color(0xFFC5B4F4) else Color(0xFF5235B6)
+        roseSoft = if (dark) Color(0xFF3A1E28) else Color(0xFFFCDEE6)
+        roseDeep = if (dark) Color(0xFFF18AA6) else Color(0xFFB83A5E)
+        sunSoft = if (dark) Color(0xFF34280F) else Color(0xFFFCEAB6)
+        sunDeep = if (dark) Color(0xFFF2C14E) else Color(0xFF9A6B12)
+
+        isDarkScheme = dark
     }
 }
 
@@ -131,26 +158,32 @@ object PardisColors {
  * drawn area at paint time, so a single instance adapts to any card size.
  */
 object PardisGradients {
+    // night/lapis are pinned to literal hexes (handoff --grad-night / --grad-lapis), NOT the
+    // PardisColors.indigoDeep token — that brightens for *text* in dark mode, but these gradients
+    // must stay constant across schemes. (A literal also avoids depending on object-init order.)
+    private val gradIndigoDeep = Color(0xFF1A256E)
+
     // --grad-night: 180deg indigoDeep → indigo → violet
     val night = Brush.verticalGradient(
-        listOf(PardisColors.indigoDeep, PardisColors.indigo, PardisColors.violet),
+        listOf(gradIndigoDeep, PardisColors.indigo, PardisColors.violet),
     )
     // --grad-lapis: 135deg indigo → violet → indigoDeep
     val lapis = Brush.linearGradient(
-        listOf(PardisColors.indigo, PardisColors.violet, PardisColors.indigoDeep),
+        listOf(PardisColors.indigo, PardisColors.violet, gradIndigoDeep),
     )
     // --grad-saffron: 135deg saffron → sun → sunPale
     val saffron = Brush.linearGradient(
         listOf(PardisColors.saffron, PardisColors.sun, PardisColors.sunPale),
     )
-    // --grad-dawn: 135deg surfacePeach → surfaceLilac → indigoSoft.
-    // A getter (not a val) so it re-reads the scheme-reactive surface tints — read inside a
-    // composable, it subscribes and re-resolves when the scheme flips. The other gradients use
-    // only scheme-agnostic brand colors, so they stay vals.
+    // --grad-dawn: light surfacePeach→surfaceLilac→indigoSoft; dark uses the handoff's explicit
+    // dark dawn stops. A getter so it re-reads the reactive isDarkScheme flag and re-resolves when
+    // the scheme flips (read inside a composable, it subscribes).
     val dawn: Brush
-        get() = Brush.linearGradient(
-            listOf(PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft),
-        )
+        get() = if (PardisColors.isDarkScheme) {
+            Brush.linearGradient(listOf(Color(0xFF221A2E), Color(0xFF1A2140), Color(0xFF16223E)))
+        } else {
+            Brush.linearGradient(listOf(Color(0xFFFFE9D2), Color(0xFFECE6FB), Color(0xFFE8EBFB)))
+        }
 }
 
 object PardisSpacing {

@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.pardis.design.PardisFonts
 import app.pardis.design.PardisRadius
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -157,10 +159,12 @@ private fun TodayGreeting(activeName: String, modifier: Modifier = Modifier) {
         hour < 18 -> "Good afternoon"
         else -> "Good evening"
     }
+    val weekday = java.text.SimpleDateFormat("EEEE", java.util.Locale.US).format(java.util.Date())
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("$greeting, $activeName".uppercase(), style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep)
-            Text("Salâm", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
+            // Eyebrow is greeting + weekday (no name); the name goes on the Salâm title.
+            Text("$greeting · $weekday".uppercase(), style = MaterialTheme.typography.labelSmall, color = PardisColors.saffronDeep)
+            Text("Salâm, $activeName", style = MaterialTheme.typography.displayLarge, color = PardisColors.ink, fontWeight = FontWeight.ExtraBold)
             PersianReaderInline("سلام، روزت پر از قصه", style = MaterialTheme.typography.bodyMedium, color = PardisColors.inkMuted)
         }
         Box(
@@ -239,7 +243,7 @@ private fun TodayShelfCover(titleEn: String, titleFa: String, coverUrl: String?,
         )
         Spacer(Modifier.height(PardisSpacing.xs))
         Text(titleEn, style = MaterialTheme.typography.titleMedium, color = PardisColors.ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        PersianReaderInline(titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.indigo, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        PersianReaderInline(titleFa, style = MaterialTheme.typography.bodySmall, color = PardisColors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -250,14 +254,15 @@ private fun WordOfDayCard(modifier: Modifier = Modifier) {
             .border(1.dp, PardisColors.lilac.copy(alpha = 0.22f), RoundedCornerShape(PardisRadius.lg)),
     ) {
     PardisPatternOverlay(PardisMotif.Vine, PardisColors.lilacDeep, alpha = 0.10f, fade = PardisPatternFade.TopRight, modifier = Modifier.matchParentSize())
-    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 22.dp)) {
+    Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("WORD OF THE DAY", style = MaterialTheme.typography.labelSmall, color = PardisColors.lilacDeep)
             PardisIcon(PardisIconKind.Volume, contentDescription = null, tint = PardisColors.lilacDeep)
         }
         Spacer(Modifier.height(PardisSpacing.xs))
-        PersianReaderParagraph("دلیر", style = MaterialTheme.typography.displayLarge, color = PardisColors.lilacDeep)
-        Text("delir — \"brave\"", style = MaterialTheme.typography.bodyMedium, color = PardisColors.lilacDeep)
+        // Hero word is the handoff's literal 40sp (no nearer type token); translit is mono.
+        PersianReaderParagraph("دلیر", style = MaterialTheme.typography.displayLarge.copy(fontSize = 40.sp), color = PardisColors.lilacDeep)
+        Text("delir — \"brave\"", style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PardisFonts.mono), color = PardisColors.lilacDeep)
         Spacer(Modifier.height(PardisSpacing.xs))
         Text(
             "A delir heart fears nothing.",
