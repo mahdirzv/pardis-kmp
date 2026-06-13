@@ -1,6 +1,7 @@
 package app.pardis.android.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -21,8 +22,11 @@ import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
 import app.pardis.core.model.ChildProfile
 import app.pardis.core.model.RivanaContent
+import app.pardis.core.model.ThemePreference
 import app.pardis.shared.profile.ProfileAction
 import app.pardis.shared.profile.ProfileViewModel
+import app.pardis.shared.theme.ThemeAction
+import app.pardis.shared.theme.ThemeViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 
@@ -40,10 +44,24 @@ private enum class PardisRootTab(
 @Composable
 fun PardisApp(
     profileViewModel: ProfileViewModel = koinViewModel(),
+    themeViewModel: ThemeViewModel = koinViewModel(),
 ) {
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val themeState by themeViewModel.uiState.collectAsStateWithLifecycle()
 
-    PardisTheme {
+    // Resolve the effective dark flag from the persisted preference (SYSTEM follows the OS).
+    val darkTheme = when (themeState.preference) {
+        ThemePreference.DARK -> true
+        ThemePreference.LIGHT -> false
+        else -> isSystemInDarkTheme()
+    }
+    // on=DARK, off=LIGHT (explicit). The binary toggle never stores SYSTEM; SYSTEM is just the
+    // pre-interaction default.
+    val onSetDark: (Boolean) -> Unit = {
+        themeViewModel.onAction(ThemeAction.SetPreference(if (it) ThemePreference.DARK else ThemePreference.LIGHT))
+    }
+
+    PardisTheme(darkTheme = darkTheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -66,6 +84,8 @@ fun PardisApp(
                         activeProfile = profileState.selectedProfile!!,
                         profiles = profileState.profiles,
                         onSelectProfile = { profileViewModel.onAction(ProfileAction.Select(it.id)) },
+                        isDark = darkTheme,
+                        onSetDark = onSetDark,
                     )
                 }
             }
@@ -78,6 +98,8 @@ private fun PardisAppShell(
     activeProfile: ChildProfile,
     profiles: List<ChildProfile>,
     onSelectProfile: (ChildProfile) -> Unit,
+    isDark: Boolean,
+    onSetDark: (Boolean) -> Unit,
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "library") {
@@ -88,6 +110,8 @@ private fun PardisAppShell(
                 onOpenLullaby = { index -> navController.navigate("lullaby/$index") },
                 onOpenCharacter = { index -> navController.navigate("character/$index") },
                 onSwitchProfile = { navController.navigate("onboarding") },
+                isDark = isDark,
+                onSetDark = onSetDark,
             )
         }
         composable("onboarding") {
@@ -170,6 +194,8 @@ private fun RootShellRoute(
     onOpenLullaby: (Int) -> Unit,
     onOpenCharacter: (Int) -> Unit,
     onSwitchProfile: () -> Unit,
+    isDark: Boolean,
+    onSetDark: (Boolean) -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     // rememberSaveable so the selected tab survives the switch-profile route round-trip
@@ -227,6 +253,8 @@ private fun RootShellRoute(
                     onSwitchProfile = onSwitchProfile,
                     downloadCount = libraryState.cachedStorySlugs.size,
                     bottomContentPadding = bottomReserve,
+                    isDark = isDark,
+                    onSetDark = onSetDark,
                 )
             }
         }

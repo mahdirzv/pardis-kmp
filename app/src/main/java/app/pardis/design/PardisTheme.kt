@@ -242,6 +242,10 @@ fun PardisTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
+    // Flip the scheme-reactive PardisColors tokens so the brand-token UI (which reads PardisColors.*
+    // directly, not MaterialTheme.colorScheme) follows the scheme. Deterministic + idempotent, so it
+    // converges; runs before content() composes, so readers see the right values (no first-frame flash).
+    PardisColors.applyScheme(darkTheme)
     MaterialTheme(
         colorScheme = if (darkTheme) PardisDarkColorScheme else PardisLightColorScheme,
         typography = PardisTypographyScheme,

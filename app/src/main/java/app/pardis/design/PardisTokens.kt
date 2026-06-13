@@ -2,6 +2,9 @@
 
 package app.pardis.design
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -11,15 +14,31 @@ import androidx.compose.ui.unit.dp
  * Pardis palette only. Use these in Compose UI.
  */
 object PardisColors {
-    val background = Color(0xFFFAF6EE)
-    val backgroundAlt = Color(0xFFF3EEDD)
-    val backgroundStage = Color(0xFFEDE6D6)
-    val surface = Color(0xFFFFFFFF)
-    val surface2 = Color(0xFFFDFAF0)
-    val surfaceSoft = Color(0xFFE8EBFB)
-    val surfaceMint = Color(0xFFDEF5E9)
-    val surfacePeach = Color(0xFFFFE9D2)
-    val surfaceLilac = Color(0xFFECE6FB)
+    // ── Scheme-reactive neutrals ──────────────────────────────
+    // Read as usual (PardisColors.background, .ink, …). They're backed by Compose snapshot state, so
+    // flipping them in [applyScheme] (called by PardisTheme on scheme change — the only writer)
+    // recomposes every reader. This lets the brand-token UI, which reads PardisColors.* directly
+    // (not MaterialTheme.colorScheme), follow light/dark. Brand accents, on-dark overlays and scrims
+    // below stay constant across schemes (their on-chip text contrast is preserved; they pop on dark).
+    var background by mutableStateOf(Color(0xFFFAF6EE))
+    var backgroundAlt by mutableStateOf(Color(0xFFF3EEDD))
+    var backgroundStage by mutableStateOf(Color(0xFFEDE6D6))
+    var surface by mutableStateOf(Color(0xFFFFFFFF))
+    var surface2 by mutableStateOf(Color(0xFFFDFAF0))
+    var surfaceSoft by mutableStateOf(Color(0xFFE8EBFB))
+    var surfaceMint by mutableStateOf(Color(0xFFDEF5E9))
+    var surfacePeach by mutableStateOf(Color(0xFFFFE9D2))
+    var surfaceLilac by mutableStateOf(Color(0xFFECE6FB))
+    var ink by mutableStateOf(Color(0xFF14111B))
+    var inkSoft by mutableStateOf(Color(0xFF4B4760))
+    var inkMuted by mutableStateOf(Color(0xFF8A8499))
+    var inkFaint by mutableStateOf(Color(0xFFB6B0C0))
+    var border by mutableStateOf(Color(0xFFECE3D0))
+    var borderSoft by mutableStateOf(Color(0xFFF2ECDD))
+    var borderStrong by mutableStateOf(Color(0xFFDDD2BC))
+    var error by mutableStateOf(Color(0xFFEF4444))
+
+    // ── Dark neutral source values (also consumed by PardisDarkColorScheme) ──
     val darkBackground = Color(0xFF141019)
     val darkBackgroundAlt = Color(0xFF1D1825)
     val darkSurface = Color(0xFF211C2B)
@@ -31,6 +50,13 @@ object PardisColors {
     val darkInkSoft = Color(0xFFC3BDD2)
     val darkInkMuted = Color(0xFF8E87A0)
     val darkInkFaint = Color(0xFF5F596F)
+    // Derived dark equivalents for tokens without a prior dark* value (stage bg + tinted surfaces).
+    private val darkBackgroundStage = Color(0xFF241E2D)
+    private val darkSurfaceSoft = Color(0xFF1E2236)
+    private val darkSurfaceMint = Color(0xFF16271F)
+    private val darkSurfacePeach = Color(0xFF2C2218)
+    private val darkSurfaceLilac = Color(0xFF221D33)
+
     val saffron = Color(0xFFF08A2D)
     val saffronDeep = Color(0xFFC46A12)
     val saffronSoft = Color(0xFFFFE9D2)
@@ -54,14 +80,6 @@ object PardisColors {
     val sunSoft = Color(0xFFFCEAB6)
     val sunPale = Color(0xFFFFD08A) // grad-saffron end stop
     val violet = Color(0xFF4F2EB5) // grad-night / grad-lapis mid stop
-    val ink = Color(0xFF14111B)
-    val inkSoft = Color(0xFF4B4760)
-    val inkMuted = Color(0xFF8A8499)
-    val inkFaint = Color(0xFFB6B0C0)
-    val border = Color(0xFFECE3D0)
-    val borderSoft = Color(0xFFF2ECDD)
-    val borderStrong = Color(0xFFDDD2BC)
-    val error = Color(0xFFEF4444)
     val errorDark = Color(0xFFFF8A80)
     val errorContainerDark = Color(0xFF6D2C2C)
     val onErrorContainerDark = Color(0xFFFFDAD4)
@@ -81,6 +99,31 @@ object PardisColors {
     // Black scrims for legibility under text over imagery/scene art.
     val scrim = Color(0x99000000) // 60%
     val scrimSoft = Color(0x66000000) // 40%
+
+    /**
+     * Flip the scheme-reactive neutrals. Called by [PardisTheme] on scheme change (the only writer).
+     * Deterministic + idempotent given the same [dark], so it converges on recomposition. Brand /
+     * on-dark / scrim tokens are scheme-agnostic and untouched.
+     */
+    fun applyScheme(dark: Boolean) {
+        background = if (dark) darkBackground else Color(0xFFFAF6EE)
+        backgroundAlt = if (dark) darkBackgroundAlt else Color(0xFFF3EEDD)
+        backgroundStage = if (dark) darkBackgroundStage else Color(0xFFEDE6D6)
+        surface = if (dark) darkSurface else Color(0xFFFFFFFF)
+        surface2 = if (dark) darkSurface2 else Color(0xFFFDFAF0)
+        surfaceSoft = if (dark) darkSurfaceSoft else Color(0xFFE8EBFB)
+        surfaceMint = if (dark) darkSurfaceMint else Color(0xFFDEF5E9)
+        surfacePeach = if (dark) darkSurfacePeach else Color(0xFFFFE9D2)
+        surfaceLilac = if (dark) darkSurfaceLilac else Color(0xFFECE6FB)
+        ink = if (dark) darkInk else Color(0xFF14111B)
+        inkSoft = if (dark) darkInkSoft else Color(0xFF4B4760)
+        inkMuted = if (dark) darkInkMuted else Color(0xFF8A8499)
+        inkFaint = if (dark) darkInkFaint else Color(0xFFB6B0C0)
+        border = if (dark) darkBorder else Color(0xFFECE3D0)
+        borderSoft = if (dark) darkBorderSoft else Color(0xFFF2ECDD)
+        borderStrong = if (dark) darkBorderStrong else Color(0xFFDDD2BC)
+        error = if (dark) errorDark else Color(0xFFEF4444)
+    }
 }
 
 /**
@@ -100,10 +143,14 @@ object PardisGradients {
     val saffron = Brush.linearGradient(
         listOf(PardisColors.saffron, PardisColors.sun, PardisColors.sunPale),
     )
-    // --grad-dawn: 135deg surfacePeach → surfaceLilac → indigoSoft
-    val dawn = Brush.linearGradient(
-        listOf(PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft),
-    )
+    // --grad-dawn: 135deg surfacePeach → surfaceLilac → indigoSoft.
+    // A getter (not a val) so it re-reads the scheme-reactive surface tints — read inside a
+    // composable, it subscribes and re-resolves when the scheme flips. The other gradients use
+    // only scheme-agnostic brand colors, so they stay vals.
+    val dawn: Brush
+        get() = Brush.linearGradient(
+            listOf(PardisColors.surfacePeach, PardisColors.surfaceLilac, PardisColors.indigoSoft),
+        )
 }
 
 object PardisSpacing {
