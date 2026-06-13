@@ -655,11 +655,11 @@ struct PardisVocabChipView: View {
             VStack(alignment: .leading, spacing: 2) {
                 PersianReaderText(
                     text: vocab.fa,
-                    font: .system(size: PardisTypography.sm, weight: .bold, design: .rounded),
+                    font: PardisFonts.persian(size: PardisTypography.sm, weight: .medium),
                     color: PardisColors.indigoDeep
                 )
                 Text("\(vocab.translit) — \(vocab.en)")
-                    .font(.system(size: PardisTypography.xs, weight: .medium, design: .rounded))
+                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                     .foregroundStyle(PardisColors.inkSoft)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -686,18 +686,18 @@ struct PardisVocabSheetContent: View {
     var body: some View {
         PardisPanel {
             Text("Vocab")
-                .font(.system(size: PardisTypography.sm, weight: .bold, design: .rounded))
+                .font(PardisFonts.body(size: PardisTypography.sm, weight: .semibold))
                 .foregroundStyle(PardisColors.indigo)
-            PersianReaderText(text: vocab.fa, font: .system(size: PardisTypography.xl, weight: .bold, design: .rounded), color: PardisColors.ink)
+            PersianReaderText(text: vocab.fa, font: PardisFonts.persian(size: PardisTypography.lg, weight: .semibold), color: PardisColors.ink)
             Text("(\(vocab.translit))")
-                .font(.system(size: PardisTypography.base, weight: .medium, design: .rounded))
+                .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
                 .foregroundStyle(PardisColors.inkSoft)
             Text(vocab.en)
-                .font(.system(size: PardisTypography.base, weight: .regular, design: .rounded))
-                .foregroundStyle(PardisColors.ink)
+                .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
+                .foregroundStyle(PardisColors.inkSoft)
             if !vocab.context.isEmpty {
                 Text("in: \(vocab.context)")
-                    .font(.system(size: PardisTypography.sm, weight: .regular, design: .rounded))
+                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
                     .foregroundStyle(PardisColors.inkMuted)
             }
             if let onPlayPronunciation, vocab.audioUrl != nil {
