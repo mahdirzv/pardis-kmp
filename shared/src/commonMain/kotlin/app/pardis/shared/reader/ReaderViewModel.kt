@@ -2,6 +2,7 @@ package app.pardis.shared.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import app.pardis.core.domain.ClearStoryAssetsUseCase
 import app.pardis.core.domain.DownloadStoryAssetsUseCase
 import app.pardis.core.domain.DownloadVideoUseCase
@@ -261,6 +262,15 @@ class ReaderViewModel(
                 localNarrationUrls = localNars
             )
         }
+    }
+
+    /**
+     * Cancels in-flight work, mirroring what Android's ViewModelStore does via the internal
+     * `clear()`. iOS has no ViewModelStore, so the Swift adapter calls this from its `deinit`.
+     * Not called on Android (its ViewModelStore clears the scope on its own).
+     */
+    fun dispose() {
+        viewModelScope.cancel()
     }
 }
 

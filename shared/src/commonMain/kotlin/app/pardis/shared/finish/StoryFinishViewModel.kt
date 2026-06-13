@@ -2,6 +2,7 @@ package app.pardis.shared.finish
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.domain.GetStoryPagesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,15 @@ class StoryFinishViewModel(
             is StoryFinishAction.Load -> load(action.slug)
             is StoryFinishAction.Retry -> load(_uiState.value.slug)
         }
+    }
+
+    /**
+     * Cancels in-flight work, mirroring what Android's ViewModelStore does via the internal
+     * `clear()`. iOS has no ViewModelStore, so the Swift adapter calls this from its `deinit`.
+     * Not called on Android (its ViewModelStore clears the scope on its own).
+     */
+    fun dispose() {
+        viewModelScope.cancel()
     }
 
     private fun load(slug: String) {

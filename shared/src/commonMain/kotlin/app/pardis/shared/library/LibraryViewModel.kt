@@ -2,6 +2,7 @@ package app.pardis.shared.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import app.pardis.core.domain.GetLocalAssetPathUseCase
 import app.pardis.core.domain.GetStoriesUseCase
 import app.pardis.core.model.Story
@@ -155,5 +156,14 @@ class LibraryViewModel(
                 isLoading.value = false
             }
         }
+    }
+
+    /**
+     * Cancels in-flight work, mirroring what Android's ViewModelStore does via the internal
+     * `clear()`. iOS has no ViewModelStore, so the Swift adapter calls this from its `deinit`.
+     * Not called on Android (its ViewModelStore clears the scope on its own).
+     */
+    fun dispose() {
+        viewModelScope.cancel()
     }
 }

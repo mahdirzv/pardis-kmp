@@ -2,6 +2,7 @@ package app.pardis.shared.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import app.pardis.core.domain.GetProfilesUseCase
 import app.pardis.core.domain.GetSelectedProfileUseCase
 import app.pardis.core.domain.SelectProfileUseCase
@@ -61,5 +62,14 @@ class ProfileViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Cancels in-flight work, mirroring what Android's ViewModelStore does via the internal
+     * `clear()`. iOS has no ViewModelStore, so the Swift adapter calls this from its `deinit`.
+     * Not called on Android (its ViewModelStore clears the scope on its own).
+     */
+    fun dispose() {
+        viewModelScope.cancel()
     }
 }
