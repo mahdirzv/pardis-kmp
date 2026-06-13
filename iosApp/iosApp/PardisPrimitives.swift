@@ -8,6 +8,7 @@ enum PardisIconKind {
     case back
     case bell
     case book
+    case bookmark
     case check
     case chevRight
     case clock
@@ -31,6 +32,7 @@ enum PardisIconKind {
     case search
     case settings
     case shield
+    case sparkle
     case sprout
     case star
     case starFill
@@ -46,6 +48,8 @@ enum PardisIconKind {
             return "bell"
         case .book:
             return "book.closed"
+        case .bookmark:
+            return "bookmark"
         case .check:
             return "checkmark"
         case .chevRight:
@@ -90,6 +94,8 @@ enum PardisIconKind {
             return "magnifyingglass"
         case .settings:
             return "gearshape"
+        case .sparkle:
+            return "sparkle"
         case .shield:
             return "checkmark.shield"
         case .sprout:
@@ -369,6 +375,7 @@ struct PardisAsyncImageFrame: View {
     let width: CGFloat?
     let height: CGFloat
     var placeholderText: String = "No illustration"
+    var cornerRadius: CGFloat = PardisRadius.md
 
     var body: some View {
         // Size the box first (fill width when `width` is nil — e.g. grid cells), then fill it with
@@ -389,7 +396,7 @@ struct PardisAsyncImageFrame: View {
                         .foregroundStyle(PardisComponentColors.mediaPlaceholderContent)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: PardisRadius.md, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .accessibilityLabel(accessibilityLabel)
     }
 }
@@ -646,6 +653,58 @@ struct PardisControlGroup<Content: View>: View {
     }
 }
 
+/// Wrapping row of variable-width chips, mirroring Compose `FlowRow` (used by Detail meta/vocab
+/// chips and the Finish garden chips). Lays children left-to-right, wrapping to a new line when
+/// the proposed width is exceeded; `spacing` applies both between items and between lines.
+struct PardisFlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        let width = proposal.width ?? rows.map(\.width).max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in computeRows(proposal: proposal, subviews: subviews) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        let maxWidth = proposal.width ?? .infinity
+        var rows: [Row] = []
+        var current = Row()
+        for (index, subview) in subviews.enumerated() {
+            let size = subview.sizeThatFits(.unspecified)
+            let extra = current.indices.isEmpty ? size.width : size.width + spacing
+            if !current.indices.isEmpty && current.width + extra > maxWidth {
+                rows.append(current)
+                current = Row()
+            }
+            current.width += current.indices.isEmpty ? size.width : size.width + spacing
+            current.indices.append(index)
+            current.height = max(current.height, size.height)
+        }
+        if !current.indices.isEmpty { rows.append(current) }
+        return rows
+    }
+}
+
 struct PardisVocabChipView: View {
     let vocab: VocabItem
     let onTap: () -> Void
@@ -655,11 +714,11 @@ struct PardisVocabChipView: View {
             VStack(alignment: .leading, spacing: 2) {
                 PersianReaderText(
                     text: vocab.fa,
-                    font: .system(size: PardisTypography.sm, weight: .bold, design: .rounded),
+                    font: PardisFonts.persian(size: PardisTypography.sm, weight: .medium),
                     color: PardisColors.indigoDeep
                 )
                 Text("\(vocab.translit) — \(vocab.en)")
-                    .font(.system(size: PardisTypography.xs, weight: .medium, design: .rounded))
+                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
                     .foregroundStyle(PardisColors.inkSoft)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -686,18 +745,18 @@ struct PardisVocabSheetContent: View {
     var body: some View {
         PardisPanel {
             Text("Vocab")
-                .font(.system(size: PardisTypography.sm, weight: .bold, design: .rounded))
+                .font(PardisFonts.body(size: PardisTypography.sm, weight: .semibold))
                 .foregroundStyle(PardisColors.indigo)
-            PersianReaderText(text: vocab.fa, font: .system(size: PardisTypography.xl, weight: .bold, design: .rounded), color: PardisColors.ink)
+            PersianReaderText(text: vocab.fa, font: PardisFonts.persian(size: PardisTypography.lg, weight: .semibold), color: PardisColors.ink)
             Text("(\(vocab.translit))")
-                .font(.system(size: PardisTypography.base, weight: .medium, design: .rounded))
+                .font(PardisFonts.body(size: PardisTypography.sm, weight: .regular))
                 .foregroundStyle(PardisColors.inkSoft)
             Text(vocab.en)
-                .font(.system(size: PardisTypography.base, weight: .regular, design: .rounded))
-                .foregroundStyle(PardisColors.ink)
+                .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
+                .foregroundStyle(PardisColors.inkSoft)
             if !vocab.context.isEmpty {
                 Text("in: \(vocab.context)")
-                    .font(.system(size: PardisTypography.sm, weight: .regular, design: .rounded))
+                    .font(PardisFonts.body(size: PardisTypography.sm, weight: .medium))
                     .foregroundStyle(PardisColors.inkMuted)
             }
             if let onPlayPronunciation, vocab.audioUrl != nil {
