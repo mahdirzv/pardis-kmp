@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.cancel
 import app.pardis.core.domain.GetThemePreferenceUseCase
 import app.pardis.core.domain.SetThemePreferenceUseCase
-import app.pardis.core.domain.ThemePreference
+import app.pardis.core.model.ThemePreference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

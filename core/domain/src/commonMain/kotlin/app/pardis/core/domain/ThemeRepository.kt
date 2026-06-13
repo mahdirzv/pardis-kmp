@@ -1,7 +1,6 @@
 package app.pardis.core.domain
 
-/** The user's theme choice. [SYSTEM] defers to the OS appearance; the default until the user picks. */
-enum class ThemePreference { LIGHT, DARK, SYSTEM }
+import app.pardis.core.model.ThemePreference
 
 interface ThemeRepository {
     suspend fun themePreference(): ThemePreference

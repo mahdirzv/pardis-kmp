@@ -3,8 +3,8 @@ package app.pardis.core.data
 import app.pardis.core.database.PardisDatabase
 import app.pardis.core.domain.GetThemePreferenceUseCase
 import app.pardis.core.domain.SetThemePreferenceUseCase
-import app.pardis.core.domain.ThemePreference
 import app.pardis.core.domain.ThemeRepository
+import app.pardis.core.model.ThemePreference
 import kotlin.concurrent.Volatile
 
 private const val KEY_THEME_PREFERENCE = "theme_preference"
