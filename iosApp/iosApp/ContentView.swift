@@ -149,6 +149,7 @@ private struct MainShellView: View {
                             lullaby: RivanaContent.shared.lullabies[route.index],
                             onBack: { lullabyRoute = nil }
                         )
+                        .toolbar(.hidden, for: .tabBar)
                     }
             }
             .tabItem { Label(PardisRootTab.bedtime.title, systemImage: PardisRootTab.bedtime.icon.systemName) }
@@ -164,6 +165,7 @@ private struct MainShellView: View {
                         character: RivanaContent.shared.characters[route.index],
                         onBack: { characterRoute = nil }
                     )
+                    .toolbar(.hidden, for: .tabBar)
                 }
             }
             .tabItem { Label(PardisRootTab.rewards.title, systemImage: PardisRootTab.rewards.icon.systemName) }
@@ -206,6 +208,8 @@ private extension View {
                     onRead: { path.wrappedValue.append(ReadRoute(slug: $0)) },
                     onBack: { path.wrappedValue.removeLast() }
                 )
+                // Pushed (non-top-level) screen: hide the tab bar so it shows only on tab roots.
+                .toolbar(.hidden, for: .tabBar)
             }
             .navigationDestination(for: ReadRoute.self) { route in
                 ReaderScreen(
@@ -215,6 +219,7 @@ private extension View {
                         path.wrappedValue.append(FinishRoute(slug: finishedSlug)) // …and replace with finish
                     }
                 )
+                .toolbar(.hidden, for: .tabBar)
             }
             .navigationDestination(for: FinishRoute.self) { route in
                 FinishScreen(
@@ -225,6 +230,7 @@ private extension View {
                     },
                     onDone: { path.wrappedValue = NavigationPath() }
                 )
+                .toolbar(.hidden, for: .tabBar)
             }
     }
 }

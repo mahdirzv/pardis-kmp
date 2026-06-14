@@ -17,7 +17,7 @@ struct DetailScreen: View {
             if let story = model.story {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        DetailHero(story: story, onBack: onBack)
+                        DetailHero(story: story)
                         DetailMetaChips(story: story)
                             .padding(.horizontal, PardisSpacing.lg)
                             .padding(.vertical, PardisSpacing.sm)
@@ -60,15 +60,38 @@ struct DetailScreen: View {
                 .padding(PardisSpacing.lg)
             }
         }
+        // Back / Save pinned to the top of the SAFE AREA. The hero deliberately bleeds under the
+        // status bar (ScrollView ignoresSafeArea(.top)), so these controls live here on the ZStack —
+        // which respects the safe area — rather than inside the hero, where they'd hide under the
+        // Dynamic Island and be unreachable.
+        .overlay(alignment: .top) {
+            if model.story != nil {
+                DetailTopBar(onBack: onBack)
+            }
+        }
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .task { await model.activate() }
         .onAppear { model.load(slug: slug) }
     }
 }
 
+private struct DetailTopBar: View {
+    let onBack: () -> Void
+
+    var body: some View {
+        HStack {
+            HeroCircleButton(icon: .back, label: "Back", action: onBack)
+            Spacer()
+            HeroCircleButton(icon: .heart, label: "Save", action: {})
+        }
+        .padding(.horizontal, PardisSpacing.md)
+        .padding(.top, PardisSpacing.sm)
+    }
+}
+
 private struct DetailHero: View {
     let story: Story
-    let onBack: () -> Void
 
     var body: some View {
         ZStack {
@@ -93,15 +116,6 @@ private struct DetailHero: View {
             )
         }
         .frame(height: 360)
-        .overlay(alignment: .top) {
-            HStack {
-                HeroCircleButton(icon: .back, label: "Back", action: onBack)
-                Spacer()
-                HeroCircleButton(icon: .heart, label: "Save", action: {})
-            }
-            .padding(.horizontal, PardisSpacing.md)
-            .padding(.top, PardisSpacing.sm)
-        }
         .overlay(alignment: .bottomLeading) {
             VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
                 Text(story.titleEn)
