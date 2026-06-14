@@ -211,8 +211,7 @@ private extension View {
             .navigationDestination(for: DetailRoute.self) { route in
                 DetailScreen(
                     slug: route.slug,
-                    onRead: { reader.wrappedValue = ReaderCover(slug: $0) },
-                    onBack: { path.wrappedValue.removeLast() }
+                    onRead: { reader.wrappedValue = ReaderCover(slug: $0) }
                 )
                 // Pushed (non-top-level) screen: hide the tab bar so it shows only on tab roots.
                 .toolbar(.hidden, for: .tabBar)

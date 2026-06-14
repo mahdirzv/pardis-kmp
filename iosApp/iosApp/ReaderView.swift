@@ -26,12 +26,10 @@ struct ReaderScreen: View {
     @State private var model = ReaderSharedViewModel()
     @State private var selectedVocab: SelectedVocab? = nil
     @State private var displayLang = "both" // both | en | fa
-    // Measured height of the top chrome (bar + dots), used to inset the scroll content so the first
-    // item clears the bar while still scrolling *behind* its blur. Seeded with a close estimate.
-    @State private var topChromeHeight: CGFloat = 96
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        NavigationStack {
         ZStack {
             PardisColors.background.ignoresSafeArea()
             if model.isLoading && model.pages.isEmpty {
@@ -61,7 +59,33 @@ struct ReaderScreen: View {
                 readerContent
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        // Native nav bar inside the modal: a visible (blurred) toolbar background means page content
+        // scrolls — and blurs — behind it for free on iOS 17, replacing the hand-rolled chrome.
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                ReaderIconButton(icon: .chevRight, label: "Close", action: { dismiss() }, rotation: 90)
+            }
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: PardisSpacing.xxs) {
+                    Text(storyTitle)
+                        .font(PardisFonts.display(size: PardisTypography.sm, weight: .heavy))
+                        .foregroundStyle(PardisColors.ink)
+                        .lineLimit(1)
+                    if !model.pages.isEmpty {
+                        Text("PAGE \(model.currentPage + 1) OF \(model.pages.count)")
+                            .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
+                            .kerning(0.6)
+                            .foregroundStyle(PardisColors.inkMuted)
+                    }
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                ReaderIconButton(icon: .bookmark, label: "Bookmark", action: {})
+            }
+        }
+        }
         .sheet(item: $selectedVocab, onDismiss: { model.dismissVocab() }) { selection in
             ReaderWordCard(
                 vocab: selection.vocab,
@@ -100,11 +124,9 @@ struct ReaderScreen: View {
         let hasVideo = model.videoUrlFa != nil || model.videoUrlEn != nil
 
         return VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Reserve room for the overlaid top chrome; content scrolls behind its blur.
-                        Color.clear.frame(height: topChromeHeight)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Spacer().frame(height: PardisSpacing.sm)
 
                     // Illustration (or video player when in video mode)
                     ZStack(alignment: .topLeading) {
@@ -178,34 +200,16 @@ struct ReaderScreen: View {
                 }
                 .padding(.horizontal, PardisSpacing.lg)
             }
-
-                // Blurred top chrome, overlaid so page content scrolls (and blurs) behind it.
-                VStack(spacing: 0) {
-                    ReaderTopBar(
-                        title: storyTitle,
-                        page: model.currentPage + 1,
-                        total: model.pages.count,
-                        onBack: { dismiss() }
-                    )
-                    ReaderPageDots(
-                        total: model.pages.count,
-                        current: model.currentPage,
-                        onGoTo: { model.goToPage(Int32($0)) }
-                    )
-                }
-                .background(alignment: .top) {
-                    ReaderTopChromeBackground()
-                        .frame(height: ReaderTopChromeMetrics.backgroundHeight)
-                        .ignoresSafeArea(edges: .top)
-                        .allowsHitTesting(false)
-                }
-                .background {
-                    GeometryReader { proxy in
-                        Color.clear
-                            .onAppear { topChromeHeight = proxy.size.height }
-                            .onChange(of: proxy.size.height) { _, h in topChromeHeight = h }
-                    }
-                }
+            // Page dots pinned just under the native nav bar; content scrolls beneath both.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ReaderPageDots(
+                    total: model.pages.count,
+                    current: model.currentPage,
+                    onGoTo: { model.goToPage(Int32($0)) }
+                )
+                .padding(.vertical, PardisSpacing.xs)
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial)
             }
 
             ReaderDock(
@@ -250,101 +254,6 @@ struct ReaderScreen: View {
         )
         guard let url else { return }
         model.playAudio(urlString: url, rate: model.playbackRate, autoAdvance: true)
-    }
-}
-
-private enum ReaderTopChromeMetrics {
-    static let backgroundHeight: CGFloat = PardisSpacing.xxl * 3
-    static let solidStop: CGFloat = 0.0
-    static let tintStop: CGFloat = 0.36
-    static let fadeStop: CGFloat = 0.72
-    static let clearStop: CGFloat = 1.0
-    // Mostly a clean blur with only a whisper of brand tint, fading out toward the bottom — so
-    // scrolling content reads as "blurred behind the bar" rather than sliding under a colored slab.
-    static let materialOpacity = 0.72
-    static let backgroundOpacity = 0.42
-    static let backgroundAltOpacity = 0.16
-    static let indigoGlowOpacity = 0.06
-    static let saffronGlowOpacity = 0.04
-}
-
-private struct ReaderTopChromeBackground: View {
-    var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .opacity(ReaderTopChromeMetrics.materialOpacity)
-
-            LinearGradient(
-                stops: [
-                    .init(
-                        color: PardisColors.background.opacity(ReaderTopChromeMetrics.backgroundOpacity),
-                        location: ReaderTopChromeMetrics.solidStop
-                    ),
-                    .init(
-                        color: PardisColors.backgroundAlt.opacity(ReaderTopChromeMetrics.backgroundAltOpacity),
-                        location: ReaderTopChromeMetrics.tintStop
-                    ),
-                    .init(color: .clear, location: ReaderTopChromeMetrics.clearStop),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            LinearGradient(
-                stops: [
-                    .init(
-                        color: PardisColors.indigoSoft.opacity(ReaderTopChromeMetrics.indigoGlowOpacity),
-                        location: ReaderTopChromeMetrics.solidStop
-                    ),
-                    .init(
-                        color: PardisColors.saffronSoft.opacity(ReaderTopChromeMetrics.saffronGlowOpacity),
-                        location: ReaderTopChromeMetrics.tintStop
-                    ),
-                    .init(color: .clear, location: ReaderTopChromeMetrics.fadeStop),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-        .mask(
-            LinearGradient(
-                stops: [
-                    .init(color: .black, location: ReaderTopChromeMetrics.solidStop),
-                    .init(color: .black, location: ReaderTopChromeMetrics.fadeStop),
-                    .init(color: .clear, location: ReaderTopChromeMetrics.clearStop),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-    }
-}
-
-private struct ReaderTopBar: View {
-    let title: String
-    let page: Int
-    let total: Int
-    let onBack: () -> Void
-
-    var body: some View {
-        HStack(spacing: PardisSpacing.sm) {
-            ReaderIconButton(icon: .chevRight, label: "Close", action: onBack, rotation: 90)
-            VStack(spacing: PardisSpacing.xxs) {
-                Text(title)
-                    .font(PardisFonts.display(size: PardisTypography.sm, weight: .heavy))
-                    .foregroundStyle(PardisColors.ink)
-                    .lineLimit(1)
-                Text("PAGE \(page) OF \(total)")
-                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
-                    .kerning(0.6)
-                    .foregroundStyle(PardisColors.inkMuted)
-            }
-            .frame(maxWidth: .infinity)
-            ReaderIconButton(icon: .bookmark, label: "Bookmark", action: {})
-        }
-        .padding(.horizontal, PardisSpacing.md)
-        .padding(.vertical, PardisSpacing.sm)
     }
 }
 

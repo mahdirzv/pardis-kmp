@@ -7,8 +7,8 @@ import Shared
 struct DetailScreen: View {
     let slug: String
     let onRead: (String) -> Void
-    let onBack: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
     @State private var model = DetailSharedViewModel()
 
     var body: some View {
@@ -60,33 +60,24 @@ struct DetailScreen: View {
                 .padding(PardisSpacing.lg)
             }
         }
-        // Back / Save pinned to the top of the SAFE AREA. The hero deliberately bleeds under the
-        // status bar (ScrollView ignoresSafeArea(.top)), so these controls live here on the ZStack —
-        // which respects the safe area — rather than inside the hero, where they'd hide under the
-        // Dynamic Island and be unreachable.
-        .overlay(alignment: .top) {
-            if model.story != nil {
-                DetailTopBar(onBack: onBack)
+        // Native navigation bar: kept transparent so the hero still bleeds up behind it, while the
+        // system positions the Back/Save controls inside the safe area (below the Dynamic Island)
+        // for us — no manual insets, overlays, or GeometryReaders. The hero's own top scrim gives
+        // the buttons contrast over the image.
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                HeroCircleButton(icon: .back, label: "Back", action: { dismiss() })
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                HeroCircleButton(icon: .heart, label: "Save", action: {})
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task { await model.activate() }
         .onAppear { model.load(slug: slug) }
-    }
-}
-
-private struct DetailTopBar: View {
-    let onBack: () -> Void
-
-    var body: some View {
-        HStack {
-            HeroCircleButton(icon: .back, label: "Back", action: onBack)
-            Spacer()
-            HeroCircleButton(icon: .heart, label: "Save", action: {})
-        }
-        .padding(.horizontal, PardisSpacing.md)
-        .padding(.top, PardisSpacing.sm)
     }
 }
 
