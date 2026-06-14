@@ -202,21 +202,11 @@ struct ReaderScreen: View {
                 }
                 .padding(.horizontal, PardisSpacing.lg)
             }
-            // Page dots pinned just under the native nav bar (no custom chrome background).
-            .safeAreaInset(edge: .top, spacing: 0) {
-                ReaderPageDots(
-                    total: model.pages.count,
-                    current: model.currentPage,
-                    onGoTo: { model.goToPage(Int32($0)) }
-                )
-                .padding(.vertical, PardisSpacing.xs)
-                .frame(maxWidth: .infinity)
-            }
 
             ReaderDock(
-                progress: model.pages.count > 1 ? Double(model.currentPage + 1) / Double(model.pages.count) : 1.0,
-                leftLabel: "\(model.currentPage + 1)",
-                rightLabel: "\(model.pages.count)",
+                total: model.pages.count,
+                current: model.currentPage,
+                onGoTo: { model.goToPage(Int32($0)) },
                 displayLang: displayLang,
                 onLangChange: { lang in
                     displayLang = lang
@@ -280,25 +270,31 @@ private struct ReaderIconButton: View {
     }
 }
 
-private struct ReaderPageDots: View {
+/// Page stepper that fills the available width: evenly spread dots reach both edges, past pages are
+/// tinted, and the current page's dot expands into a pill. Replaces the bottom player's progress
+/// track. Each dot has an enlarged (24pt) vertical tap target.
+private struct ReaderStepper: View {
     let total: Int
     let current: Int
     let onGoTo: (Int) -> Void
 
     var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<total, id: \.self) { i in
+        HStack(spacing: 0) {
+            ForEach(0..<max(total, 1), id: \.self) { i in
                 let color: Color = i == current
                     ? PardisColors.saffron
                     : (i < current ? PardisColors.saffronSoft : PardisColors.border)
                 Capsule(style: .continuous)
                     .fill(color)
-                    .frame(width: i == current ? 22 : 5, height: 5)
+                    .frame(width: i == current ? 24 : 6, height: 6)
+                    .frame(height: 24)
+                    .contentShape(Rectangle())
                     .onTapGesture { onGoTo(i) }
+                if i < total - 1 { Spacer(minLength: 4) }
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, PardisSpacing.sm)
+        .animation(.snappy(duration: 0.28), value: current)
     }
 }
 
@@ -330,9 +326,9 @@ private struct ReaderVideoControls: View {
 }
 
 private struct ReaderDock: View {
-    let progress: Double
-    let leftLabel: String
-    let rightLabel: String
+    let total: Int
+    let current: Int
+    let onGoTo: (Int) -> Void
     let displayLang: String
     let onLangChange: (String) -> Void
     let playing: Bool
@@ -344,15 +340,7 @@ private struct ReaderDock: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Text(leftLabel)
-                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
-                    .foregroundStyle(PardisColors.inkMuted)
-                PardisProgressBar(value: progress, height: 5)
-                Text(rightLabel)
-                    .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
-                    .foregroundStyle(PardisColors.inkMuted)
-            }
+            ReaderStepper(total: total, current: current, onGoTo: onGoTo)
             Spacer().frame(height: PardisSpacing.md)
             HStack {
                 ReaderSegmented(value: displayLang, onChange: onLangChange)
