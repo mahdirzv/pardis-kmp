@@ -64,9 +64,10 @@ struct ReaderScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(id: "close", placement: .topBarLeading) {
                 ReaderIconButton(icon: .chevRight, label: "Close", action: { dismiss() }, rotation: 90)
             }
+            .hidingSharedBackground()
             ToolbarItem(placement: .principal) {
                 VStack(spacing: PardisSpacing.xxs) {
                     Text(storyTitle)
@@ -81,9 +82,10 @@ struct ReaderScreen: View {
                     }
                 }
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(id: "bookmark", placement: .topBarTrailing) {
                 ReaderIconButton(icon: .bookmark, label: "Bookmark", action: {})
             }
+            .hidingSharedBackground()
         }
         }
         .sheet(item: $selectedVocab, onDismiss: { model.dismissVocab() }) { selection in

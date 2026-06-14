@@ -68,12 +68,14 @@ struct DetailScreen: View {
         .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(id: "back", placement: .topBarLeading) {
                 HeroCircleButton(icon: .back, label: "Back", action: { dismiss() })
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            .hidingSharedBackground()
+            ToolbarItem(id: "save", placement: .topBarTrailing) {
                 HeroCircleButton(icon: .heart, label: "Save", action: {})
             }
+            .hidingSharedBackground()
         }
         .toolbar(.hidden, for: .tabBar)
         .task { await model.activate() }
