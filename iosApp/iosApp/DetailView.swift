@@ -7,8 +7,8 @@ import Shared
 struct DetailScreen: View {
     let slug: String
     let onRead: (String) -> Void
-    let onBack: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
     @State private var model = DetailSharedViewModel()
 
     var body: some View {
@@ -17,7 +17,7 @@ struct DetailScreen: View {
             if let story = model.story {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        DetailHero(story: story, onBack: onBack)
+                        DetailHero(story: story)
                         DetailMetaChips(story: story)
                             .padding(.horizontal, PardisSpacing.lg)
                             .padding(.vertical, PardisSpacing.sm)
@@ -60,7 +60,26 @@ struct DetailScreen: View {
                 .padding(PardisSpacing.lg)
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        // Native navigation bar: kept transparent so the hero still bleeds up behind it, while the
+        // system positions the Back/Save controls inside the safe area (below the Dynamic Island)
+        // for us — no manual insets, overlays, or GeometryReaders. The hero's own top scrim gives
+        // the buttons contrast over the image.
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        // Plain toolbar buttons (no custom circle) so the system supplies the native Liquid Glass
+        // background on iOS 26; the transparent bar keeps the hero visible behind them.
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: { dismiss() }) { Image(systemName: "chevron.left") }
+                    .accessibilityLabel("Back")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {}) { Image(systemName: "heart") }
+                    .accessibilityLabel("Save")
+            }
+        }
+        .toolbar(.hidden, for: .tabBar)
         .task { await model.activate() }
         .onAppear { model.load(slug: slug) }
     }
@@ -68,7 +87,6 @@ struct DetailScreen: View {
 
 private struct DetailHero: View {
     let story: Story
-    let onBack: () -> Void
 
     var body: some View {
         ZStack {
@@ -93,15 +111,6 @@ private struct DetailHero: View {
             )
         }
         .frame(height: 360)
-        .overlay(alignment: .top) {
-            HStack {
-                HeroCircleButton(icon: .back, label: "Back", action: onBack)
-                Spacer()
-                HeroCircleButton(icon: .heart, label: "Save", action: {})
-            }
-            .padding(.horizontal, PardisSpacing.md)
-            .padding(.top, PardisSpacing.sm)
-        }
         .overlay(alignment: .bottomLeading) {
             VStack(alignment: .leading, spacing: PardisSpacing.xxs) {
                 Text(story.titleEn)
@@ -115,23 +124,6 @@ private struct DetailHero: View {
             .padding(.horizontal, PardisSpacing.lg)
             .padding(.vertical, PardisSpacing.md)
         }
-    }
-}
-
-private struct HeroCircleButton: View {
-    let icon: PardisIconKind
-    let label: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle().fill(PardisColors.surface).frame(width: 44, height: 44)
-                PardisIcon(kind: icon, size: 19, color: PardisColors.ink)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
 
