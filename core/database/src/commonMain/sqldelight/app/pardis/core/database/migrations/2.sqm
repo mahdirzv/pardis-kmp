@@ -1,8 +1,11 @@
 -- Migration 2: Add generic app_setting key-value table.
--- Added to Pardis.sq in a later commit without a migration, so databases already at
--- version 2 (post-cached_pages) were missing this table and crashed on getSetting
--- ("no such table: app_setting"). This migration backfills it for existing installs.
-CREATE TABLE app_setting (
+-- app_setting was added to Pardis.sq (Schema.create) in a later commit without bumping
+-- the version, so version-2 databases are inconsistent: those created before that commit
+-- lack the table ("no such table: app_setting"), while those created after already have it
+-- (Schema.create made it) but still report user_version = 2. IF NOT EXISTS makes this
+-- migration idempotent so it backfills the former without colliding on the latter
+-- ("table app_setting already exists").
+CREATE TABLE IF NOT EXISTS app_setting (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
