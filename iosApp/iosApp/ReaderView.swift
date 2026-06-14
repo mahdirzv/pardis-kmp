@@ -26,6 +26,9 @@ struct ReaderScreen: View {
     @State private var model = ReaderSharedViewModel()
     @State private var selectedVocab: SelectedVocab? = nil
     @State private var displayLang = "both" // both | en | fa
+    // Measured height of the top chrome (bar + dots), used to inset the scroll content so the first
+    // item clears the bar while still scrolling *behind* its blur. Seeded with a close estimate.
+    @State private var topChromeHeight: CGFloat = 96
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -97,28 +100,11 @@ struct ReaderScreen: View {
         let hasVideo = model.videoUrlFa != nil || model.videoUrlEn != nil
 
         return VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                ReaderTopBar(
-                    title: storyTitle,
-                    page: model.currentPage + 1,
-                    total: model.pages.count,
-                    onBack: { dismiss() }
-                )
-                ReaderPageDots(
-                    total: model.pages.count,
-                    current: model.currentPage,
-                    onGoTo: { model.goToPage(Int32($0)) }
-                )
-            }
-            .background(alignment: .top) {
-                ReaderTopChromeBackground()
-                    .frame(height: ReaderTopChromeMetrics.backgroundHeight)
-                    .ignoresSafeArea(edges: .top)
-                    .allowsHitTesting(false)
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Spacer().frame(height: PardisSpacing.sm)
+            ZStack(alignment: .top) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Reserve room for the overlaid top chrome; content scrolls behind its blur.
+                        Color.clear.frame(height: topChromeHeight)
 
                     // Illustration (or video player when in video mode)
                     ZStack(alignment: .topLeading) {
@@ -193,6 +179,35 @@ struct ReaderScreen: View {
                 .padding(.horizontal, PardisSpacing.lg)
             }
 
+                // Blurred top chrome, overlaid so page content scrolls (and blurs) behind it.
+                VStack(spacing: 0) {
+                    ReaderTopBar(
+                        title: storyTitle,
+                        page: model.currentPage + 1,
+                        total: model.pages.count,
+                        onBack: { dismiss() }
+                    )
+                    ReaderPageDots(
+                        total: model.pages.count,
+                        current: model.currentPage,
+                        onGoTo: { model.goToPage(Int32($0)) }
+                    )
+                }
+                .background(alignment: .top) {
+                    ReaderTopChromeBackground()
+                        .frame(height: ReaderTopChromeMetrics.backgroundHeight)
+                        .ignoresSafeArea(edges: .top)
+                        .allowsHitTesting(false)
+                }
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { topChromeHeight = proxy.size.height }
+                            .onChange(of: proxy.size.height) { _, h in topChromeHeight = h }
+                    }
+                }
+            }
+
             ReaderDock(
                 progress: model.pages.count > 1 ? Double(model.currentPage + 1) / Double(model.pages.count) : 1.0,
                 leftLabel: "\(model.currentPage + 1)",
@@ -244,11 +259,13 @@ private enum ReaderTopChromeMetrics {
     static let tintStop: CGFloat = 0.36
     static let fadeStop: CGFloat = 0.72
     static let clearStop: CGFloat = 1.0
-    static let materialOpacity = 0.86
-    static let backgroundOpacity = 0.82
-    static let backgroundAltOpacity = 0.48
-    static let indigoGlowOpacity = 0.18
-    static let saffronGlowOpacity = 0.12
+    // Mostly a clean blur with only a whisper of brand tint, fading out toward the bottom — so
+    // scrolling content reads as "blurred behind the bar" rather than sliding under a colored slab.
+    static let materialOpacity = 0.72
+    static let backgroundOpacity = 0.42
+    static let backgroundAltOpacity = 0.16
+    static let indigoGlowOpacity = 0.06
+    static let saffronGlowOpacity = 0.04
 }
 
 private struct ReaderTopChromeBackground: View {

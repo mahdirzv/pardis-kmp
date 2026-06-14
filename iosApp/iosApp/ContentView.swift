@@ -110,6 +110,8 @@ private struct MainShellView: View {
     // Android's nav graph (single onOpenStory → "detail/{slug}").
     @State private var todayPath = NavigationPath()
     @State private var libraryPath = NavigationPath()
+    @State private var todayReader: ReaderCover? = nil
+    @State private var libraryReader: ReaderCover? = nil
     @State private var lullabyRoute: LullabyRoute? = nil
     @State private var characterRoute: CharacterRoute? = nil
 
@@ -126,7 +128,7 @@ private struct MainShellView: View {
                     onOpenBedtime: { selectedTab = .bedtime }
                 )
                 .pardisScreenBackground()
-                .storyFlowDestinations(path: $todayPath)
+                .storyFlowDestinations(path: $todayPath, reader: $todayReader)
             }
             .tabItem { Label(PardisRootTab.today.title, systemImage: PardisRootTab.today.icon.systemName) }
             .tag(PardisRootTab.today)
@@ -137,7 +139,7 @@ private struct MainShellView: View {
                     onOpenStory: { libraryPath.append(DetailRoute(slug: $0)) }
                 )
                 .pardisScreenBackground()
-                .storyFlowDestinations(path: $libraryPath)
+                .storyFlowDestinations(path: $libraryPath, reader: $libraryReader)
             }
             .tabItem { Label(PardisRootTab.library.title, systemImage: PardisRootTab.library.icon.systemName) }
             .tag(PardisRootTab.library)
@@ -192,33 +194,27 @@ private struct MainShellView: View {
 
 // Story-flow routes (Hashable values pushed onto a tab's NavigationPath).
 private struct DetailRoute: Hashable { let slug: String }
-private struct ReadRoute: Hashable { let slug: String }
 private struct FinishRoute: Hashable { let slug: String }
 
-/// Detail → Reader → Finish destinations, mirroring Android's nav graph:
-/// - finish REPLACES the reader in the stack (back from finish doesn't re-enter the last page)
-/// - "Next story" replaces finish with the next story's detail
-/// - "Done" pops to the tab root
+// The reader is presented MODALLY (fullScreenCover) rather than pushed: it launches over the whole
+// shell — covering the tab bar — and slides up like a sheet, then dismisses back to Detail.
+private struct ReaderCover: Identifiable, Hashable { let slug: String; var id: String { slug } }
+
+/// Detail → Reader → Finish, mirroring Android's nav graph:
+/// - Detail/Finish are PUSHED onto the tab's stack; the Reader is a modal cover over the shell.
+/// - Finishing dismisses the reader and pushes Finish (so back from Finish lands on Detail, never
+///   re-entering the last page).
+/// - "Next story" replaces Finish with the next story's Detail; "Done" pops to the tab root.
 private extension View {
-    func storyFlowDestinations(path: Binding<NavigationPath>) -> some View {
+    func storyFlowDestinations(path: Binding<NavigationPath>, reader: Binding<ReaderCover?>) -> some View {
         self
             .navigationDestination(for: DetailRoute.self) { route in
                 DetailScreen(
                     slug: route.slug,
-                    onRead: { path.wrappedValue.append(ReadRoute(slug: $0)) },
+                    onRead: { reader.wrappedValue = ReaderCover(slug: $0) },
                     onBack: { path.wrappedValue.removeLast() }
                 )
                 // Pushed (non-top-level) screen: hide the tab bar so it shows only on tab roots.
-                .toolbar(.hidden, for: .tabBar)
-            }
-            .navigationDestination(for: ReadRoute.self) { route in
-                ReaderScreen(
-                    slug: route.slug,
-                    onFinish: { finishedSlug in
-                        path.wrappedValue.removeLast() // pop the reader…
-                        path.wrappedValue.append(FinishRoute(slug: finishedSlug)) // …and replace with finish
-                    }
-                )
                 .toolbar(.hidden, for: .tabBar)
             }
             .navigationDestination(for: FinishRoute.self) { route in
@@ -231,6 +227,16 @@ private extension View {
                     onDone: { path.wrappedValue = NavigationPath() }
                 )
                 .toolbar(.hidden, for: .tabBar)
+            }
+            // Modal reader. A fullScreenCover already covers the tab bar, so no toolbar hiding needed.
+            .fullScreenCover(item: reader) { cover in
+                ReaderScreen(
+                    slug: cover.slug,
+                    onFinish: { finishedSlug in
+                        reader.wrappedValue = nil // dismiss the modal reader…
+                        path.wrappedValue.append(FinishRoute(slug: finishedSlug)) // …then show Finish
+                    }
+                )
             }
     }
 }
