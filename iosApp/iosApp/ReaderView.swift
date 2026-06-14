@@ -202,7 +202,7 @@ struct ReaderScreen: View {
                 }
                 .padding(.horizontal, PardisSpacing.lg)
             }
-            // Page dots pinned just under the native nav bar; content scrolls beneath both.
+            // Page dots pinned just under the native nav bar (no custom chrome background).
             .safeAreaInset(edge: .top, spacing: 0) {
                 ReaderPageDots(
                     total: model.pages.count,
@@ -211,7 +211,6 @@ struct ReaderScreen: View {
                 )
                 .padding(.vertical, PardisSpacing.xs)
                 .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial)
             }
 
             ReaderDock(
