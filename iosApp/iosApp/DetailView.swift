@@ -67,15 +67,17 @@ struct DetailScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
+        // Plain toolbar buttons (no custom circle) so the system supplies the native Liquid Glass
+        // background on iOS 26; the transparent bar keeps the hero visible behind them.
         .toolbar {
-            ToolbarItem(id: "back", placement: .topBarLeading) {
-                HeroCircleButton(icon: .back, label: "Back", action: { dismiss() })
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: { dismiss() }) { Image(systemName: "chevron.left") }
+                    .accessibilityLabel("Back")
             }
-            .hidingSharedBackground()
-            ToolbarItem(id: "save", placement: .topBarTrailing) {
-                HeroCircleButton(icon: .heart, label: "Save", action: {})
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {}) { Image(systemName: "heart") }
+                    .accessibilityLabel("Save")
             }
-            .hidingSharedBackground()
         }
         .toolbar(.hidden, for: .tabBar)
         .task { await model.activate() }
@@ -122,23 +124,6 @@ private struct DetailHero: View {
             .padding(.horizontal, PardisSpacing.lg)
             .padding(.vertical, PardisSpacing.md)
         }
-    }
-}
-
-private struct HeroCircleButton: View {
-    let icon: PardisIconKind
-    let label: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle().fill(PardisColors.surface).frame(width: 44, height: 44)
-                PardisIcon(kind: icon, size: 19, color: PardisColors.ink)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
 
