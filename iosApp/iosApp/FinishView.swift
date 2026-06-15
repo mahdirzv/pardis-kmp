@@ -5,6 +5,10 @@ import Shared
 /// glow, confetti burst, HeroSealMedallion, StarRow, stats, garden chips, Next/Done CTA bar.
 /// Note: omits the nightsky/rosette pattern overlays like other iOS screens (needs
 /// asset-catalog motif images - known follow-up).
+// Design --lapis-deep (light value), fixed: the finish screen is always a dark night gradient, so
+// the white "Next story" pill always needs dark text regardless of the app's light/dark theme.
+private let finishPrimaryInk = Color(hex: "#1A256E")
+
 struct FinishScreen: View {
     let slug: String
     let onNextStory: (String) -> Void
@@ -14,7 +18,10 @@ struct FinishScreen: View {
 
     var body: some View {
         ZStack {
+            // Confetti lives on the background as an overlay, NOT as a ZStack sibling: a
+            // GeometryReader sibling is greedy and was skewing the scroll content's horizontal layout.
             PardisGradients.night.ignoresSafeArea()
+                .overlay { ConfettiBurst() }
             // radial glow behind the medallion
             RadialGradient(
                 stops: [
@@ -29,8 +36,6 @@ struct FinishScreen: View {
             .frame(width: 460, height: 460)
             .frame(maxHeight: .infinity, alignment: .top)
             .offset(y: -40)
-
-            ConfettiBurst()
 
             ScrollView {
                 VStack(spacing: 0) {
@@ -92,14 +97,15 @@ struct FinishScreen: View {
                         HStack(spacing: 8) {
                             Text("Next story")
                                 .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
-                                .foregroundStyle(PardisColors.inkOnDark)
-                            PardisIcon(kind: .chevRight, size: 18, color: PardisColors.inkOnDark)
+                                .foregroundStyle(finishPrimaryInk)
+                            PardisIcon(kind: .chevRight, size: 18, color: finishPrimaryInk)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
-                        // Saffron primary CTA, matching Detail/Reader — the previous white pill with
-                        // indigoDeep text was illegible in dark mode (indigoDeep brightens there).
-                        .background(PardisColors.saffron)
+                        // Design: white pill (#fff) with lapis-deep text. Fixed dark ink (not dynamic
+                        // indigoDeep, which brightens in dark mode) because the finish night
+                        // background is always dark, so the white pill always needs dark text.
+                        .background(PardisColors.inkOnDark)
                         .clipShape(Capsule(style: .continuous))
                     }
                     .buttonStyle(.plain)
