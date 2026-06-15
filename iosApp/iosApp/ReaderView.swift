@@ -279,18 +279,19 @@ private struct ReaderStepper: View {
     let onGoTo: (Int) -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: PardisSpacing.xs) {
             ForEach(0..<max(total, 1), id: \.self) { i in
                 let color: Color = i == current
                     ? PardisColors.saffron
                     : (i < current ? PardisColors.saffronSoft : PardisColors.border)
                 Capsule(style: .continuous)
                     .fill(color)
-                    .frame(width: i == current ? 24 : 6, height: 6)
-                    .frame(height: 24)
+                    .frame(height: 6)
+                    // Inactive dots stay small with tight gaps; the current page's dot absorbs all
+                    // the remaining width. minHeight enlarges the tap target.
+                    .frame(maxWidth: i == current ? .infinity : 6, minHeight: 22)
                     .contentShape(Rectangle())
                     .onTapGesture { onGoTo(i) }
-                if i < total - 1 { Spacer(minLength: 4) }
             }
         }
         .frame(maxWidth: .infinity)
