@@ -2,7 +2,6 @@ import SwiftUI
 import Shared
 
 private let characterHeroHeight: CGFloat = 400
-private let characterCircleButton: CGFloat = 44
 
 private func toneAccent(_ tone: String) -> Color {
     switch tone {
@@ -26,7 +25,7 @@ struct CharacterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                CharacterHero(character: character, onBack: onBack)
+                CharacterHero(character: character)
 
                 Text(character.bio)
                     .font(PardisFonts.body(size: PardisTypography.base, weight: .regular))
@@ -41,15 +40,26 @@ struct CharacterView: View {
                 Spacer().frame(height: PardisSpacing.xl)
             }
         }
+        .ignoresSafeArea(edges: .top)
         .background(PardisColors.background.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: onBack) { Image(systemName: "chevron.left") }
+                    .accessibilityLabel("Back")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {}) { Image(systemName: "heart") }
+                    .accessibilityLabel("Save")
+            }
+        }
     }
 }
 
 private struct CharacterHero: View {
     let character: RivanaCharacter
-    let onBack: () -> Void
 
     var body: some View {
         PardisSceneArt(seed: character.name, forcedVariant: Int(character.sceneVariant))
@@ -64,16 +74,6 @@ private struct CharacterHero: View {
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
-            }
-            .overlay(alignment: .top) {
-                HStack {
-                    CharacterCircleButton(icon: .back, label: "Back", action: onBack)
-                    Spacer()
-                    CharacterCircleButton(icon: .heart, label: "Save", action: {})
-                }
-                .padding(.horizontal, PardisSpacing.md)
-                .padding(.vertical, PardisSpacing.sm)
-                .safeAreaPadding(.top)
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -111,23 +111,6 @@ private struct CollectedTag: View {
         .padding(.vertical, PardisSpacing.sm - PardisSpacing.xxs)
         .background(collected ? PardisColors.mintSoft : PardisColors.scrim)
         .clipShape(Capsule(style: .continuous))
-    }
-}
-
-private struct CharacterCircleButton: View {
-    let icon: PardisIconKind
-    let label: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            PardisIcon(kind: icon, size: 19, color: PardisColors.ink)
-                .frame(width: characterCircleButton, height: characterCircleButton)
-                .background(PardisColors.surface)
-                .clipShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
 

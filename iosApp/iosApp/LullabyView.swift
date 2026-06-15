@@ -34,19 +34,6 @@ struct LullabyView: View {
             PardisGradients.lullabyNight.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // top bar
-                HStack {
-                    LullabyGhostButton(icon: .chevRight, label: "Close", rotation: 90, action: onBack)
-                    Spacer()
-                    Text("NOW PLAYING")
-                        .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
-                        .foregroundStyle(PardisColors.inkOnDarkMuted)
-                    Spacer()
-                    LullabyGhostButton(icon: .heart, label: "Save", action: {})
-                }
-                .padding(.horizontal, PardisSpacing.lg)
-                .padding(.vertical, PardisSpacing.sm)
-
                 // album art
                 ZStack {
                     PardisSceneArt(seed: lullaby.title, forcedVariant: Int(lullaby.sceneVariant))
@@ -138,6 +125,24 @@ struct LullabyView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: onBack) { Image(systemName: "chevron.down") }
+                    .accessibilityLabel("Close")
+            }
+            ToolbarItem(placement: .principal) {
+                Text("NOW PLAYING")
+                    .font(PardisFonts.body(size: PardisTypography.xs, weight: .semibold))
+                    .foregroundStyle(PardisColors.inkOnDarkMuted)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {}) { Image(systemName: "heart") }
+                    .accessibilityLabel("Save")
+            }
+        }
+        .tint(PardisColors.inkOnDark)
         .onReceive(tick) { _ in
             guard playing else { return }
             progress = progress >= 1 ? 0 : progress + 0.0015

@@ -7,7 +7,6 @@ import Shared
 private let onboardingAvatarSize: CGFloat = 80
 private let onboardingAddChildIconSize: CGFloat = 56
 private let onboardingAddChildMinHeight: CGFloat = 168
-private let onboardingBackButtonSize: CGFloat = 40
 private let onboardingGridSpacing: CGFloat = 16
 private let onboardingWordmarkSpacing: CGFloat = 9
 
@@ -43,22 +42,17 @@ struct OnboardingView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 0) {
-            if isSwitch {
-                HStack {
-                    Button(action: onBack) {
-                        PardisIcon(kind: .back, size: 20, color: PardisColors.ink)
-                            .frame(width: onboardingBackButtonSize, height: onboardingBackButtonSize)
-                            .background(PardisColors.surface)
-                            .clipShape(Circle())
-                    }
-                    .accessibilityLabel("Back")
-                    Spacer()
-                }
-                .padding(.leading, PardisSpacing.lg)
-                .padding(.top, PardisSpacing.sm)
-            }
+        // Switch-profile mode is a modal: give it a native nav bar with a glass close button to
+        // match the rest of the app. First-launch (root) mode has no back affordance.
+        if isSwitch {
+            NavigationStack { picker }
+        } else {
+            picker
+        }
+    }
 
+    private var picker: some View {
+        VStack(spacing: 0) {
             VStack(spacing: PardisSpacing.xs) {
                 HStack(spacing: onboardingWordmarkSpacing) {
                     Text("Rivana")
@@ -110,6 +104,16 @@ struct OnboardingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(PardisColors.background.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            if isSwitch {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: onBack) { Image(systemName: "chevron.down") }
+                        .accessibilityLabel("Back")
+                }
+            }
+        }
     }
 }
 

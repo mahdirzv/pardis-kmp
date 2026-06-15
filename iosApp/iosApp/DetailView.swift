@@ -188,13 +188,16 @@ private struct DetailVocabPreview: View {
                 .foregroundStyle(PardisColors.inkMuted)
             PardisFlowLayout(spacing: PardisSpacing.sm) {
                 ForEach(words.prefix(12), id: \.fa) { w in
+                    // Lapis tag (lapis-soft bg, lapis-deep text — both auto-invert in dark mode):
+                    // Farsi primary + faint mono transliteration. The translit was previously the
+                    // fixed `indigo` accent, which was low-contrast on the dark-mode capsule.
                     HStack(spacing: 7) {
                         Text(w.fa)
                             .font(PardisFonts.persian(size: PardisTypography.base, weight: .semibold))
                             .foregroundStyle(PardisColors.indigoDeep)
                         Text(w.translit)
                             .font(PardisFonts.mono(size: PardisTypography.xs, weight: .semibold))
-                            .foregroundStyle(PardisColors.indigo)
+                            .foregroundStyle(PardisColors.indigoDeep.opacity(0.6))
                     }
                     .padding(.horizontal, 13)
                     .padding(.vertical, 8)
