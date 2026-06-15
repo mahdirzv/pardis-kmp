@@ -289,7 +289,7 @@ private struct ReaderStepper: View {
                     .frame(height: 6)
                     // Inactive dots stay small with tight gaps; the current page's dot absorbs all
                     // the remaining width. minHeight enlarges the tap target.
-                    .frame(maxWidth: i == current ? .infinity : 6, minHeight: 22)
+                    .frame(maxWidth: i == current ? .infinity : 10, minHeight: 22)
                     .contentShape(Rectangle())
                     .onTapGesture { onGoTo(i) }
             }

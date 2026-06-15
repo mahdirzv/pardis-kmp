@@ -92,12 +92,14 @@ struct FinishScreen: View {
                         HStack(spacing: 8) {
                             Text("Next story")
                                 .font(PardisFonts.display(size: PardisTypography.base, weight: .bold))
-                                .foregroundStyle(PardisColors.indigoDeep)
-                            PardisIcon(kind: .chevRight, size: 18, color: PardisColors.indigoDeep)
+                                .foregroundStyle(PardisColors.inkOnDark)
+                            PardisIcon(kind: .chevRight, size: 18, color: PardisColors.inkOnDark)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
-                        .background(PardisColors.inkOnDark)
+                        // Saffron primary CTA, matching Detail/Reader — the previous white pill with
+                        // indigoDeep text was illegible in dark mode (indigoDeep brightens there).
+                        .background(PardisColors.saffron)
                         .clipShape(Capsule(style: .continuous))
                     }
                     .buttonStyle(.plain)
